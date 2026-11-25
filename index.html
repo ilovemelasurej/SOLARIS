@@ -15,6 +15,28 @@
             color: #edf8f1;
             font-family: "Inter", Arial, Helvetica, sans-serif;
             overflow-x: hidden;
+            --sky-tint: rgba(255, 224, 150, 0.14);
+            --mood-filter: brightness(1) saturate(1);
+        }
+
+        body.config-page.mood-daylight {
+            --sky-tint: rgba(255, 236, 179, 0.22);
+            --mood-filter: brightness(1.06) saturate(1.12);
+        }
+
+        body.config-page.mood-sunset {
+            --sky-tint: rgba(251, 146, 60, 0.26);
+            --mood-filter: brightness(0.95) saturate(1.25) sepia(0.14);
+        }
+
+        body.config-page.mood-night {
+            --sky-tint: rgba(30, 64, 120, 0.28);
+            --mood-filter: brightness(0.76) saturate(1.05) hue-rotate(8deg);
+        }
+
+        body.config-page.mood-rain {
+            --sky-tint: rgba(73, 189, 232, 0.20);
+            --mood-filter: brightness(0.84) saturate(0.85) contrast(1.04);
         }
 
         /* Dynamic background scene (Indoor window vs Outdoor farm) */
@@ -24,6 +46,8 @@
             z-index: 0;
             pointer-events: none;
             overflow: hidden;
+            filter: var(--mood-filter);
+            transition: filter 0.45s ease;
         }
 
         .scene-layer {
@@ -37,18 +61,16 @@
             opacity: 1;
         }
 
-        /* Indoor: dark emerald ambient + sunlit window & soft sheer curtains (no bed) */
         .indoor-scene {
             background:
-                radial-gradient(circle at 22% 24%, rgba(255, 214, 153, 0.16), transparent 45%),
+                radial-gradient(circle at 22% 24%, var(--sky-tint), transparent 46%),
                 radial-gradient(circle at 75% 75%, rgba(55, 201, 130, 0.10), transparent 50%),
                 linear-gradient(180deg, #071612 0%, #0a201a 68%, #07120e 100%);
         }
 
-        /* Outdoor: warm sky + glowing sun + distant farm/greenhouse/tractor */
         .outdoor-scene {
             background:
-                radial-gradient(circle at 24% 18%, rgba(255, 212, 110, 0.24), transparent 42%),
+                radial-gradient(circle at 24% 18%, var(--sky-tint), transparent 45%),
                 linear-gradient(180deg, #0b1f1a 0%, #102a21 56%, #132216 100%);
         }
 
@@ -56,6 +78,65 @@
             width: 100%;
             height: 100%;
             display: block;
+        }
+
+        /* Weather / Time-of-day scenery overlay */
+        .scenery-fx-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .fx-group {
+            display: none;
+        }
+
+        .fx-group.is-active {
+            display: inline;
+        }
+
+        .rain-streak {
+            animation: rainFall 0.85s linear infinite;
+        }
+
+        /* Right-corner 4-option scenery switcher */
+        .scenery-switcher-corner {
+            position: fixed;
+            top: 18px;
+            right: 22px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(237, 248, 241, 0.18);
+            background: rgba(8, 24, 19, 0.78);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+        }
+
+        .scenery-opt-btn {
+            padding: 6px 11px;
+            border-radius: 999px;
+            background: transparent;
+            color: #9ab9a8;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .scenery-opt-btn:hover {
+            color: #edf8f1;
+            transform: none;
+        }
+
+        .scenery-opt-btn.active {
+            background: linear-gradient(90deg, #37c982, #49bde8);
+            color: #072219;
         }
 
         .solaris-layout-stage {
@@ -87,7 +168,8 @@
             max-height: 94vh;
             display: block;
             overflow: visible;
-            filter: drop-shadow(0 16px 32px rgba(0, 0, 0, 0.65));
+            filter: var(--mood-filter) drop-shadow(0 16px 32px rgba(0, 0, 0, 0.65));
+            transition: filter 0.45s ease;
         }
 
         .botanical-species {
@@ -98,7 +180,6 @@
             display: inline;
         }
 
-        /* Pot shown only in Indoor mode; hidden when planted directly in Outdoor ground */
         .indoor-pot-group {
             opacity: 1;
             transition: opacity 0.35s ease;
@@ -133,7 +214,6 @@
             animation: nightStemGrow 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.76s forwards;
         }
 
-        /* Leaves, flowers & fruits unfolding as stems grow */
         .sprout-leaf {
             opacity: 0;
             transform: scale(0.18) translateY(12px);
@@ -235,10 +315,22 @@
             }
         }
 
+        @keyframes rainFall {
+            0% { transform: translate(-12px, -30px); opacity: 0.2; }
+            50% { opacity: 0.7; }
+            100% { transform: translate(-28px, 45px); opacity: 0.1; }
+        }
+
         @media (max-width: 900px) {
+            .scenery-switcher-corner {
+                top: 12px;
+                right: 12px;
+                flex-wrap: wrap;
+                max-width: calc(100% - 24px);
+            }
             .solaris-layout-stage {
                 grid-template-columns: 1fr;
-                padding: 16px 14px 0;
+                padding: 58px 14px 0;
             }
             .plant-floor-anchor {
                 min-height: 360px;
@@ -255,10 +347,17 @@
         }
     </style>
 </head>
-<body class="config-page env-indoor">
+<body class="config-page env-indoor mood-daylight">
+    <!-- RIGHT-CORNER 4 SCENERY OPTIONS: DAYLIGHT / SUNSET / NIGHT / RAIN -->
+    <div class="scenery-switcher-corner" role="group" aria-label="Time of Day and Weather Scenery">
+        <button type="button" class="scenery-opt-btn active" data-scenery="daylight">Daylight</button>
+        <button type="button" class="scenery-opt-btn" data-scenery="sunset">Sunset</button>
+        <button type="button" class="scenery-opt-btn" data-scenery="night">Night</button>
+        <button type="button" class="scenery-opt-btn" data-scenery="rain">Rain</button>
+    </div>
+
     <!-- BACKGROUND ENVIRONMENT SCENES (INDOOR WINDOW VS OUTDOOR FARM) -->
     <div class="env-scene-backdrop" aria-hidden="true">
-        <!-- INDOOR SCENE: Window + Warm Light + Curtains + Sill (No Bed) -->
         <div id="indoorScene" class="scene-layer indoor-scene is-active">
             <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
                 <defs>
@@ -274,28 +373,18 @@
                     </linearGradient>
                 </defs>
 
-                <!-- Window pane behind left plant area -->
                 <rect x="85" y="105" width="430" height="445" rx="14" fill="url(#windowGlowGrad)" stroke="rgba(245, 222, 179, 0.22)" stroke-width="4" />
                 <line x1="228" y1="105" x2="228" y2="550" stroke="rgba(245, 222, 179, 0.18)" stroke-width="5" />
                 <line x1="372" y1="105" x2="372" y2="550" stroke="rgba(245, 222, 179, 0.18)" stroke-width="5" />
                 <line x1="85" y1="325" x2="515" y2="325" stroke="rgba(245, 222, 179, 0.18)" stroke-width="5" />
-
-                <!-- Window sill -->
                 <rect x="65" y="550" width="470" height="18" rx="5" fill="rgba(225, 198, 156, 0.22)" />
-
-                <!-- Soft sheer curtains framing window -->
                 <path d="M 45 75 Q 95 260 65 650 L 135 650 Q 155 260 112 75 Z" fill="url(#curtainGrad)" />
                 <path d="M 488 75 Q 455 260 475 650 L 545 650 Q 565 260 540 75 Z" fill="url(#curtainGrad)" />
-
-                <!-- Warm sunlight beam -->
                 <polygon points="120,130 480,130 620,860 40,860" fill="rgba(255, 224, 163, 0.045)" />
-
-                <!-- Lower indoor floor -->
                 <rect x="0" y="790" width="1440" height="110" fill="rgba(6, 18, 14, 0.78)" />
             </svg>
         </div>
 
-        <!-- OUTDOOR SCENE: Sun + Distant Plants + Greenhouse + Tractor + Ground -->
         <div id="outdoorScene" class="scene-layer outdoor-scene">
             <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
                 <defs>
@@ -311,15 +400,12 @@
                     </linearGradient>
                 </defs>
 
-                <!-- Sun in upper left/center sky -->
-                <circle cx="315" cy="155" r="145" fill="url(#outdoorSunGrad)" />
-                <circle cx="315" cy="155" r="36" fill="#fde68a" opacity="0.88" />
+                <circle id="outdoorSunHalo" cx="315" cy="155" r="145" fill="url(#outdoorSunGrad)" />
+                <circle id="outdoorSunCore" cx="315" cy="155" r="36" fill="#fde68a" opacity="0.88" />
 
-                <!-- Distant hills & rows of farm plants -->
                 <path d="M 0 560 Q 320 475 680 545 T 1440 500 L 1440 900 L 0 900 Z" fill="rgba(23, 56, 36, 0.52)" />
                 <path d="M 0 625 Q 420 565 860 615 T 1440 580 L 1440 900 L 0 900 Z" fill="rgba(29, 72, 44, 0.65)" />
 
-                <!-- Greenhouse farming tunnel structure in background -->
                 <g opacity="0.48" stroke="#9be5c8" stroke-width="2.2" fill="rgba(148, 224, 196, 0.08)">
                     <path d="M 435 615 L 435 535 Q 525 470 615 535 L 615 615 Z" />
                     <line x1="435" y1="565" x2="615" y2="565" />
@@ -327,7 +413,6 @@
                     <line x1="555" y1="505" x2="555" y2="615" />
                 </g>
 
-                <!-- Distant crop rows -->
                 <g fill="rgba(66, 148, 88, 0.45)">
                     <ellipse cx="95" cy="645" rx="22" ry="9" />
                     <ellipse cx="145" cy="650" rx="24" ry="9" />
@@ -335,7 +420,6 @@
                     <ellipse cx="445" cy="648" rx="24" ry="9" />
                 </g>
 
-                <!-- Farm tractor silhouette/detail in mid-background -->
                 <g transform="translate(655, 578)" opacity="0.68">
                     <rect x="18" y="18" width="44" height="24" rx="4" fill="#d97706" />
                     <rect x="44" y="4" width="22" height="18" rx="3" fill="#475569" />
@@ -344,10 +428,46 @@
                     <circle cx="52" cy="43" r="15" fill="#1e293b" stroke="#94a3b8" stroke-width="3" />
                 </g>
 
-                <!-- Foreground planted soil ground -->
                 <rect x="0" y="750" width="1440" height="150" fill="url(#outdoorGroundGrad)" />
             </svg>
         </div>
+    </div>
+
+    <!-- 4-SCENARIO ATMOSPHERE OVERLAY (DAYLIGHT / SUNSET / NIGHT / RAIN) -->
+    <div class="scenery-fx-layer" aria-hidden="true">
+        <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
+            <!-- SUNSET SCENERY: Low amber-coral sun + warm horizon glow -->
+            <g id="fxSunset" class="fx-group">
+                <circle cx="330" cy="420" r="185" fill="rgba(251, 146, 60, 0.24)" />
+                <circle cx="330" cy="420" r="46" fill="#fb923c" opacity="0.78" />
+                <rect x="0" y="460" width="1440" height="440" fill="rgba(234, 88, 12, 0.07)" />
+            </g>
+
+            <!-- NIGHT SCENERY: Crescent moon + stars -->
+            <g id="fxNight" class="fx-group">
+                <circle cx="350" cy="140" r="28" fill="#f8fafc" opacity="0.82" />
+                <circle cx="362" cy="133" r="25" fill="#071612" opacity="0.88" />
+                <circle cx="150" cy="120" r="2" fill="#e2e8f0" opacity="0.75" />
+                <circle cx="240" cy="85" r="1.8" fill="#e2e8f0" opacity="0.65" />
+                <circle cx="465" cy="115" r="2.2" fill="#e2e8f0" opacity="0.8" />
+                <circle cx="530" cy="175" r="1.6" fill="#e2e8f0" opacity="0.6" />
+                <circle cx="195" cy="210" r="1.7" fill="#e2e8f0" opacity="0.7" />
+            </g>
+
+            <!-- RAIN SCENERY: Rain clouds + falling rain streaks -->
+            <g id="fxRain" class="fx-group">
+                <ellipse cx="260" cy="110" rx="135" ry="38" fill="rgba(51, 65, 85, 0.42)" />
+                <ellipse cx="420" cy="125" rx="120" ry="34" fill="rgba(51, 65, 85, 0.36)" />
+                <g stroke="rgba(125, 211, 252, 0.42)" stroke-width="1.8" stroke-linecap="round">
+                    <line class="rain-streak" x1="160" y1="180" x2="146" y2="215" />
+                    <line class="rain-streak" x1="230" y1="220" x2="216" y2="255" style="animation-delay: -0.25s;" />
+                    <line class="rain-streak" x1="305" y1="170" x2="291" y2="205" style="animation-delay: -0.45s;" />
+                    <line class="rain-streak" x1="380" y1="240" x2="366" y2="275" style="animation-delay: -0.15s;" />
+                    <line class="rain-streak" x1="455" y1="195" x2="441" y2="230" style="animation-delay: -0.6s;" />
+                    <line class="rain-streak" x1="520" y1="260" x2="506" y2="295" style="animation-delay: -0.35s;" />
+                </g>
+            </g>
+        </svg>
     </div>
 
     <main class="solaris-layout-stage">
@@ -402,10 +522,8 @@
                     </linearGradient>
                 </defs>
 
-                <!-- Ground shadow at bottom edge -->
                 <ellipse cx="235" cy="724" rx="155" ry="13" fill="rgba(0, 0, 0, 0.55)" />
 
-                <!-- Surrounding grass / soil blades -->
                 <g opacity="0.85">
                     <path class="grass-blade" d="M 88 724 Q 76 668 58 634 Q 84 668 98 724 Z" fill="url(#grassGrad)" />
                     <path class="grass-blade alt" d="M 118 724 Q 112 680 102 652 Q 120 680 128 724 Z" fill="url(#grassGrad)" />
@@ -413,7 +531,6 @@
                     <path class="grass-blade alt" d="M 386 724 Q 402 664 424 628 Q 408 668 396 724 Z" fill="url(#grassGrad)" />
                 </g>
 
-                <!-- Ambient glowing particles -->
                 <g>
                     <circle class="firefly-dot" cx="122" cy="430" r="3" fill="#b9f8d3" />
                     <circle class="firefly-dot f2" cx="352" cy="340" r="3.5" fill="#fde68a" />
@@ -623,6 +740,10 @@
             const outdoorScene = document.querySelector("#outdoorScene");
             const indoorBtn = document.querySelector("#indoor");
             const outdoorBtn = document.querySelector("#outdoor");
+            const sceneryBtns = document.querySelectorAll(".scenery-opt-btn");
+            const fxSunset = document.querySelector("#fxSunset");
+            const fxNight = document.querySelector("#fxNight");
+            const fxRain = document.querySelector("#fxRain");
 
             function replayGrowth() {
                 if (!plantSelect || !kalamansiGroup || !oreganoGroup) return;
@@ -648,6 +769,27 @@
                 outdoorScene?.classList.toggle("is-active", Boolean(isOutdoor));
             }
 
+            function applySceneryMode(mode) {
+                const chosen = ["daylight", "sunset", "night", "rain"].includes(mode) ? mode : "daylight";
+                document.body.classList.remove("mood-daylight", "mood-sunset", "mood-night", "mood-rain");
+                document.body.classList.add(`mood-${chosen}`);
+
+                sceneryBtns.forEach((btn) => {
+                    btn.classList.toggle("active", btn.getAttribute("data-scenery") === chosen);
+                });
+
+                fxSunset?.classList.toggle("is-active", chosen === "sunset");
+                fxNight?.classList.toggle("is-active", chosen === "night");
+                fxRain?.classList.toggle("is-active", chosen === "rain");
+                localStorage.setItem("configuredScenery", chosen);
+            }
+
+            sceneryBtns.forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    applySceneryMode(btn.getAttribute("data-scenery"));
+                });
+            });
+
             plantSelect?.addEventListener("change", replayGrowth);
             indoorBtn?.addEventListener("click", () => {
                 window.setTimeout(syncEnvironmentScene, 10);
@@ -656,8 +798,10 @@
                 window.setTimeout(syncEnvironmentScene, 10);
             });
 
+            const savedScenery = localStorage.getItem("configuredScenery") || "daylight";
             replayGrowth();
             syncEnvironmentScene();
+            applySceneryMode(savedScenery);
         });
     </script>
 </body>

@@ -12,264 +12,398 @@
             width: 100%;
             margin: 0;
             background:
-                radial-gradient(circle at 18% 18%, rgba(73, 189, 232, 0.22), transparent 45%),
-                radial-gradient(circle at 82% 78%, rgba(55, 201, 130, 0.18), transparent 48%),
-                #071b16;
+                radial-gradient(circle at 16% 24%, rgba(73, 189, 232, 0.16), transparent 44%),
+                radial-gradient(circle at 75% 75%, rgba(55, 201, 130, 0.14), transparent 50%),
+                linear-gradient(180deg, #071b16 0%, #09221b 68%, #0d1d15 100%);
             color: #edf8f1;
             font-family: "Inter", Arial, Helvetica, sans-serif;
             overflow-x: hidden;
         }
 
-        .solaris-config-wrap {
+        /* Ground mist line at very bottom */
+        body.config-page::after {
+            content: "";
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 70px;
+            background: linear-gradient(180deg, rgba(7, 27, 22, 0), rgba(14, 34, 22, 0.72) 70%, rgba(9, 20, 14, 0.95) 100%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .solaris-layout-stage {
+            position: relative;
+            z-index: 2;
             min-height: 100vh;
             width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 28px 18px;
-            box-sizing: border-box;
-        }
-
-        .config-layout {
-            width: 100%;
-            max-width: 880px;
             display: grid;
-            grid-template-columns: 320px minmax(0, 1fr);
-            gap: 28px;
+            grid-template-columns: minmax(320px, 46vw) minmax(0, 1fr);
             align-items: center;
-        }
-
-        .plant-2d-stage {
-            position: relative;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 24px 18px 20px;
-            border-radius: 20px;
-            border: 1px solid rgba(88, 224, 150, 0.45);
-            background: linear-gradient(160deg, rgba(18, 57, 44, 0.92), rgba(10, 32, 26, 0.96));
-            box-shadow: 0 20px 42px rgba(0, 0, 0, 0.42);
-            overflow: hidden;
+            padding: 28px 36px 0 0;
             box-sizing: border-box;
-            animation: stageEntrance 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
-        .plant-2d-stage.is-switching .plant-2d-svg {
-            animation: plant2dSwap 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        .plant-aura {
-            position: absolute;
-            width: 195px;
-            height: 195px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(88, 224, 150, 0.30), rgba(73, 189, 232, 0.10) 65%, transparent 75%);
-            filter: blur(8px);
+        /* Borderless plant anchored all the way to the bottom edge */
+        .plant-floor-anchor {
+            position: relative;
+            align-self: stretch;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            min-height: 100vh;
             pointer-events: none;
         }
 
-        .plant-2d-stage.is-oregano .plant-aura {
-            background: radial-gradient(circle, rgba(243, 187, 82, 0.26), rgba(88, 224, 150, 0.16) 65%, transparent 75%);
-        }
-
-        .plant-2d-svg {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            max-width: 225px;
-            height: auto;
+        .plant-botanical-svg {
+            width: min(100%, 500px);
+            height: min(94vh, 780px);
+            max-height: 94vh;
             display: block;
+            overflow: visible;
+            filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.45));
         }
 
-        .plant-artwork {
+        .botanical-species {
             display: none;
         }
 
-        .plant-artwork.is-active {
+        .botanical-species.is-active {
             display: inline;
-            animation: artworkPop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        .sway-a {
-            animation: swayLeafA 3.8s ease-in-out infinite;
+        /* Stem & branch extension animation (bottom -> top) */
+        .grow-stem {
+            stroke-dasharray: 900;
+            stroke-dashoffset: 900;
+            animation: stemExtend 1.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .grow-branch-1 {
+            stroke-dasharray: 500;
+            stroke-dashoffset: 500;
+            animation: stemExtend 1.15s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards;
+        }
+
+        .grow-branch-2 {
+            stroke-dasharray: 500;
+            stroke-dashoffset: 500;
+            animation: stemExtend 1.15s cubic-bezier(0.22, 1, 0.36, 1) 0.48s forwards;
+        }
+
+        .grow-branch-3 {
+            stroke-dasharray: 500;
+            stroke-dashoffset: 500;
+            animation: stemExtend 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.72s forwards;
+        }
+
+        /* Leaves, flowers & fruits sprouting in sequence as branches grow */
+        .sprout-leaf {
+            opacity: 0;
+            transform: scale(0.15);
             transform-box: fill-box;
             transform-origin: center;
+            animation: leafSprout 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
 
-        .sway-b {
-            animation: swayLeafB 4.4s ease-in-out infinite;
-            transform-box: fill-box;
-            transform-origin: center;
+        .d1 { animation-delay: 0.35s; }
+        .d2 { animation-delay: 0.55s; }
+        .d3 { animation-delay: 0.75s; }
+        .d4 { animation-delay: 0.95s; }
+        .d5 { animation-delay: 1.15s; }
+        .d6 { animation-delay: 1.32s; }
+
+        /* Subtle living breeze once fully grown */
+        .breeze-group {
+            transform-origin: 240px 710px;
+            animation: gentlePlantBreeze 5.2s ease-in-out 1.5s infinite;
         }
 
-        .plant-2d-caption {
-            position: relative;
-            z-index: 1;
-            margin-top: 10px;
-            text-align: center;
+        .config-card-column {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px 40px;
         }
 
-        .plant-2d-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-size: 10px;
-            font-weight: 800;
-            letter-spacing: 1.2px;
-            color: #9bf5c4;
-            background: rgba(55, 201, 130, 0.18);
-            border: 1px solid rgba(55, 201, 130, 0.38);
-        }
-
-        .plant-2d-caption p {
-            margin: 8px 0 0;
-            font-size: 12px;
-            color: #9ab9a8;
-        }
-
-        .solaris-config-wrap .plant-config {
+        .config-card-column .plant-config {
             width: 100%;
             max-width: 474px;
-            margin: 0 auto;
+            margin: 0;
             box-sizing: border-box;
-            animation: stageEntrance 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
-        @keyframes stageEntrance {
-            from {
-                opacity: 0;
-                transform: translateY(22px) scale(0.96);
-            }
+        @keyframes stemExtend {
             to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes leafSprout {
+            0% {
+                opacity: 0;
+                transform: scale(0.15);
+            }
+            70% {
                 opacity: 1;
-                transform: translateY(0) scale(1);
+                transform: scale(1.05);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
             }
         }
 
-        @keyframes plant2dSwap {
-            0% { transform: scale(0.9); }
-            60% { transform: scale(1.04); }
-            100% { transform: scale(1); }
+        @keyframes gentlePlantBreeze {
+            0%, 100% {
+                transform: rotate(0deg);
+            }
+            50% {
+                transform: rotate(1.1deg);
+            }
         }
 
-        @keyframes artworkPop {
-            from { opacity: 0; transform: scale(0.88); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes swayLeafA {
-            0%, 100% { transform: rotate(-2deg); }
-            50% { transform: rotate(3deg); }
-        }
-
-        @keyframes swayLeafB {
-            0%, 100% { transform: rotate(2.5deg); }
-            50% { transform: rotate(-2.5deg); }
-        }
-
-        @media (max-width: 800px) {
-            .config-layout {
+        @media (max-width: 900px) {
+            .solaris-layout-stage {
                 grid-template-columns: 1fr;
-                max-width: 474px;
+                padding: 16px 14px 0;
             }
-            .plant-2d-svg {
-                max-width: 185px;
+            .plant-floor-anchor {
+                min-height: 360px;
+                order: 2;
+            }
+            .plant-botanical-svg {
+                height: 360px;
+                max-height: 360px;
+            }
+            .config-card-column {
+                order: 1;
+                padding-bottom: 12px;
             }
         }
     </style>
 </head>
 <body class="config-page">
-    <main class="solaris-config-wrap">
-        <div class="config-layout">
-            <aside class="plant-2d-stage is-visible" id="plant2dStage" aria-label="2D Plant Preview">
-                <div class="plant-aura" id="plantAura"></div>
+    <main class="solaris-layout-stage">
+        <!-- FULL-HEIGHT BORDERLESS BOTANICAL PLANT AT BOTTOM EDGE -->
+        <div class="plant-floor-anchor" aria-label="Animated Plant Growth Preview">
+            <svg id="plantBotanicalSvg" class="plant-botanical-svg" viewBox="0 0 480 740" role="img" aria-label="Realistic Kalamansi and Oregano Growth Animation">
+                <defs>
+                    <!-- Kalamansi botanical gradients -->
+                    <linearGradient id="kalamansiStemGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                        <stop offset="0%" stop-color="#5a6e32" />
+                        <stop offset="55%" stop-color="#6c8b3c" />
+                        <stop offset="100%" stop-color="#8eb24d" />
+                    </linearGradient>
 
-                <svg id="plant2dSvg" class="plant-2d-svg" viewBox="0 0 260 280" role="img" aria-label="2D Plant Illustration">
-                    <defs>
-                        <linearGradient id="potGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#b85d3b" />
-                            <stop offset="50%" stop-color="#d47652" />
-                            <stop offset="100%" stop-color="#8c4227" />
-                        </linearGradient>
-                        <linearGradient id="soilGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#4a2c18" />
-                            <stop offset="100%" stop-color="#241309" />
-                        </linearGradient>
-                        <linearGradient id="leafGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#58e096" />
-                            <stop offset="100%" stop-color="#1f8a5b" />
-                        </linearGradient>
-                        <radialGradient id="kalamansiFruitGrad" cx="35%" cy="30%" r="70%">
-                            <stop offset="0%" stop-color="#b8f252" />
-                            <stop offset="65%" stop-color="#6cc22b" />
-                            <stop offset="100%" stop-color="#3c8214" />
-                        </radialGradient>
-                    </defs>
+                    <linearGradient id="kalamansiLeafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#76a83b" />
+                        <stop offset="55%" stop-color="#4b7c25" />
+                        <stop offset="100%" stop-color="#2c5215" />
+                    </linearGradient>
 
-                    <ellipse cx="130" cy="256" rx="74" ry="11" fill="rgba(0, 0, 0, 0.42)" />
+                    <radialGradient id="ripeKalamansiGrad" cx="34%" cy="28%" r="72%">
+                        <stop offset="0%" stop-color="#ffd24c" />
+                        <stop offset="58%" stop-color="#f39c12" />
+                        <stop offset="100%" stop-color="#b85d07" />
+                    </radialGradient>
 
-                    <!-- KALAMANSI 2D ARTWORK -->
-                    <g id="artworkKalamansi" class="plant-artwork is-active">
-                        <path d="M130 192 C130 162, 128 136, 126 104" stroke="#6d8f4d" stroke-width="6.5" stroke-linecap="round" fill="none" />
-                        <path d="M128 145 C106 130, 88 122, 72 114" stroke="#6d8f4d" stroke-width="4.5" stroke-linecap="round" fill="none" />
-                        <path d="M128 132 C150 116, 168 108, 188 100" stroke="#6d8f4d" stroke-width="4.5" stroke-linecap="round" fill="none" />
-                        <path d="M127 112 C112 92, 100 80, 88 70" stroke="#6d8f4d" stroke-width="3.8" stroke-linecap="round" fill="none" />
-                        <path d="M127 108 C142 86, 154 72, 166 62" stroke="#6d8f4d" stroke-width="3.8" stroke-linecap="round" fill="none" />
+                    <radialGradient id="unripeKalamansiGrad" cx="35%" cy="30%" r="72%">
+                        <stop offset="0%" stop-color="#b5df4b" />
+                        <stop offset="62%" stop-color="#68a825" />
+                        <stop offset="100%" stop-color="#396911" />
+                    </radialGradient>
 
-                        <ellipse class="sway-a" cx="68" cy="110" rx="22" ry="10" transform="rotate(-24 68 110)" fill="url(#leafGrad)" />
-                        <ellipse class="sway-b" cx="192" cy="96" rx="22" ry="10" transform="rotate(24 192 96)" fill="url(#leafGrad)" />
-                        <ellipse class="sway-b" cx="84" cy="66" rx="20" ry="9.5" transform="rotate(-35 84 66)" fill="url(#leafGrad)" />
-                        <ellipse class="sway-a" cx="170" cy="58" rx="20" ry="9.5" transform="rotate(35 170 58)" fill="url(#leafGrad)" />
-                        <ellipse class="sway-a" cx="128" cy="48" rx="18" ry="9" transform="rotate(-8 128 48)" fill="url(#leafGrad)" />
-                        <ellipse class="sway-b" cx="98" cy="156" rx="18" ry="8.5" transform="rotate(-18 98 156)" fill="url(#leafGrad)" />
-                        <ellipse class="sway-a" cx="160" cy="152" rx="18" ry="8.5" transform="rotate(18 160 152)" fill="url(#leafGrad)" />
+                    <!-- Oregano botanical gradients (soft sage/mint + veins) -->
+                    <linearGradient id="oreganoStemGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                        <stop offset="0%" stop-color="#5d7d6e" />
+                        <stop offset="100%" stop-color="#8ab39e" />
+                    </linearGradient>
 
-                        <g class="sway-a">
-                            <circle cx="94" cy="126" r="10" fill="url(#kalamansiFruitGrad)" />
-                            <circle cx="91" cy="123" r="2.5" fill="rgba(255,255,255,0.45)" />
+                    <linearGradient id="oreganoLeafGrad" x1="15%" y1="10%" x2="85%" y2="90%">
+                        <stop offset="0%" stop-color="#b8dcd0" />
+                        <stop offset="55%" stop-color="#8abca9" />
+                        <stop offset="100%" stop-color="#649482" />
+                    </linearGradient>
+                </defs>
+
+                <!-- Ground shadow right at bottom edge (y = 724) -->
+                <ellipse cx="235" cy="724" rx="145" ry="13" fill="rgba(0, 0, 0, 0.45)" />
+
+                <g id="breezeWrapper" class="breeze-group">
+                    <!-- ==================== KALAMANSI BOTANICAL BRANCH ==================== -->
+                    <g id="speciesKalamansi" class="botanical-species is-active">
+                        <!-- Main stem extending from bottom edge (724) up to crown (115) -->
+                        <path class="grow-stem" d="M 225 724 C 228 635, 212 555, 224 465 C 236 375, 214 295, 226 205 C 231 165, 226 135, 222 108"
+                              stroke="url(#kalamansiStemGrad)" stroke-width="11" stroke-linecap="round" fill="none" />
+
+                        <!-- Secondary branches growing outward -->
+                        <path class="grow-branch-1" d="M 220 565 C 185 548, 148 552, 108 575"
+                              stroke="url(#kalamansiStemGrad)" stroke-width="7.5" stroke-linecap="round" fill="none" />
+                        <path class="grow-branch-1" d="M 223 475 C 268 452, 315 446, 368 422"
+                              stroke="url(#kalamansiStemGrad)" stroke-width="8" stroke-linecap="round" fill="none" />
+                        <path class="grow-branch-2" d="M 221 372 C 182 342, 142 325, 98 312"
+                              stroke="url(#kalamansiStemGrad)" stroke-width="6.5" stroke-linecap="round" fill="none" />
+                        <path class="grow-branch-2" d="M 222 292 C 264 265, 304 248, 344 228"
+                              stroke="url(#kalamansiStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
+                        <path class="grow-branch-3" d="M 224 205 C 198 175, 178 152, 158 134"
+                              stroke="url(#kalamansiStemGrad)" stroke-width="5" stroke-linecap="round" fill="none" />
+                        <path class="grow-branch-3" d="M 225 182 C 254 156, 276 138, 298 122"
+                              stroke="url(#kalamansiStemGrad)" stroke-width="5" stroke-linecap="round" fill="none" />
+
+                        <!-- Lower & mid citrus leaves with midrib & veins -->
+                        <g class="sprout-leaf d1">
+                            <path d="M 112 574 C 76 558, 52 575, 42 604 C 74 612, 102 598, 112 574 Z" fill="url(#kalamansiLeafGrad)" />
+                            <path d="M 110 575 Q 76 588 46 602" stroke="#9bc758" stroke-width="1.8" fill="none" />
                         </g>
-                        <g class="sway-b">
-                            <circle cx="164" cy="116" r="10.5" fill="url(#kalamansiFruitGrad)" />
-                            <circle cx="161" cy="113" r="2.5" fill="rgba(255,255,255,0.45)" />
+
+                        <g class="sprout-leaf d2">
+                            <path d="M 224 510 C 182 485, 145 488, 118 506 C 148 525, 188 524, 224 510 Z" fill="url(#kalamansiLeafGrad)" />
+                            <path d="M 220 509 Q 170 505 122 506" stroke="#9bc758" stroke-width="1.8" fill="none" />
                         </g>
-                        <g class="sway-b">
-                            <circle cx="128" cy="82" r="9.5" fill="url(#kalamansiFruitGrad)" />
-                            <circle cx="125" cy="79" r="2.2" fill="rgba(255,255,255,0.45)" />
+
+                        <g class="sprout-leaf d2">
+                            <path d="M 268 456 C 296 420, 336 406, 372 410 C 354 442, 312 456, 268 456 Z" fill="url(#kalamansiLeafGrad)" />
+                            <path d="M 272 454 Q 320 430 368 412" stroke="#9bc758" stroke-width="1.8" fill="none" />
+                        </g>
+
+                        <g class="sprout-leaf d3">
+                            <path d="M 185 344 C 148 312, 105 305, 68 318 C 98 345, 144 352, 185 344 Z" fill="url(#kalamansiLeafGrad)" />
+                            <path d="M 181 342 Q 125 326 72 318" stroke="#9bc758" stroke-width="1.8" fill="none" />
+                        </g>
+
+                        <g class="sprout-leaf d3">
+                            <path d="M 224 342 C 258 312, 302 308, 338 322 C 308 348, 264 352, 224 342 Z" fill="url(#kalamansiLeafGrad)" />
+                            <path d="M 228 340 Q 282 326 334 323" stroke="#9bc758" stroke-width="1.8" fill="none" />
+                        </g>
+
+                        <g class="sprout-leaf d4">
+                            <path d="M 275 262 C 304 224, 344 206, 384 208 C 364 242, 322 258, 275 262 Z" fill="url(#kalamansiLeafGrad)" />
+                            <path d="M 278 260 Q 330 232 380 210" stroke="#9bc758" stroke-width="1.8" fill="none" />
+                        </g>
+
+                        <!-- Upper tender leaves & white citrus blossoms -->
+                        <g class="sprout-leaf d4">
+                            <path d="M 192 170 C 164 134, 132 122, 102 132 C 126 158, 160 168, 192 170 Z" fill="url(#kalamansiLeafGrad)" />
+                        </g>
+
+                        <g class="sprout-leaf d5">
+                            <path d="M 224 148 C 218 106, 226 74, 244 54 C 254 88, 246 122, 224 148 Z" fill="url(#kalamansiLeafGrad)" />
+                        </g>
+
+                        <g class="sprout-leaf d5">
+                            <path d="M 248 158 C 278 132, 314 124, 346 134 C 322 158, 286 164, 248 158 Z" fill="url(#kalamansiLeafGrad)" />
+                        </g>
+
+                        <!-- Small white citrus flowers -->
+                        <g class="sprout-leaf d5" transform="translate(148, 128)">
+                            <circle cx="0" cy="-7" r="6" fill="#fffdf5" />
+                            <circle cx="7" cy="-2" r="6" fill="#fffdf5" />
+                            <circle cx="4.5" cy="6" r="6" fill="#fffdf5" />
+                            <circle cx="-4.5" cy="6" r="6" fill="#fffdf5" />
+                            <circle cx="-7" cy="-2" r="6" fill="#fffdf5" />
+                            <circle cx="0" cy="0" r="3" fill="#f5b82e" />
+                        </g>
+
+                        <g class="sprout-leaf d6" transform="translate(222, 92)">
+                            <circle cx="0" cy="-6" r="5.5" fill="#fffdf5" />
+                            <circle cx="6" cy="-2" r="5.5" fill="#fffdf5" />
+                            <circle cx="4" cy="5" r="5.5" fill="#fffdf5" />
+                            <circle cx="-4" cy="5" r="5.5" fill="#fffdf5" />
+                            <circle cx="-6" cy="-2" r="5.5" fill="#fffdf5" />
+                            <circle cx="0" cy="0" r="2.8" fill="#f5b82e" />
+                        </g>
+
+                        <!-- Ripe golden kalamansi fruit & green unripe fruit -->
+                        <g class="sprout-leaf d5">
+                            <circle cx="332" cy="444" r="31" fill="url(#ripeKalamansiGrad)" />
+                            <circle cx="321" cy="432" r="8" fill="rgba(255, 255, 255, 0.32)" />
+                            <path d="M 332 413 L 332 403" stroke="#5b7d26" stroke-width="3" stroke-linecap="round" />
+                        </g>
+
+                        <g class="sprout-leaf d6">
+                            <circle cx="386" cy="396" r="24" fill="url(#unripeKalamansiGrad)" />
+                            <circle cx="378" cy="387" r="6" fill="rgba(255, 255, 255, 0.28)" />
+                            <path d="M 380 374 L 368 422" stroke="#6c8b3c" stroke-width="3.5" fill="none" />
                         </g>
                     </g>
 
-                    <!-- OREGANO 2D ARTWORK -->
-                    <g id="artworkOregano" class="plant-artwork">
-                        <path d="M130 192 C122 162, 102 142, 82 124" stroke="#75b868" stroke-width="3.6" stroke-linecap="round" fill="none" />
-                        <path d="M130 192 C130 158, 130 132, 130 102" stroke="#75b868" stroke-width="4" stroke-linecap="round" fill="none" />
-                        <path d="M130 192 C138 162, 158 142, 178 124" stroke="#75b868" stroke-width="3.6" stroke-linecap="round" fill="none" />
-                        <path d="M126 164 C106 158, 90 154, 74 150" stroke="#75b868" stroke-width="2.8" stroke-linecap="round" fill="none" />
-                        <path d="M134 164 C154 158, 170 154, 186 150" stroke="#75b868" stroke-width="2.8" stroke-linecap="round" fill="none" />
+                    <!-- ==================== OREGANO BOTANICAL CLUSTER ==================== -->
+                    <g id="speciesOregano" class="botanical-species">
+                        <!-- Main herb stems extending from bottom edge (724) -->
+                        <path class="grow-stem" d="M 232 724 C 228 635, 234 545, 226 455 C 220 385, 232 325, 228 265"
+                              stroke="url(#oreganoStemGrad)" stroke-width="8.5" stroke-linecap="round" fill="none" />
+                        <path class="grow-branch-1" d="M 230 620 C 192 585, 152 562, 110 542"
+                              stroke="url(#oreganoStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
+                        <path class="grow-branch-1" d="M 232 595 C 274 565, 318 545, 362 526"
+                              stroke="url(#oreganoStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
+                        <path class="grow-branch-2" d="M 228 475 C 186 442, 146 420, 102 398"
+                              stroke="url(#oreganoStemGrad)" stroke-width="5.2" stroke-linecap="round" fill="none" />
+                        <path class="grow-branch-2" d="M 229 452 C 274 422, 318 402, 364 380"
+                              stroke="url(#oreganoStemGrad)" stroke-width="5.2" stroke-linecap="round" fill="none" />
+                        <path class="grow-branch-3" d="M 228 345 C 196 314, 174 292, 154 272"
+                              stroke="url(#oreganoStemGrad)" stroke-width="4.4" stroke-linecap="round" fill="none" />
+                        <path class="grow-branch-3" d="M 229 332 C 262 304, 288 282, 314 260"
+                              stroke="url(#oreganoStemGrad)" stroke-width="4.4" stroke-linecap="round" fill="none" />
 
-                        <ellipse class="sway-a" cx="76" cy="118" rx="15" ry="8" transform="rotate(-32 76 118)" fill="url(#leafGrad)" />
-                        <ellipse class="sway-b" cx="98" cy="114" rx="14" ry="7.5" transform="rotate(18 98 114)" fill="url(#leafGrad)" />
-                        <ellipse class="sway-b" cx="184" cy="118" rx="15" ry="8" transform="rotate(32 184 118)" fill="url(#leafGrad)" />
-                        <ellipse class="sway-a" cx="162" cy="114" rx="14" ry="7.5" transform="rotate(-18 162 114)" fill="url(#leafGrad)" />
-                        <ellipse class="sway-a" cx="114" cy="96" rx="16" ry="8" transform="rotate(-24 114 96)" fill="url(#leafGrad)" />
-                        <ellipse class="sway-b" cx="146" cy="96" rx="16" ry="8" transform="rotate(24 146 96)" fill="url(#leafGrad)" />
-                        <ellipse class="sway-a" cx="130" cy="82" rx="15" ry="7.5" fill="url(#leafGrad)" />
-                        <ellipse class="sway-b" cx="70" cy="148" rx="14" ry="7" transform="rotate(-14 70 148)" fill="url(#leafGrad)" />
-                        <ellipse class="sway-a" cx="190" cy="148" rx="14" ry="7" transform="rotate(14 190 148)" fill="url(#leafGrad)" />
+                        <!-- Broad veined oregano leaves (inspired by image_90bdd5.jpg) -->
+                        <g class="sprout-leaf d1">
+                            <path d="M 118 548 C 82 522, 54 544, 48 588 C 72 612, 114 596, 134 564 Z" fill="url(#oreganoLeafGrad)" />
+                            <path d="M 124 562 L 62 582 M 102 568 L 84 545 M 96 572 L 88 596" stroke="#537c6c" stroke-width="1.6" fill="none" />
+                        </g>
+
+                        <g class="sprout-leaf d2">
+                            <path d="M 352 532 C 388 506, 418 528, 422 574 C 396 598, 354 582, 336 548 Z" fill="url(#oreganoLeafGrad)" />
+                            <path d="M 344 546 L 408 568 M 368 554 L 386 530 M 374 558 L 382 582" stroke="#537c6c" stroke-width="1.6" fill="none" />
+                        </g>
+
+                        <g class="sprout-leaf d2">
+                            <path d="M 226 530 C 186 496, 152 512, 148 558 C 176 584, 218 568, 234 542 Z" fill="url(#oreganoLeafGrad)" />
+                            <path d="M 228 538 L 162 554 M 202 544 L 184 520 M 196 548 L 188 572" stroke="#537c6c" stroke-width="1.6" fill="none" />
+                        </g>
+
+                        <g class="sprout-leaf d3">
+                            <path d="M 110 404 C 72 376, 44 398, 42 444 C 68 468, 112 452, 128 420 Z" fill="url(#oreganoLeafGrad)" />
+                            <path d="M 120 418 L 58 438 M 96 424 L 78 402 M 90 428 L 82 452" stroke="#537c6c" stroke-width="1.6" fill="none" />
+                        </g>
+
+                        <g class="sprout-leaf d3">
+                            <path d="M 354 386 C 392 358, 422 380, 424 426 C 398 450, 354 434, 338 402 Z" fill="url(#oreganoLeafGrad)" />
+                            <path d="M 346 400 L 408 420 M 370 406 L 388 384 M 376 410 L 384 434" stroke="#537c6c" stroke-width="1.6" fill="none" />
+                        </g>
+
+                        <g class="sprout-leaf d4">
+                            <path d="M 226 392 C 184 358, 150 376, 148 422 C 176 446, 220 430, 234 402 Z" fill="url(#oreganoLeafGrad)" />
+                            <path d="M 228 398 L 164 416 M 202 404 L 184 382 M 196 408 L 188 432" stroke="#537c6c" stroke-width="1.6" fill="none" />
+                        </g>
+
+                        <g class="sprout-leaf d4">
+                            <path d="M 234 382 C 276 348, 310 366, 312 412 C 284 436, 240 420, 228 392 Z" fill="url(#oreganoLeafGrad)" />
+                            <path d="M 234 388 L 298 406 M 258 394 L 276 372 M 264 398 L 272 422" stroke="#537c6c" stroke-width="1.6" fill="none" />
+                        </g>
+
+                        <g class="sprout-leaf d5">
+                            <path d="M 162 278 C 132 252, 108 270, 108 308 C 130 328, 166 314, 178 290 Z" fill="url(#oreganoLeafGrad)" />
+                            <path d="M 170 288 L 120 304" stroke="#537c6c" stroke-width="1.5" fill="none" />
+                        </g>
+
+                        <g class="sprout-leaf d5">
+                            <path d="M 304 268 C 334 242, 358 260, 358 298 C 336 318, 300 304, 288 280 Z" fill="url(#oreganoLeafGrad)" />
+                            <path d="M 296 278 L 346 294" stroke="#537c6c" stroke-width="1.5" fill="none" />
+                        </g>
+
+                        <g class="sprout-leaf d6">
+                            <path d="M 228 275 C 202 232, 214 196, 232 182 C 250 196, 256 232, 234 275 Z" fill="url(#oreganoLeafGrad)" />
+                            <path d="M 230 268 L 232 192" stroke="#537c6c" stroke-width="1.6" fill="none" />
+                        </g>
                     </g>
+                </g>
+            </svg>
+        </div>
 
-                    <ellipse cx="130" cy="192" rx="54" ry="10" fill="url(#soilGrad)" />
-                    <path d="M74 192 L186 192 L173 250 C171 255, 166 258, 161 258 L99 258 C94 258, 89 255, 87 250 Z" fill="url(#potGrad)" />
-                    <rect x="68" y="186" width="124" height="12" rx="5" fill="#d97b57" />
-                </svg>
-
-                <div class="plant-2d-caption">
-                    <span class="plant-2d-badge" id="plant2dBadge">KALAMANSI · INDOOR</span>
-                    <p id="plant2dHint">Citrus profile · Optimal 06:00 AM (0.35 L)</p>
-                </div>
-            </aside>
-
+        <!-- CONFIGURE YOUR PLANT CARD ON RIGHT -->
+        <div class="config-card-column">
             <section class="plant-config" aria-labelledby="configure-heading">
                 <h1 id="configure-heading">Configure Your Plant</h1>
                 <p>Select the plant and environment you want the irrigation system to operate.</p>
@@ -294,43 +428,36 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const plantSelect = document.querySelector("#plantType");
-            const kalamansiArt = document.querySelector("#artworkKalamansi");
-            const oreganoArt = document.querySelector("#artworkOregano");
-            const stage = document.querySelector("#plant2dStage");
-            const badge = document.querySelector("#plant2dBadge");
-            const hint = document.querySelector("#plant2dHint");
+            const kalamansiGroup = document.querySelector("#speciesKalamansi");
+            const oreganoGroup = document.querySelector("#speciesOregano");
+            const svgEl = document.querySelector("#plantBotanicalSvg");
 
-            function updateInlinePlant() {
-                if (!plantSelect || !kalamansiArt || !oreganoArt) return;
+            function replayGrowthAndSwitch() {
+                if (!plantSelect || !kalamansiGroup || !oreganoGroup) return;
                 const isOregano = plantSelect.value.toLowerCase() === "oregano";
-                const activeEnvBtn = document.querySelector(".environment-buttons button.active");
-                const envText = activeEnvBtn ? activeEnvBtn.textContent.trim() : "Indoor";
 
-                kalamansiArt.classList.toggle("is-active", !isOregano);
-                oreganoArt.classList.toggle("is-active", isOregano);
-                stage?.classList.toggle("is-oregano", isOregano);
+                kalamansiGroup.classList.toggle("is-active", !isOregano);
+                oreganoGroup.classList.toggle("is-active", isOregano);
 
-                if (badge) {
-                    badge.textContent = `${isOregano ? "OREGANO" : "KALAMANSI"} · ${envText.toUpperCase()}`;
-                }
-                if (hint) {
-                    hint.textContent = isOregano
-                        ? `Herb profile · Optimal 06:30 AM (${envText === "Outdoor" ? "0.25 L" : "0.18 L"})`
-                        : `Citrus profile · Optimal 06:00 AM (${envText === "Outdoor" ? "0.50 L" : "0.35 L"})`;
-                }
+                const activeGroup = isOregano ? oreganoGroup : kalamansiGroup;
+                const animatedEls = activeGroup.querySelectorAll(".grow-stem, .grow-branch-1, .grow-branch-2, .grow-branch-3, .sprout-leaf");
+                animatedEls.forEach((el) => {
+                    el.style.animation = "none";
+                    void el.offsetWidth;
+                    el.style.animation = "";
+                });
 
-                if (stage) {
-                    stage.classList.remove("is-switching");
-                    void stage.offsetWidth;
-                    stage.classList.add("is-switching");
+                if (svgEl) {
+                    svgEl.style.opacity = "0.92";
+                    requestAnimationFrame(() => {
+                        svgEl.style.transition = "opacity 0.25s ease";
+                        svgEl.style.opacity = "1";
+                    });
                 }
             }
 
-            plantSelect?.addEventListener("change", updateInlinePlant);
-            document.querySelectorAll(".environment-buttons button").forEach((btn) => {
-                btn.addEventListener("click", () => window.setTimeout(updateInlinePlant, 10));
-            });
-            updateInlinePlant();
+            plantSelect?.addEventListener("change", replayGrowthAndSwitch);
+            replayGrowthAndSwitch();
         });
     </script>
 </body>

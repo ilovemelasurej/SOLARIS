@@ -15,18 +15,18 @@
             color: #edf8f1;
             font-family: "Inter", Arial, Helvetica, sans-serif;
             overflow-x: hidden;
-            --sky-tint: rgba(255, 224, 150, 0.14);
-            --mood-filter: brightness(1) saturate(1);
+            --sky-tint: rgba(255, 232, 150, 0.18);
+            --mood-filter: brightness(1.04) saturate(1.1);
         }
 
         body.config-page.mood-daylight {
-            --sky-tint: rgba(255, 236, 179, 0.22);
+            --sky-tint: rgba(255, 236, 179, 0.24);
             --mood-filter: brightness(1.06) saturate(1.12);
         }
 
         body.config-page.mood-sunset {
-            --sky-tint: rgba(251, 146, 60, 0.26);
-            --mood-filter: brightness(0.95) saturate(1.25) sepia(0.14);
+            --sky-tint: rgba(251, 146, 60, 0.28);
+            --mood-filter: brightness(0.96) saturate(1.25) sepia(0.12);
         }
 
         body.config-page.mood-night {
@@ -35,7 +35,7 @@
         }
 
         body.config-page.mood-rain {
-            --sky-tint: rgba(73, 189, 232, 0.20);
+            --sky-tint: rgba(100, 116, 139, 0.24);
             --mood-filter: brightness(0.84) saturate(0.85) contrast(1.04);
         }
 
@@ -74,19 +74,75 @@
                 linear-gradient(180deg, #0b1f1a 0%, #102a21 56%, #132216 100%);
         }
 
-        #outdoorDaySun {
-            opacity: 0;
-            transition: opacity 0.4s ease;
-        }
-
-        body.mood-daylight #outdoorDaySun {
-            opacity: 1;
-        }
-
         .scene-svg {
             width: 100%;
             height: 100%;
             display: block;
+        }
+
+        /* Shared Sun transition logic across Daylight / Sunset / Rain / Night */
+        .celestial-sun {
+            transform: translateY(0px);
+            opacity: 0.94;
+            transition: transform 0.85s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.55s ease;
+        }
+
+        .celestial-sun-core {
+            fill: #fde68a;
+            transition: fill 0.75s ease;
+        }
+
+        .celestial-sun-halo {
+            fill: rgba(251, 191, 36, 0.28);
+            transition: fill 0.75s ease;
+        }
+
+        /* Sunset: sun descends lower and turns orange */
+        body.mood-sunset .celestial-sun {
+            transform: translateY(235px);
+            opacity: 0.95;
+        }
+
+        body.mood-sunset .celestial-sun-core {
+            fill: #fb923c;
+        }
+
+        body.mood-sunset .celestial-sun-halo {
+            fill: rgba(249, 115, 22, 0.36);
+        }
+
+        /* Rain: sun stays in sky with subtle dim, covered by greyish rain clouds */
+        body.mood-rain .celestial-sun {
+            transform: translateY(15px);
+            opacity: 0.55;
+        }
+
+        /* Night: sun disappears from screen and moon takes over */
+        body.mood-night .celestial-sun {
+            transform: translateY(120px);
+            opacity: 0;
+        }
+
+        .celestial-moon {
+            opacity: 0;
+            transform: translateY(18px);
+            transition: opacity 0.65s ease, transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        body.mood-night .celestial-moon {
+            opacity: 1;
+            transform: translateY(0px);
+        }
+
+        .grey-rain-clouds {
+            opacity: 0;
+            transform: translateY(-14px);
+            transition: opacity 0.55s ease, transform 0.65s ease;
+        }
+
+        body.mood-rain .grey-rain-clouds {
+            opacity: 1;
+            transform: translateY(0px);
         }
 
         /* Weather / Time-of-day scenery overlay */
@@ -397,23 +453,12 @@
         <div id="outdoorScene" class="scene-layer outdoor-scene">
             <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
                 <defs>
-                    <radialGradient id="outdoorSunGrad" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stop-color="#fff0a6" stop-opacity="0.92" />
-                        <stop offset="45%" stop-color="#fbbf24" stop-opacity="0.38" />
-                        <stop offset="100%" stop-color="#fbbf24" stop-opacity="0" />
-                    </radialGradient>
                     <linearGradient id="outdoorGroundGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                         <stop offset="0%" stop-color="#1b3822" />
                         <stop offset="45%" stop-color="#261c12" />
                         <stop offset="100%" stop-color="#130d08" />
                     </linearGradient>
                 </defs>
-
-                <!-- Daylight sun: only visible when Daylight is active -->
-                <g id="outdoorDaySun">
-                    <circle cx="315" cy="155" r="145" fill="url(#outdoorSunGrad)" />
-                    <circle cx="315" cy="155" r="36" fill="#fde68a" opacity="0.88" />
-                </g>
 
                 <path d="M 0 560 Q 320 475 680 545 T 1440 500 L 1440 900 L 0 900 Z" fill="rgba(23, 56, 36, 0.52)" />
                 <path d="M 0 625 Q 420 565 860 615 T 1440 580 L 1440 900 L 0 900 Z" fill="rgba(29, 72, 44, 0.65)" />
@@ -445,38 +490,40 @@
         </div>
     </div>
 
-    <!-- 4-SCENARIO ATMOSPHERE OVERLAY (DAYLIGHT / SUNSET / NIGHT / RAIN) -->
+    <!-- SUN TRANSITION + MOON + GREY CLOUDS + RAIN LAYER -->
     <div class="scenery-fx-layer" aria-hidden="true">
         <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
-            <!-- SUNSET SCENERY: Low amber-coral sun + warm horizon glow -->
-            <g id="fxSunset" class="fx-group">
-                <circle cx="330" cy="420" r="185" fill="rgba(251, 146, 60, 0.24)" />
-                <circle cx="330" cy="420" r="46" fill="#fb923c" opacity="0.78" />
-                <rect x="0" y="460" width="1440" height="440" fill="rgba(234, 88, 12, 0.07)" />
+            <!-- SUN: Descends & turns orange on Sunset, dimmed under grey clouds on Rain, fades out on Night -->
+            <g class="celestial-sun">
+                <circle class="celestial-sun-halo" cx="315" cy="155" r="145" />
+                <circle class="celestial-sun-core" cx="315" cy="155" r="38" />
             </g>
 
-            <!-- NIGHT SCENERY: Crescent moon + stars -->
-            <g id="fxNight" class="fx-group">
-                <circle cx="350" cy="140" r="28" fill="#f8fafc" opacity="0.82" />
-                <circle cx="362" cy="133" r="25" fill="#071612" opacity="0.88" />
+            <!-- MOON: Appears in Night mode when sun leaves -->
+            <g class="celestial-moon">
+                <circle cx="330" cy="145" r="30" fill="#f8fafc" opacity="0.88" />
+                <circle cx="342" cy="138" r="26" fill="#071612" opacity="0.92" />
                 <circle cx="150" cy="120" r="2" fill="#e2e8f0" opacity="0.75" />
-                <circle cx="240" cy="85" r="1.8" fill="#e2e8f0" opacity="0.65" />
+                <circle cx="235" cy="85" r="1.8" fill="#e2e8f0" opacity="0.65" />
                 <circle cx="465" cy="115" r="2.2" fill="#e2e8f0" opacity="0.8" />
                 <circle cx="530" cy="175" r="1.6" fill="#e2e8f0" opacity="0.6" />
-                <circle cx="195" cy="210" r="1.7" fill="#e2e8f0" opacity="0.7" />
             </g>
 
-            <!-- RAIN SCENERY: Rain clouds + falling rain streaks -->
+            <!-- GREY RAIN CLOUDS + RAIN STREAKS: Covers sun during Rain -->
+            <g class="grey-rain-clouds">
+                <ellipse cx="265" cy="135" rx="145" ry="42" fill="#64748b" opacity="0.72" />
+                <ellipse cx="385" cy="148" rx="130" ry="38" fill="#475569" opacity="0.78" />
+                <ellipse cx="320" cy="122" rx="115" ry="34" fill="#94a3b8" opacity="0.55" />
+            </g>
+
             <g id="fxRain" class="fx-group">
-                <ellipse cx="260" cy="110" rx="135" ry="38" fill="rgba(51, 65, 85, 0.42)" />
-                <ellipse cx="420" cy="125" rx="120" ry="34" fill="rgba(51, 65, 85, 0.36)" />
-                <g stroke="rgba(125, 211, 252, 0.42)" stroke-width="1.8" stroke-linecap="round">
-                    <line class="rain-streak" x1="160" y1="180" x2="146" y2="215" />
-                    <line class="rain-streak" x1="230" y1="220" x2="216" y2="255" style="animation-delay: -0.25s;" />
-                    <line class="rain-streak" x1="305" y1="170" x2="291" y2="205" style="animation-delay: -0.45s;" />
-                    <line class="rain-streak" x1="380" y1="240" x2="366" y2="275" style="animation-delay: -0.15s;" />
-                    <line class="rain-streak" x1="455" y1="195" x2="441" y2="230" style="animation-delay: -0.6s;" />
-                    <line class="rain-streak" x1="520" y1="260" x2="506" y2="295" style="animation-delay: -0.35s;" />
+                <g stroke="rgba(148, 163, 184, 0.52)" stroke-width="1.8" stroke-linecap="round">
+                    <line class="rain-streak" x1="160" y1="185" x2="146" y2="220" />
+                    <line class="rain-streak" x1="230" y1="225" x2="216" y2="260" style="animation-delay: -0.25s;" />
+                    <line class="rain-streak" x1="305" y1="175" x2="291" y2="210" style="animation-delay: -0.45s;" />
+                    <line class="rain-streak" x1="380" y1="245" x2="366" y2="280" style="animation-delay: -0.15s;" />
+                    <line class="rain-streak" x1="455" y1="200" x2="441" y2="235" style="animation-delay: -0.6s;" />
+                    <line class="rain-streak" x1="520" y1="265" x2="506" y2="300" style="animation-delay: -0.35s;" />
                 </g>
             </g>
         </svg>
@@ -753,9 +800,6 @@
             const indoorBtn = document.querySelector("#indoor");
             const outdoorBtn = document.querySelector("#outdoor");
             const sceneryBtns = document.querySelectorAll(".scenery-opt-btn");
-            const outdoorDaySun = document.querySelector("#outdoorDaySun");
-            const fxSunset = document.querySelector("#fxSunset");
-            const fxNight = document.querySelector("#fxNight");
             const fxRain = document.querySelector("#fxRain");
 
             function replayGrowth() {
@@ -791,11 +835,6 @@
                     btn.classList.toggle("active", btn.getAttribute("data-scenery") === chosen);
                 });
 
-                if (outdoorDaySun) {
-                    outdoorDaySun.style.display = chosen === "daylight" ? "inline" : "none";
-                }
-                fxSunset?.classList.toggle("is-active", chosen === "sunset");
-                fxNight?.classList.toggle("is-active", chosen === "night");
                 fxRain?.classList.toggle("is-active", chosen === "rain");
                 localStorage.setItem("configuredScenery", chosen);
             }

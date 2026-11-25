@@ -11,26 +11,51 @@
             min-height: 100vh;
             width: 100%;
             margin: 0;
-            background:
-                radial-gradient(circle at 22% 22%, rgba(55, 201, 130, 0.12), transparent 42%),
-                radial-gradient(circle at 75% 75%, rgba(73, 189, 232, 0.10), transparent 48%),
-                linear-gradient(180deg, #040b09 0%, #061410 65%, #07120d 100%);
+            background: #040b09;
             color: #edf8f1;
             font-family: "Inter", Arial, Helvetica, sans-serif;
             overflow-x: hidden;
         }
 
-        /* Subtle bottom ground glow without any box */
-        body.config-page::after {
-            content: "";
+        /* Dynamic background scene (Indoor window vs Outdoor farm) */
+        .env-scene-backdrop {
             position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            height: 68px;
-            background: linear-gradient(180deg, rgba(4, 11, 9, 0), rgba(8, 22, 16, 0.85) 75%, rgba(4, 10, 7, 0.98) 100%);
+            inset: 0;
+            z-index: 0;
             pointer-events: none;
-            z-index: 1;
+            overflow: hidden;
+        }
+
+        .scene-layer {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.55s ease;
+        }
+
+        .scene-layer.is-active {
+            opacity: 1;
+        }
+
+        /* Indoor: dark emerald ambient + sunlit window & soft sheer curtains (no bed) */
+        .indoor-scene {
+            background:
+                radial-gradient(circle at 22% 24%, rgba(255, 214, 153, 0.16), transparent 45%),
+                radial-gradient(circle at 75% 75%, rgba(55, 201, 130, 0.10), transparent 50%),
+                linear-gradient(180deg, #071612 0%, #0a201a 68%, #07120e 100%);
+        }
+
+        /* Outdoor: warm sky + glowing sun + distant farm/greenhouse/tractor */
+        .outdoor-scene {
+            background:
+                radial-gradient(circle at 24% 18%, rgba(255, 212, 110, 0.24), transparent 42%),
+                linear-gradient(180deg, #0b1f1a 0%, #102a21 56%, #132216 100%);
+        }
+
+        .scene-svg {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
         .solaris-layout-stage {
@@ -39,9 +64,9 @@
             min-height: 100vh;
             width: 100%;
             display: grid;
-            grid-template-columns: minmax(320px, 46vw) minmax(0, 1fr);
+            grid-template-columns: minmax(330px, 47vw) minmax(0, 1fr);
             align-items: center;
-            padding: 24px 36px 0 0;
+            padding: 20px 36px 0 0;
             box-sizing: border-box;
         }
 
@@ -73,7 +98,17 @@
             display: inline;
         }
 
-        /* Stem rising & extending upward (night-garden grow style) */
+        /* Pot shown only in Indoor mode; hidden when planted directly in Outdoor ground */
+        .indoor-pot-group {
+            opacity: 1;
+            transition: opacity 0.35s ease;
+        }
+
+        body.env-outdoor .indoor-pot-group {
+            opacity: 0;
+        }
+
+        /* Stem rising & extending upward */
         .grow-stem {
             stroke-dasharray: 950;
             stroke-dashoffset: 950;
@@ -98,7 +133,7 @@
             animation: nightStemGrow 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.76s forwards;
         }
 
-        /* Leaves, flowers & fruits unfolding as stems rise */
+        /* Leaves, flowers & fruits unfolding as stems grow */
         .sprout-leaf {
             opacity: 0;
             transform: scale(0.18) translateY(12px);
@@ -114,13 +149,11 @@
         .d5 { animation-delay: 1.15s; }
         .d6 { animation-delay: 1.35s; }
 
-        /* Continuous gentle sway like the video */
         .breeze-group {
-            transform-origin: 235px 724px;
+            transform-origin: 235px 675px;
             animation: nightGardenSway 4.8s ease-in-out 1.4s infinite;
         }
 
-        /* Ambient grass blades & glowing particles around the plant */
         .grass-blade {
             transform-box: fill-box;
             transform-origin: bottom center;
@@ -158,12 +191,12 @@
             max-width: 474px;
             margin: 0;
             box-sizing: border-box;
+            background: linear-gradient(145deg, rgba(16, 48, 38, 0.84), rgba(11, 34, 27, 0.88));
+            backdrop-filter: blur(10px);
         }
 
         @keyframes nightStemGrow {
-            to {
-                stroke-dashoffset: 0;
-            }
+            to { stroke-dashoffset: 0; }
         }
 
         @keyframes nightLeafBloom {
@@ -182,21 +215,13 @@
         }
 
         @keyframes nightGardenSway {
-            0%, 100% {
-                transform: rotate(-1.1deg);
-            }
-            50% {
-                transform: rotate(1.4deg);
-            }
+            0%, 100% { transform: rotate(-1.1deg); }
+            50% { transform: rotate(1.4deg); }
         }
 
         @keyframes grassSway {
-            0%, 100% {
-                transform: rotate(-2deg);
-            }
-            50% {
-                transform: rotate(2.5deg);
-            }
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2.5deg); }
         }
 
         @keyframes fireflyFloat {
@@ -230,9 +255,103 @@
         }
     </style>
 </head>
-<body class="config-page">
+<body class="config-page env-indoor">
+    <!-- BACKGROUND ENVIRONMENT SCENES (INDOOR WINDOW VS OUTDOOR FARM) -->
+    <div class="env-scene-backdrop" aria-hidden="true">
+        <!-- INDOOR SCENE: Window + Warm Light + Curtains + Sill (No Bed) -->
+        <div id="indoorScene" class="scene-layer indoor-scene is-active">
+            <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
+                <defs>
+                    <linearGradient id="windowGlowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ffe8b8" stop-opacity="0.34" />
+                        <stop offset="55%" stop-color="#f6c678" stop-opacity="0.16" />
+                        <stop offset="100%" stop-color="#1b4638" stop-opacity="0.28" />
+                    </linearGradient>
+                    <linearGradient id="curtainGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#d8b88c" stop-opacity="0.22" />
+                        <stop offset="60%" stop-color="#f5dfb9" stop-opacity="0.12" />
+                        <stop offset="100%" stop-color="#8c6d49" stop-opacity="0.20" />
+                    </linearGradient>
+                </defs>
+
+                <!-- Window pane behind left plant area -->
+                <rect x="85" y="105" width="430" height="445" rx="14" fill="url(#windowGlowGrad)" stroke="rgba(245, 222, 179, 0.22)" stroke-width="4" />
+                <line x1="228" y1="105" x2="228" y2="550" stroke="rgba(245, 222, 179, 0.18)" stroke-width="5" />
+                <line x1="372" y1="105" x2="372" y2="550" stroke="rgba(245, 222, 179, 0.18)" stroke-width="5" />
+                <line x1="85" y1="325" x2="515" y2="325" stroke="rgba(245, 222, 179, 0.18)" stroke-width="5" />
+
+                <!-- Window sill -->
+                <rect x="65" y="550" width="470" height="18" rx="5" fill="rgba(225, 198, 156, 0.22)" />
+
+                <!-- Soft sheer curtains framing window -->
+                <path d="M 45 75 Q 95 260 65 650 L 135 650 Q 155 260 112 75 Z" fill="url(#curtainGrad)" />
+                <path d="M 488 75 Q 455 260 475 650 L 545 650 Q 565 260 540 75 Z" fill="url(#curtainGrad)" />
+
+                <!-- Warm sunlight beam -->
+                <polygon points="120,130 480,130 620,860 40,860" fill="rgba(255, 224, 163, 0.045)" />
+
+                <!-- Lower indoor floor -->
+                <rect x="0" y="790" width="1440" height="110" fill="rgba(6, 18, 14, 0.78)" />
+            </svg>
+        </div>
+
+        <!-- OUTDOOR SCENE: Sun + Distant Plants + Greenhouse + Tractor + Ground -->
+        <div id="outdoorScene" class="scene-layer outdoor-scene">
+            <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
+                <defs>
+                    <radialGradient id="outdoorSunGrad" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#fff0a6" stop-opacity="0.92" />
+                        <stop offset="45%" stop-color="#fbbf24" stop-opacity="0.38" />
+                        <stop offset="100%" stop-color="#fbbf24" stop-opacity="0" />
+                    </radialGradient>
+                    <linearGradient id="outdoorGroundGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#1b3822" />
+                        <stop offset="45%" stop-color="#261c12" />
+                        <stop offset="100%" stop-color="#130d08" />
+                    </linearGradient>
+                </defs>
+
+                <!-- Sun in upper left/center sky -->
+                <circle cx="315" cy="155" r="145" fill="url(#outdoorSunGrad)" />
+                <circle cx="315" cy="155" r="36" fill="#fde68a" opacity="0.88" />
+
+                <!-- Distant hills & rows of farm plants -->
+                <path d="M 0 560 Q 320 475 680 545 T 1440 500 L 1440 900 L 0 900 Z" fill="rgba(23, 56, 36, 0.52)" />
+                <path d="M 0 625 Q 420 565 860 615 T 1440 580 L 1440 900 L 0 900 Z" fill="rgba(29, 72, 44, 0.65)" />
+
+                <!-- Greenhouse farming tunnel structure in background -->
+                <g opacity="0.48" stroke="#9be5c8" stroke-width="2.2" fill="rgba(148, 224, 196, 0.08)">
+                    <path d="M 435 615 L 435 535 Q 525 470 615 535 L 615 615 Z" />
+                    <line x1="435" y1="565" x2="615" y2="565" />
+                    <line x1="495" y1="505" x2="495" y2="615" />
+                    <line x1="555" y1="505" x2="555" y2="615" />
+                </g>
+
+                <!-- Distant crop rows -->
+                <g fill="rgba(66, 148, 88, 0.45)">
+                    <ellipse cx="95" cy="645" rx="22" ry="9" />
+                    <ellipse cx="145" cy="650" rx="24" ry="9" />
+                    <ellipse cx="385" cy="652" rx="26" ry="9" />
+                    <ellipse cx="445" cy="648" rx="24" ry="9" />
+                </g>
+
+                <!-- Farm tractor silhouette/detail in mid-background -->
+                <g transform="translate(655, 578)" opacity="0.68">
+                    <rect x="18" y="18" width="44" height="24" rx="4" fill="#d97706" />
+                    <rect x="44" y="4" width="22" height="18" rx="3" fill="#475569" />
+                    <rect x="6" y="25" width="14" height="12" rx="2" fill="#b45309" />
+                    <circle cx="16" cy="46" r="10" fill="#1e293b" stroke="#94a3b8" stroke-width="2.5" />
+                    <circle cx="52" cy="43" r="15" fill="#1e293b" stroke="#94a3b8" stroke-width="3" />
+                </g>
+
+                <!-- Foreground planted soil ground -->
+                <rect x="0" y="750" width="1440" height="150" fill="url(#outdoorGroundGrad)" />
+            </svg>
+        </div>
+    </div>
+
     <main class="solaris-layout-stage">
-        <!-- FULL-HEIGHT BORDERLESS NIGHT-GARDEN PLANT AT BOTTOM EDGE -->
+        <!-- FULL-HEIGHT BORDERLESS PLANT AT BOTTOM EDGE -->
         <div class="plant-floor-anchor" aria-label="Animated Plant Growth Preview">
             <svg id="plantBotanicalSvg" class="plant-botanical-svg" viewBox="0 0 480 740" role="img" aria-label="Animated Kalamansi and Oregano Plant">
                 <defs>
@@ -275,12 +394,18 @@
                         <stop offset="0%" stop-color="#0e2b22" />
                         <stop offset="100%" stop-color="#369672" />
                     </linearGradient>
+
+                    <linearGradient id="indoorPotGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#9e4c2e" />
+                        <stop offset="50%" stop-color="#c96b47" />
+                        <stop offset="100%" stop-color="#75341c" />
+                    </linearGradient>
                 </defs>
 
-                <!-- Soft ground glow & shadow at bottom edge -->
+                <!-- Ground shadow at bottom edge -->
                 <ellipse cx="235" cy="724" rx="155" ry="13" fill="rgba(0, 0, 0, 0.55)" />
 
-                <!-- Surrounding night-garden grass blades -->
+                <!-- Surrounding grass / soil blades -->
                 <g opacity="0.85">
                     <path class="grass-blade" d="M 88 724 Q 76 668 58 634 Q 84 668 98 724 Z" fill="url(#grassGrad)" />
                     <path class="grass-blade alt" d="M 118 724 Q 112 680 102 652 Q 120 680 128 724 Z" fill="url(#grassGrad)" />
@@ -288,7 +413,7 @@
                     <path class="grass-blade alt" d="M 386 724 Q 402 664 424 628 Q 408 668 396 724 Z" fill="url(#grassGrad)" />
                 </g>
 
-                <!-- Glowing firefly particles like the Short -->
+                <!-- Ambient glowing particles -->
                 <g>
                     <circle class="firefly-dot" cx="122" cy="430" r="3" fill="#b9f8d3" />
                     <circle class="firefly-dot f2" cx="352" cy="340" r="3.5" fill="#fde68a" />
@@ -455,6 +580,13 @@
                             <path d="M 230 268 L 232 192" stroke="#3c6e5d" stroke-width="1.6" fill="none" />
                         </g>
                     </g>
+
+                    <!-- Indoor pot at base (hidden when Outdoor is selected) -->
+                    <g class="indoor-pot-group">
+                        <ellipse cx="230" cy="666" rx="54" ry="9" fill="#2b180e" />
+                        <path d="M 176 666 L 284 666 L 273 722 C 271 725, 267 727, 263 727 L 197 727 C 193 727, 189 725, 187 722 Z" fill="url(#indoorPotGrad)" />
+                        <rect x="171" y="661" width="118" height="10" rx="4" fill="#d47652" />
+                    </g>
                 </g>
             </svg>
         </div>
@@ -487,8 +619,12 @@
             const plantSelect = document.querySelector("#plantType");
             const kalamansiGroup = document.querySelector("#speciesKalamansi");
             const oreganoGroup = document.querySelector("#speciesOregano");
+            const indoorScene = document.querySelector("#indoorScene");
+            const outdoorScene = document.querySelector("#outdoorScene");
+            const indoorBtn = document.querySelector("#indoor");
+            const outdoorBtn = document.querySelector("#outdoor");
 
-            function replayNightGrowth() {
+            function replayGrowth() {
                 if (!plantSelect || !kalamansiGroup || !oreganoGroup) return;
                 const isOregano = plantSelect.value.toLowerCase() === "oregano";
 
@@ -504,8 +640,24 @@
                 });
             }
 
-            plantSelect?.addEventListener("change", replayNightGrowth);
-            replayNightGrowth();
+            function syncEnvironmentScene() {
+                const isOutdoor = outdoorBtn?.classList.contains("active");
+                document.body.classList.toggle("env-outdoor", Boolean(isOutdoor));
+                document.body.classList.toggle("env-indoor", !isOutdoor);
+                indoorScene?.classList.toggle("is-active", !isOutdoor);
+                outdoorScene?.classList.toggle("is-active", Boolean(isOutdoor));
+            }
+
+            plantSelect?.addEventListener("change", replayGrowth);
+            indoorBtn?.addEventListener("click", () => {
+                window.setTimeout(syncEnvironmentScene, 10);
+            });
+            outdoorBtn?.addEventListener("click", () => {
+                window.setTimeout(syncEnvironmentScene, 10);
+            });
+
+            replayGrowth();
+            syncEnvironmentScene();
         });
     </script>
 </body>

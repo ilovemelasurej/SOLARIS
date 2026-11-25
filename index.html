@@ -15,28 +15,28 @@
             color: #edf8f1;
             font-family: "Inter", Arial, Helvetica, sans-serif;
             overflow-x: hidden;
-            --sky-tint: rgba(255, 232, 150, 0.18);
-            --mood-filter: brightness(1.04) saturate(1.1);
-        }
-
-        body.config-page.mood-daylight {
-            --sky-tint: rgba(255, 236, 179, 0.24);
+            --sky-tint: rgba(255, 236, 179, 0.28);
             --mood-filter: brightness(1.06) saturate(1.12);
         }
 
+        body.config-page.mood-daylight {
+            --sky-tint: rgba(255, 240, 185, 0.34);
+            --mood-filter: brightness(1.08) saturate(1.14);
+        }
+
         body.config-page.mood-sunset {
-            --sky-tint: rgba(251, 146, 60, 0.28);
-            --mood-filter: brightness(0.96) saturate(1.25) sepia(0.12);
+            --sky-tint: rgba(251, 146, 60, 0.34);
+            --mood-filter: brightness(0.98) saturate(1.26) sepia(0.12);
         }
 
         body.config-page.mood-night {
             --sky-tint: rgba(30, 64, 120, 0.28);
-            --mood-filter: brightness(0.76) saturate(1.05) hue-rotate(8deg);
+            --mood-filter: brightness(0.78) saturate(1.06) hue-rotate(8deg);
         }
 
         body.config-page.mood-rain {
-            --sky-tint: rgba(100, 116, 139, 0.24);
-            --mood-filter: brightness(0.84) saturate(0.85) contrast(1.04);
+            --sky-tint: rgba(100, 116, 139, 0.26);
+            --mood-filter: brightness(0.86) saturate(0.88) contrast(1.04);
         }
 
         /* Dynamic background scene (Indoor window vs Outdoor farm) */
@@ -63,14 +63,14 @@
 
         .indoor-scene {
             background:
-                radial-gradient(circle at 22% 24%, var(--sky-tint), transparent 46%),
-                radial-gradient(circle at 75% 75%, rgba(55, 201, 130, 0.10), transparent 50%),
-                linear-gradient(180deg, #071612 0%, #0a201a 68%, #07120e 100%);
+                radial-gradient(circle at 22% 24%, var(--sky-tint), transparent 52%),
+                radial-gradient(circle at 75% 75%, rgba(55, 201, 130, 0.10), transparent 52%),
+                linear-gradient(180deg, #091d17 0%, #0d271f 68%, #0b1c17 100%);
         }
 
         .outdoor-scene {
             background:
-                radial-gradient(circle at 24% 18%, var(--sky-tint), transparent 45%),
+                radial-gradient(circle at 24% 18%, var(--sky-tint), transparent 48%),
                 linear-gradient(180deg, #0b1f1a 0%, #102a21 56%, #132216 100%);
         }
 
@@ -83,7 +83,7 @@
         /* Shared Sun transition logic across Daylight / Sunset / Rain / Night */
         .celestial-sun {
             transform: translateY(0px);
-            opacity: 0.94;
+            opacity: 0.96;
             transition: transform 0.85s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.55s ease;
         }
 
@@ -93,14 +93,13 @@
         }
 
         .celestial-sun-halo {
-            fill: rgba(251, 191, 36, 0.28);
+            fill: rgba(251, 191, 36, 0.42);
             transition: fill 0.75s ease;
         }
 
-        /* Sunset: sun descends lower and turns orange */
         body.mood-sunset .celestial-sun {
-            transform: translateY(235px);
-            opacity: 0.95;
+            transform: translateY(150px);
+            opacity: 0.96;
         }
 
         body.mood-sunset .celestial-sun-core {
@@ -108,24 +107,22 @@
         }
 
         body.mood-sunset .celestial-sun-halo {
-            fill: rgba(249, 115, 22, 0.36);
+            fill: rgba(249, 115, 22, 0.46);
         }
 
-        /* Rain: sun stays in sky with subtle dim, covered by greyish rain clouds */
         body.mood-rain .celestial-sun {
-            transform: translateY(15px);
+            transform: translateY(12px);
             opacity: 0.55;
         }
 
-        /* Night: sun disappears from screen and moon takes over */
         body.mood-night .celestial-sun {
-            transform: translateY(120px);
+            transform: translateY(110px);
             opacity: 0;
         }
 
         .celestial-moon {
             opacity: 0;
-            transform: translateY(18px);
+            transform: translateY(16px);
             transition: opacity 0.65s ease, transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
@@ -136,22 +133,13 @@
 
         .grey-rain-clouds {
             opacity: 0;
-            transform: translateY(-14px);
+            transform: translateY(-12px);
             transition: opacity 0.55s ease, transform 0.65s ease;
         }
 
         body.mood-rain .grey-rain-clouds {
             opacity: 1;
             transform: translateY(0px);
-        }
-
-        /* Weather / Time-of-day scenery overlay */
-        .scenery-fx-layer {
-            position: fixed;
-            inset: 0;
-            z-index: 1;
-            pointer-events: none;
-            overflow: hidden;
         }
 
         .fx-group {
@@ -164,6 +152,21 @@
 
         .rain-streak {
             animation: rainFall 0.85s linear infinite;
+        }
+
+        /* Floating dust particles in light beam */
+        .dust-mote {
+            animation: dustDrift 7s ease-in-out infinite;
+        }
+
+        .dust-mote.d-slow {
+            animation-duration: 9.5s;
+            animation-delay: -2.4s;
+        }
+
+        .dust-mote.d-fast {
+            animation-duration: 5.5s;
+            animation-delay: -4.1s;
         }
 
         /* Right-corner 4-option scenery switcher */
@@ -233,7 +236,7 @@
             max-height: 94vh;
             display: block;
             overflow: visible;
-            filter: var(--mood-filter) drop-shadow(0 16px 32px rgba(0, 0, 0, 0.65));
+            filter: var(--mood-filter) drop-shadow(0 16px 32px rgba(0, 0, 0, 0.55));
             transition: filter 0.45s ease;
         }
 
@@ -381,9 +384,20 @@
         }
 
         @keyframes rainFall {
-            0% { transform: translate(-12px, -30px); opacity: 0.2; }
-            50% { opacity: 0.7; }
-            100% { transform: translate(-28px, 45px); opacity: 0.1; }
+            0% { transform: translate(-10px, -26px); opacity: 0.25; }
+            50% { opacity: 0.75; }
+            100% { transform: translate(-24px, 38px); opacity: 0.1; }
+        }
+
+        @keyframes dustDrift {
+            0%, 100% {
+                transform: translate(0px, 0px) scale(0.85);
+                opacity: 0.25;
+            }
+            50% {
+                transform: translate(18px, -14px) scale(1.2);
+                opacity: 0.85;
+            }
         }
 
         @media (max-width: 900px) {
@@ -421,35 +435,114 @@
         <button type="button" class="scenery-opt-btn" data-scenery="rain">Rain</button>
     </div>
 
-    <!-- BACKGROUND ENVIRONMENT SCENES (INDOOR WINDOW VS OUTDOOR FARM) -->
+    <!-- BACKGROUND ENVIRONMENT SCENES (INDOOR WINDOW WITH CARPET VS OUTDOOR FARM) -->
     <div class="env-scene-backdrop" aria-hidden="true">
+        <!-- INDOOR SCENE: Window-clipped sun/moon/clouds/rain + strong light beam + dust + light grey carpet -->
         <div id="indoorScene" class="scene-layer indoor-scene is-active">
             <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
                 <defs>
-                    <linearGradient id="windowGlowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#ffe8b8" stop-opacity="0.34" />
-                        <stop offset="55%" stop-color="#f6c678" stop-opacity="0.16" />
-                        <stop offset="100%" stop-color="#1b4638" stop-opacity="0.28" />
+                    <clipPath id="indoorWindowClip">
+                        <rect x="85" y="105" width="430" height="445" rx="12" />
+                    </clipPath>
+
+                    <linearGradient id="windowPaneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#fff1c4" stop-opacity="0.42" />
+                        <stop offset="55%" stop-color="#f7ca7e" stop-opacity="0.22" />
+                        <stop offset="100%" stop-color="#225745" stop-opacity="0.30" />
                     </linearGradient>
+
+                    <linearGradient id="strongSunBeamGrad" x1="0%" y1="0%" x2="85%" y2="100%">
+                        <stop offset="0%" stop-color="#ffe8a3" stop-opacity="0.26" />
+                        <stop offset="55%" stop-color="#ffd573" stop-opacity="0.11" />
+                        <stop offset="100%" stop-color="#ffd573" stop-opacity="0" />
+                    </linearGradient>
+
                     <linearGradient id="curtainGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="#d8b88c" stop-opacity="0.22" />
-                        <stop offset="60%" stop-color="#f5dfb9" stop-opacity="0.12" />
-                        <stop offset="100%" stop-color="#8c6d49" stop-opacity="0.20" />
+                        <stop offset="0%" stop-color="#d8b88c" stop-opacity="0.25" />
+                        <stop offset="60%" stop-color="#f5dfb9" stop-opacity="0.14" />
+                        <stop offset="100%" stop-color="#8c6d49" stop-opacity="0.22" />
                     </linearGradient>
+
+                    <linearGradient id="lightGreyCarpetGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#c4ccca" />
+                        <stop offset="50%" stop-color="#aeb7b5" />
+                        <stop offset="100%" stop-color="#949e9c" />
+                    </linearGradient>
+
+                    <pattern id="carpetFiberPattern" width="8" height="8" patternUnits="userSpaceOnUse">
+                        <rect width="8" height="8" fill="transparent" />
+                        <circle cx="2" cy="2" r="0.9" fill="#eef3f2" opacity="0.28" />
+                        <circle cx="6" cy="5" r="0.9" fill="#6b7573" opacity="0.22" />
+                    </pattern>
                 </defs>
 
-                <rect x="85" y="105" width="430" height="445" rx="14" fill="url(#windowGlowGrad)" stroke="rgba(245, 222, 179, 0.22)" stroke-width="4" />
-                <line x1="228" y1="105" x2="228" y2="550" stroke="rgba(245, 222, 179, 0.18)" stroke-width="5" />
-                <line x1="372" y1="105" x2="372" y2="550" stroke="rgba(245, 222, 179, 0.18)" stroke-width="5" />
-                <line x1="85" y1="325" x2="515" y2="325" stroke="rgba(245, 222, 179, 0.18)" stroke-width="5" />
-                <rect x="65" y="550" width="470" height="18" rx="5" fill="rgba(225, 198, 156, 0.22)" />
-                <path d="M 45 75 Q 95 260 65 650 L 135 650 Q 155 260 112 75 Z" fill="url(#curtainGrad)" />
-                <path d="M 488 75 Q 455 260 475 650 L 545 650 Q 565 260 540 75 Z" fill="url(#curtainGrad)" />
-                <polygon points="120,130 480,130 620,860 40,860" fill="rgba(255, 224, 163, 0.045)" />
-                <rect x="0" y="790" width="1440" height="110" fill="rgba(6, 18, 14, 0.78)" />
+                <!-- Window glass base -->
+                <rect x="85" y="105" width="430" height="445" rx="14" fill="url(#windowPaneGrad)" stroke="rgba(245, 222, 179, 0.28)" stroke-width="4" />
+
+                <!-- Clipped inside window frame: Sun, Moon, Grey Clouds & Rain never spill outside window -->
+                <g clip-path="url(#indoorWindowClip)">
+                    <g class="celestial-sun">
+                        <circle class="celestial-sun-halo" cx="300" cy="215" r="145" />
+                        <circle class="celestial-sun-core" cx="300" cy="215" r="36" />
+                    </g>
+
+                    <g class="celestial-moon">
+                        <circle cx="315" cy="205" r="28" fill="#f8fafc" opacity="0.88" />
+                        <circle cx="326" cy="199" r="24" fill="#0d271f" opacity="0.92" />
+                        <circle cx="155" cy="175" r="2" fill="#e2e8f0" opacity="0.78" />
+                        <circle cx="220" cy="150" r="1.7" fill="#e2e8f0" opacity="0.68" />
+                        <circle cx="430" cy="170" r="2.1" fill="#e2e8f0" opacity="0.8" />
+                    </g>
+
+                    <g class="grey-rain-clouds">
+                        <ellipse cx="250" cy="185" rx="135" ry="38" fill="#64748b" opacity="0.78" />
+                        <ellipse cx="365" cy="198" rx="125" ry="34" fill="#475569" opacity="0.82" />
+                        <ellipse cx="305" cy="172" rx="110" ry="30" fill="#94a3b8" opacity="0.62" />
+                    </g>
+
+                    <g id="indoorFxRain" class="fx-group">
+                        <g stroke="rgba(186, 204, 222, 0.56)" stroke-width="1.8" stroke-linecap="round">
+                            <line class="rain-streak" x1="150" y1="240" x2="138" y2="272" />
+                            <line class="rain-streak" x1="215" y1="275" x2="203" y2="307" style="animation-delay: -0.25s;" />
+                            <line class="rain-streak" x1="285" y1="230" x2="273" y2="262" style="animation-delay: -0.45s;" />
+                            <line class="rain-streak" x1="355" y1="290" x2="343" y2="322" style="animation-delay: -0.15s;" />
+                            <line class="rain-streak" x1="425" y1="250" x2="413" y2="282" style="animation-delay: -0.6s;" />
+                        </g>
+                    </g>
+                </g>
+
+                <!-- Window mullions & sill -->
+                <line x1="228" y1="105" x2="228" y2="550" stroke="rgba(245, 222, 179, 0.24)" stroke-width="5" />
+                <line x1="372" y1="105" x2="372" y2="550" stroke="rgba(245, 222, 179, 0.24)" stroke-width="5" />
+                <line x1="85" y1="325" x2="515" y2="325" stroke="rgba(245, 222, 179, 0.24)" stroke-width="5" />
+                <rect x="65" y="550" width="470" height="18" rx="5" fill="rgba(225, 198, 156, 0.28)" />
+
+                <!-- Curtains -->
+                <path d="M 45 75 Q 95 260 65 680 L 135 680 Q 155 260 112 75 Z" fill="url(#curtainGrad)" />
+                <path d="M 488 75 Q 455 260 475 680 L 545 680 Q 565 260 540 75 Z" fill="url(#curtainGrad)" />
+
+                <!-- Stronger volumetric light shaft & glowing dust particles -->
+                <polygon points="105,120 495,120 740,785 30,785" fill="url(#strongSunBeamGrad)" />
+
+                <g fill="#fff4c2">
+                    <circle class="dust-mote" cx="195" cy="285" r="2.6" />
+                    <circle class="dust-mote d-slow" cx="265" cy="340" r="2.1" />
+                    <circle class="dust-mote d-fast" cx="335" cy="265" r="2.8" />
+                    <circle class="dust-mote" cx="410" cy="365" r="2.2" />
+                    <circle class="dust-mote d-slow" cx="170" cy="430" r="2.5" />
+                    <circle class="dust-mote d-fast" cx="295" cy="465" r="2.3" />
+                    <circle class="dust-mote" cx="385" cy="440" r="2.0" />
+                    <circle class="dust-mote d-slow" cx="235" cy="525" r="2.4" />
+                </g>
+
+                <!-- Light Grey Carpet floor at bottom (replaces black floor) -->
+                <rect x="0" y="765" width="1440" height="135" fill="url(#lightGreyCarpetGrad)" />
+                <rect x="0" y="765" width="1440" height="135" fill="url(#carpetFiberPattern)" />
+                <line x1="0" y1="765" x2="1440" y2="765" stroke="rgba(255, 255, 255, 0.36)" stroke-width="2" />
             </svg>
         </div>
 
+        <!-- OUTDOOR SCENE: Unclipped sky sun/moon/clouds/rain + farm scenery -->
         <div id="outdoorScene" class="scene-layer outdoor-scene">
             <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
                 <defs>
@@ -459,6 +552,37 @@
                         <stop offset="100%" stop-color="#130d08" />
                     </linearGradient>
                 </defs>
+
+                <g class="celestial-sun">
+                    <circle class="celestial-sun-halo" cx="315" cy="155" r="155" />
+                    <circle class="celestial-sun-core" cx="315" cy="155" r="38" />
+                </g>
+
+                <g class="celestial-moon">
+                    <circle cx="330" cy="145" r="30" fill="#f8fafc" opacity="0.88" />
+                    <circle cx="342" cy="138" r="26" fill="#0b1f1a" opacity="0.92" />
+                    <circle cx="150" cy="120" r="2" fill="#e2e8f0" opacity="0.75" />
+                    <circle cx="235" cy="85" r="1.8" fill="#e2e8f0" opacity="0.65" />
+                    <circle cx="465" cy="115" r="2.2" fill="#e2e8f0" opacity="0.8" />
+                    <circle cx="530" cy="175" r="1.6" fill="#e2e8f0" opacity="0.6" />
+                </g>
+
+                <g class="grey-rain-clouds">
+                    <ellipse cx="265" cy="135" rx="145" ry="42" fill="#64748b" opacity="0.74" />
+                    <ellipse cx="385" cy="148" rx="130" ry="38" fill="#475569" opacity="0.78" />
+                    <ellipse cx="320" cy="122" rx="115" ry="34" fill="#94a3b8" opacity="0.58" />
+                </g>
+
+                <g id="outdoorFxRain" class="fx-group">
+                    <g stroke="rgba(148, 163, 184, 0.54)" stroke-width="1.8" stroke-linecap="round">
+                        <line class="rain-streak" x1="160" y1="185" x2="146" y2="220" />
+                        <line class="rain-streak" x1="230" y1="225" x2="216" y2="260" style="animation-delay: -0.25s;" />
+                        <line class="rain-streak" x1="305" y1="175" x2="291" y2="210" style="animation-delay: -0.45s;" />
+                        <line class="rain-streak" x1="380" y1="245" x2="366" y2="280" style="animation-delay: -0.15s;" />
+                        <line class="rain-streak" x1="455" y1="200" x2="441" y2="235" style="animation-delay: -0.6s;" />
+                        <line class="rain-streak" x1="520" y1="265" x2="506" y2="300" style="animation-delay: -0.35s;" />
+                    </g>
+                </g>
 
                 <path d="M 0 560 Q 320 475 680 545 T 1440 500 L 1440 900 L 0 900 Z" fill="rgba(23, 56, 36, 0.52)" />
                 <path d="M 0 625 Q 420 565 860 615 T 1440 580 L 1440 900 L 0 900 Z" fill="rgba(29, 72, 44, 0.65)" />
@@ -488,45 +612,6 @@
                 <rect x="0" y="750" width="1440" height="150" fill="url(#outdoorGroundGrad)" />
             </svg>
         </div>
-    </div>
-
-    <!-- SUN TRANSITION + MOON + GREY CLOUDS + RAIN LAYER -->
-    <div class="scenery-fx-layer" aria-hidden="true">
-        <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
-            <!-- SUN: Descends & turns orange on Sunset, dimmed under grey clouds on Rain, fades out on Night -->
-            <g class="celestial-sun">
-                <circle class="celestial-sun-halo" cx="315" cy="155" r="145" />
-                <circle class="celestial-sun-core" cx="315" cy="155" r="38" />
-            </g>
-
-            <!-- MOON: Appears in Night mode when sun leaves -->
-            <g class="celestial-moon">
-                <circle cx="330" cy="145" r="30" fill="#f8fafc" opacity="0.88" />
-                <circle cx="342" cy="138" r="26" fill="#071612" opacity="0.92" />
-                <circle cx="150" cy="120" r="2" fill="#e2e8f0" opacity="0.75" />
-                <circle cx="235" cy="85" r="1.8" fill="#e2e8f0" opacity="0.65" />
-                <circle cx="465" cy="115" r="2.2" fill="#e2e8f0" opacity="0.8" />
-                <circle cx="530" cy="175" r="1.6" fill="#e2e8f0" opacity="0.6" />
-            </g>
-
-            <!-- GREY RAIN CLOUDS + RAIN STREAKS: Covers sun during Rain -->
-            <g class="grey-rain-clouds">
-                <ellipse cx="265" cy="135" rx="145" ry="42" fill="#64748b" opacity="0.72" />
-                <ellipse cx="385" cy="148" rx="130" ry="38" fill="#475569" opacity="0.78" />
-                <ellipse cx="320" cy="122" rx="115" ry="34" fill="#94a3b8" opacity="0.55" />
-            </g>
-
-            <g id="fxRain" class="fx-group">
-                <g stroke="rgba(148, 163, 184, 0.52)" stroke-width="1.8" stroke-linecap="round">
-                    <line class="rain-streak" x1="160" y1="185" x2="146" y2="220" />
-                    <line class="rain-streak" x1="230" y1="225" x2="216" y2="260" style="animation-delay: -0.25s;" />
-                    <line class="rain-streak" x1="305" y1="175" x2="291" y2="210" style="animation-delay: -0.45s;" />
-                    <line class="rain-streak" x1="380" y1="245" x2="366" y2="280" style="animation-delay: -0.15s;" />
-                    <line class="rain-streak" x1="455" y1="200" x2="441" y2="235" style="animation-delay: -0.6s;" />
-                    <line class="rain-streak" x1="520" y1="265" x2="506" y2="300" style="animation-delay: -0.35s;" />
-                </g>
-            </g>
-        </svg>
     </div>
 
     <main class="solaris-layout-stage">
@@ -581,7 +666,7 @@
                     </linearGradient>
                 </defs>
 
-                <ellipse cx="235" cy="724" rx="155" ry="13" fill="rgba(0, 0, 0, 0.55)" />
+                <ellipse cx="235" cy="724" rx="155" ry="13" fill="rgba(0, 0, 0, 0.35)" />
 
                 <g opacity="0.85">
                     <path class="grass-blade" d="M 88 724 Q 76 668 58 634 Q 84 668 98 724 Z" fill="url(#grassGrad)" />
@@ -800,7 +885,8 @@
             const indoorBtn = document.querySelector("#indoor");
             const outdoorBtn = document.querySelector("#outdoor");
             const sceneryBtns = document.querySelectorAll(".scenery-opt-btn");
-            const fxRain = document.querySelector("#fxRain");
+            const indoorFxRain = document.querySelector("#indoorFxRain");
+            const outdoorFxRain = document.querySelector("#outdoorFxRain");
 
             function replayGrowth() {
                 if (!plantSelect || !kalamansiGroup || !oreganoGroup) return;
@@ -835,7 +921,8 @@
                     btn.classList.toggle("active", btn.getAttribute("data-scenery") === chosen);
                 });
 
-                fxRain?.classList.toggle("is-active", chosen === "rain");
+                indoorFxRain?.classList.toggle("is-active", chosen === "rain");
+                outdoorFxRain?.classList.toggle("is-active", chosen === "rain");
                 localStorage.setItem("configuredScenery", chosen);
             }
 

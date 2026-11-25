@@ -7,57 +7,57 @@
     <link rel="stylesheet" href="styles.css">
     <script src="script.js" defer></script>
     <style>
-        body.config-page {
+        html, body.config-page {
             min-height: 100vh;
+            width: 100%;
             margin: 0;
             background:
-                radial-gradient(circle at 18% 18%, rgba(73, 189, 232, 0.20), transparent 45%),
-                radial-gradient(circle at 82% 78%, rgba(55, 201, 130, 0.16), transparent 48%),
+                radial-gradient(circle at 18% 18%, rgba(73, 189, 232, 0.22), transparent 45%),
+                radial-gradient(circle at 82% 78%, rgba(55, 201, 130, 0.18), transparent 48%),
                 #071b16;
             color: #edf8f1;
             font-family: "Inter", Arial, Helvetica, sans-serif;
+            overflow-x: hidden;
         }
 
         .solaris-config-wrap {
             min-height: 100vh;
-            display: grid;
-            place-items: center;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 28px 18px;
+            box-sizing: border-box;
         }
 
         .config-layout {
-            width: min(100%, 860px);
+            width: 100%;
+            max-width: 880px;
             display: grid;
-            grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+            grid-template-columns: 320px minmax(0, 1fr);
             gap: 28px;
             align-items: center;
         }
 
         .plant-2d-stage {
             position: relative;
+            width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 24px 18px 20px;
             border-radius: 20px;
-            border: 1px solid rgba(88, 224, 150, 0.34);
-            background: linear-gradient(160deg, rgba(18, 57, 44, 0.88), rgba(10, 32, 26, 0.94));
-            box-shadow: 0 20px 42px rgba(0, 0, 0, 0.38);
+            border: 1px solid rgba(88, 224, 150, 0.45);
+            background: linear-gradient(160deg, rgba(18, 57, 44, 0.92), rgba(10, 32, 26, 0.96));
+            box-shadow: 0 20px 42px rgba(0, 0, 0, 0.42);
             overflow: hidden;
-            opacity: 0;
-            transform: translateY(26px) scale(0.94);
-            transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-                        transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        .plant-2d-stage.is-visible {
-            opacity: 1;
-            transform: translateY(0) scale(1);
+            box-sizing: border-box;
+            animation: stageEntrance 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
         .plant-2d-stage.is-switching .plant-2d-svg {
-            animation: plant2dSwap 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+            animation: plant2dSwap 0.4s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .plant-aura {
@@ -65,21 +65,22 @@
             width: 195px;
             height: 195px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(88, 224, 150, 0.28), rgba(73, 189, 232, 0.08) 65%, transparent 75%);
+            background: radial-gradient(circle, rgba(88, 224, 150, 0.30), rgba(73, 189, 232, 0.10) 65%, transparent 75%);
             filter: blur(8px);
             pointer-events: none;
         }
 
         .plant-2d-stage.is-oregano .plant-aura {
-            background: radial-gradient(circle, rgba(243, 187, 82, 0.24), rgba(88, 224, 150, 0.14) 65%, transparent 75%);
+            background: radial-gradient(circle, rgba(243, 187, 82, 0.26), rgba(88, 224, 150, 0.16) 65%, transparent 75%);
         }
 
         .plant-2d-svg {
             position: relative;
             z-index: 1;
             width: 100%;
-            max-width: 230px;
+            max-width: 225px;
             height: auto;
+            display: block;
         }
 
         .plant-artwork {
@@ -88,7 +89,7 @@
 
         .plant-artwork.is-active {
             display: inline;
-            animation: artworkFadePop 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+            animation: artworkPop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .sway-a {
@@ -106,7 +107,7 @@
         .plant-2d-caption {
             position: relative;
             z-index: 1;
-            margin-top: 8px;
+            margin-top: 10px;
             text-align: center;
         }
 
@@ -118,8 +119,8 @@
             font-weight: 800;
             letter-spacing: 1.2px;
             color: #9bf5c4;
-            background: rgba(55, 201, 130, 0.16);
-            border: 1px solid rgba(55, 201, 130, 0.35);
+            background: rgba(55, 201, 130, 0.18);
+            border: 1px solid rgba(55, 201, 130, 0.38);
         }
 
         .plant-2d-caption p {
@@ -132,12 +133,19 @@
             width: 100%;
             max-width: 474px;
             margin: 0 auto;
-            animation: cardEntrance 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+            box-sizing: border-box;
+            animation: stageEntrance 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
-        @keyframes cardEntrance {
-            from { opacity: 0; transform: translateY(18px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes stageEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(22px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         @keyframes plant2dSwap {
@@ -146,7 +154,7 @@
             100% { transform: scale(1); }
         }
 
-        @keyframes artworkFadePop {
+        @keyframes artworkPop {
             from { opacity: 0; transform: scale(0.88); }
             to { opacity: 1; transform: scale(1); }
         }
@@ -161,7 +169,7 @@
             50% { transform: rotate(-2.5deg); }
         }
 
-        @media (max-width: 760px) {
+        @media (max-width: 800px) {
             .config-layout {
                 grid-template-columns: 1fr;
                 max-width: 474px;
@@ -175,7 +183,7 @@
 <body class="config-page">
     <main class="solaris-config-wrap">
         <div class="config-layout">
-            <aside class="plant-2d-stage" id="plant2dStage" aria-label="2D Plant Preview">
+            <aside class="plant-2d-stage is-visible" id="plant2dStage" aria-label="2D Plant Preview">
                 <div class="plant-aura" id="plantAura"></div>
 
                 <svg id="plant2dSvg" class="plant-2d-svg" viewBox="0 0 260 280" role="img" aria-label="2D Plant Illustration">
@@ -284,11 +292,45 @@
     </main>
 
     <script>
-        window.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener("DOMContentLoaded", () => {
+            const plantSelect = document.querySelector("#plantType");
+            const kalamansiArt = document.querySelector("#artworkKalamansi");
+            const oreganoArt = document.querySelector("#artworkOregano");
             const stage = document.querySelector("#plant2dStage");
-            if (stage) {
-                requestAnimationFrame(() => stage.classList.add("is-visible"));
+            const badge = document.querySelector("#plant2dBadge");
+            const hint = document.querySelector("#plant2dHint");
+
+            function updateInlinePlant() {
+                if (!plantSelect || !kalamansiArt || !oreganoArt) return;
+                const isOregano = plantSelect.value.toLowerCase() === "oregano";
+                const activeEnvBtn = document.querySelector(".environment-buttons button.active");
+                const envText = activeEnvBtn ? activeEnvBtn.textContent.trim() : "Indoor";
+
+                kalamansiArt.classList.toggle("is-active", !isOregano);
+                oreganoArt.classList.toggle("is-active", isOregano);
+                stage?.classList.toggle("is-oregano", isOregano);
+
+                if (badge) {
+                    badge.textContent = `${isOregano ? "OREGANO" : "KALAMANSI"} · ${envText.toUpperCase()}`;
+                }
+                if (hint) {
+                    hint.textContent = isOregano
+                        ? `Herb profile · Optimal 06:30 AM (${envText === "Outdoor" ? "0.25 L" : "0.18 L"})`
+                        : `Citrus profile · Optimal 06:00 AM (${envText === "Outdoor" ? "0.50 L" : "0.35 L"})`;
+                }
+
+                if (stage) {
+                    stage.classList.remove("is-switching");
+                    void stage.offsetWidth;
+                    stage.classList.add("is-switching");
+                }
             }
+
+            plantSelect?.addEventListener("change", updateInlinePlant);
+            document.querySelectorAll(".environment-buttons button").forEach((btn) => {
+                btn.addEventListener("click", () => window.setTimeout(updateInlinePlant, 10));
+            });
+            updateInlinePlant();
         });
     </script>
 </body>

@@ -6,12 +6,176 @@
     <title>Configure Your Plant — SOLARIS</title>
     <link rel="stylesheet" href="styles.css">
     <script src="script.js" defer></script>
+    <style>
+        body.config-page {
+            min-height: 100vh;
+            margin: 0;
+            background:
+                radial-gradient(circle at 18% 18%, rgba(73, 189, 232, 0.20), transparent 45%),
+                radial-gradient(circle at 82% 78%, rgba(55, 201, 130, 0.16), transparent 48%),
+                #071b16;
+            color: #edf8f1;
+            font-family: "Inter", Arial, Helvetica, sans-serif;
+        }
+
+        .solaris-config-wrap {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 28px 18px;
+        }
+
+        .config-layout {
+            width: min(100%, 860px);
+            display: grid;
+            grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+            gap: 28px;
+            align-items: center;
+        }
+
+        .plant-2d-stage {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 18px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(88, 224, 150, 0.34);
+            background: linear-gradient(160deg, rgba(18, 57, 44, 0.88), rgba(10, 32, 26, 0.94));
+            box-shadow: 0 20px 42px rgba(0, 0, 0, 0.38);
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(26px) scale(0.94);
+            transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+                        transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .plant-2d-stage.is-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .plant-2d-stage.is-switching .plant-2d-svg {
+            animation: plant2dSwap 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .plant-aura {
+            position: absolute;
+            width: 195px;
+            height: 195px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(88, 224, 150, 0.28), rgba(73, 189, 232, 0.08) 65%, transparent 75%);
+            filter: blur(8px);
+            pointer-events: none;
+        }
+
+        .plant-2d-stage.is-oregano .plant-aura {
+            background: radial-gradient(circle, rgba(243, 187, 82, 0.24), rgba(88, 224, 150, 0.14) 65%, transparent 75%);
+        }
+
+        .plant-2d-svg {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 230px;
+            height: auto;
+        }
+
+        .plant-artwork {
+            display: none;
+        }
+
+        .plant-artwork.is-active {
+            display: inline;
+            animation: artworkFadePop 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .sway-a {
+            animation: swayLeafA 3.8s ease-in-out infinite;
+            transform-box: fill-box;
+            transform-origin: center;
+        }
+
+        .sway-b {
+            animation: swayLeafB 4.4s ease-in-out infinite;
+            transform-box: fill-box;
+            transform-origin: center;
+        }
+
+        .plant-2d-caption {
+            position: relative;
+            z-index: 1;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .plant-2d-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            color: #9bf5c4;
+            background: rgba(55, 201, 130, 0.16);
+            border: 1px solid rgba(55, 201, 130, 0.35);
+        }
+
+        .plant-2d-caption p {
+            margin: 8px 0 0;
+            font-size: 12px;
+            color: #9ab9a8;
+        }
+
+        .solaris-config-wrap .plant-config {
+            width: 100%;
+            max-width: 474px;
+            margin: 0 auto;
+            animation: cardEntrance 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes plant2dSwap {
+            0% { transform: scale(0.9); }
+            60% { transform: scale(1.04); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes artworkFadePop {
+            from { opacity: 0; transform: scale(0.88); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes swayLeafA {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(3deg); }
+        }
+
+        @keyframes swayLeafB {
+            0%, 100% { transform: rotate(2.5deg); }
+            50% { transform: rotate(-2.5deg); }
+        }
+
+        @media (max-width: 760px) {
+            .config-layout {
+                grid-template-columns: 1fr;
+                max-width: 474px;
+            }
+            .plant-2d-svg {
+                max-width: 185px;
+            }
+        }
+    </style>
 </head>
 <body class="config-page">
-    <main class="dashboard config-dashboard">
+    <main class="solaris-config-wrap">
         <div class="config-layout">
-            <!-- 2D ANIMATED PLANT STAGE (ENTRANCE + LIVE PLANT MORPH/SWITCH) -->
-            <aside class="plant-2d-stage is-entering" id="plant2dStage" aria-label="2D Plant Preview">
+            <aside class="plant-2d-stage" id="plant2dStage" aria-label="2D Plant Preview">
                 <div class="plant-aura" id="plantAura"></div>
 
                 <svg id="plant2dSvg" class="plant-2d-svg" viewBox="0 0 260 280" role="img" aria-label="2D Plant Illustration">
@@ -36,37 +200,33 @@
                         </radialGradient>
                     </defs>
 
-                    <!-- Soft ground shadow -->
                     <ellipse cx="130" cy="256" rx="74" ry="11" fill="rgba(0, 0, 0, 0.42)" />
 
                     <!-- KALAMANSI 2D ARTWORK -->
                     <g id="artworkKalamansi" class="plant-artwork is-active">
-                        <!-- Main woody stem & branches -->
-                        <path class="plant-stem" d="M130 192 C130 162, 128 136, 126 104" stroke="#6d8f4d" stroke-width="6.5" stroke-linecap="round" fill="none" />
-                        <path class="plant-stem" d="M128 145 C106 130, 88 122, 72 114" stroke="#6d8f4d" stroke-width="4.5" stroke-linecap="round" fill="none" />
-                        <path class="plant-stem" d="M128 132 C150 116, 168 108, 188 100" stroke="#6d8f4d" stroke-width="4.5" stroke-linecap="round" fill="none" />
-                        <path class="plant-stem" d="M127 112 C112 92, 100 80, 88 70" stroke="#6d8f4d" stroke-width="3.8" stroke-linecap="round" fill="none" />
-                        <path class="plant-stem" d="M127 108 C142 86, 154 72, 166 62" stroke="#6d8f4d" stroke-width="3.8" stroke-linecap="round" fill="none" />
+                        <path d="M130 192 C130 162, 128 136, 126 104" stroke="#6d8f4d" stroke-width="6.5" stroke-linecap="round" fill="none" />
+                        <path d="M128 145 C106 130, 88 122, 72 114" stroke="#6d8f4d" stroke-width="4.5" stroke-linecap="round" fill="none" />
+                        <path d="M128 132 C150 116, 168 108, 188 100" stroke="#6d8f4d" stroke-width="4.5" stroke-linecap="round" fill="none" />
+                        <path d="M127 112 C112 92, 100 80, 88 70" stroke="#6d8f4d" stroke-width="3.8" stroke-linecap="round" fill="none" />
+                        <path d="M127 108 C142 86, 154 72, 166 62" stroke="#6d8f4d" stroke-width="3.8" stroke-linecap="round" fill="none" />
 
-                        <!-- Citrus leaves -->
-                        <ellipse class="plant-leaf sway-a" cx="68" cy="110" rx="22" ry="10" transform="rotate(-24 68 110)" fill="url(#leafGrad)" />
-                        <ellipse class="plant-leaf sway-b" cx="192" cy="96" rx="22" ry="10" transform="rotate(24 192 96)" fill="url(#leafGrad)" />
-                        <ellipse class="plant-leaf sway-b" cx="84" cy="66" rx="20" ry="9.5" transform="rotate(-35 84 66)" fill="url(#leafGrad)" />
-                        <ellipse class="plant-leaf sway-a" cx="170" cy="58" rx="20" ry="9.5" transform="rotate(35 170 58)" fill="url(#leafGrad)" />
-                        <ellipse class="plant-leaf sway-a" cx="128" cy="48" rx="18" ry="9" transform="rotate(-8 128 48)" fill="url(#leafGrad)" />
-                        <ellipse class="plant-leaf sway-b" cx="98" cy="156" rx="18" ry="8.5" transform="rotate(-18 98 156)" fill="url(#leafGrad)" />
-                        <ellipse class="plant-leaf sway-a" cx="160" cy="152" rx="18" ry="8.5" transform="rotate(18 160 152)" fill="url(#leafGrad)" />
+                        <ellipse class="sway-a" cx="68" cy="110" rx="22" ry="10" transform="rotate(-24 68 110)" fill="url(#leafGrad)" />
+                        <ellipse class="sway-b" cx="192" cy="96" rx="22" ry="10" transform="rotate(24 192 96)" fill="url(#leafGrad)" />
+                        <ellipse class="sway-b" cx="84" cy="66" rx="20" ry="9.5" transform="rotate(-35 84 66)" fill="url(#leafGrad)" />
+                        <ellipse class="sway-a" cx="170" cy="58" rx="20" ry="9.5" transform="rotate(35 170 58)" fill="url(#leafGrad)" />
+                        <ellipse class="sway-a" cx="128" cy="48" rx="18" ry="9" transform="rotate(-8 128 48)" fill="url(#leafGrad)" />
+                        <ellipse class="sway-b" cx="98" cy="156" rx="18" ry="8.5" transform="rotate(-18 98 156)" fill="url(#leafGrad)" />
+                        <ellipse class="sway-a" cx="160" cy="152" rx="18" ry="8.5" transform="rotate(18 160 152)" fill="url(#leafGrad)" />
 
-                        <!-- Small Kalamansi fruits -->
-                        <g class="plant-fruit sway-a">
+                        <g class="sway-a">
                             <circle cx="94" cy="126" r="10" fill="url(#kalamansiFruitGrad)" />
                             <circle cx="91" cy="123" r="2.5" fill="rgba(255,255,255,0.45)" />
                         </g>
-                        <g class="plant-fruit sway-b">
+                        <g class="sway-b">
                             <circle cx="164" cy="116" r="10.5" fill="url(#kalamansiFruitGrad)" />
                             <circle cx="161" cy="113" r="2.5" fill="rgba(255,255,255,0.45)" />
                         </g>
-                        <g class="plant-fruit sway-b">
+                        <g class="sway-b">
                             <circle cx="128" cy="82" r="9.5" fill="url(#kalamansiFruitGrad)" />
                             <circle cx="125" cy="79" r="2.2" fill="rgba(255,255,255,0.45)" />
                         </g>
@@ -74,26 +234,23 @@
 
                     <!-- OREGANO 2D ARTWORK -->
                     <g id="artworkOregano" class="plant-artwork">
-                        <!-- Cluster of soft herb stems -->
-                        <path class="plant-stem" d="M130 192 C122 162, 102 142, 82 124" stroke="#75b868" stroke-width="3.6" stroke-linecap="round" fill="none" />
-                        <path class="plant-stem" d="M130 192 C130 158, 130 132, 130 102" stroke="#75b868" stroke-width="4" stroke-linecap="round" fill="none" />
-                        <path class="plant-stem" d="M130 192 C138 162, 158 142, 178 124" stroke="#75b868" stroke-width="3.6" stroke-linecap="round" fill="none" />
-                        <path class="plant-stem" d="M126 164 C106 158, 90 154, 74 150" stroke="#75b868" stroke-width="2.8" stroke-linecap="round" fill="none" />
-                        <path class="plant-stem" d="M134 164 C154 158, 170 154, 186 150" stroke="#75b868" stroke-width="2.8" stroke-linecap="round" fill="none" />
+                        <path d="M130 192 C122 162, 102 142, 82 124" stroke="#75b868" stroke-width="3.6" stroke-linecap="round" fill="none" />
+                        <path d="M130 192 C130 158, 130 132, 130 102" stroke="#75b868" stroke-width="4" stroke-linecap="round" fill="none" />
+                        <path d="M130 192 C138 162, 158 142, 178 124" stroke="#75b868" stroke-width="3.6" stroke-linecap="round" fill="none" />
+                        <path d="M126 164 C106 158, 90 154, 74 150" stroke="#75b868" stroke-width="2.8" stroke-linecap="round" fill="none" />
+                        <path d="M134 164 C154 158, 170 154, 186 150" stroke="#75b868" stroke-width="2.8" stroke-linecap="round" fill="none" />
 
-                        <!-- Bushy paired oregano leaves -->
-                        <ellipse class="plant-leaf sway-a" cx="76" cy="118" rx="15" ry="8" transform="rotate(-32 76 118)" fill="url(#leafGrad)" />
-                        <ellipse class="plant-leaf sway-b" cx="98" cy="114" rx="14" ry="7.5" transform="rotate(18 98 114)" fill="url(#leafGrad)" />
-                        <ellipse class="plant-leaf sway-b" cx="184" cy="118" rx="15" ry="8" transform="rotate(32 184 118)" fill="url(#leafGrad)" />
-                        <ellipse class="plant-leaf sway-a" cx="162" cy="114" rx="14" ry="7.5" transform="rotate(-18 162 114)" fill="url(#leafGrad)" />
-                        <ellipse class="plant-leaf sway-a" cx="114" cy="96" rx="16" ry="8" transform="rotate(-24 114 96)" fill="url(#leafGrad)" />
-                        <ellipse class="plant-leaf sway-b" cx="146" cy="96" rx="16" ry="8" transform="rotate(24 146 96)" fill="url(#leafGrad)" />
-                        <ellipse class="plant-leaf sway-a" cx="130" cy="82" rx="15" ry="7.5" fill="url(#leafGrad)" />
-                        <ellipse class="plant-leaf sway-b" cx="70" cy="148" rx="14" ry="7" transform="rotate(-14 70 148)" fill="url(#leafGrad)" />
-                        <ellipse class="plant-leaf sway-a" cx="190" cy="148" rx="14" ry="7" transform="rotate(14 190 148)" fill="url(#leafGrad)" />
+                        <ellipse class="sway-a" cx="76" cy="118" rx="15" ry="8" transform="rotate(-32 76 118)" fill="url(#leafGrad)" />
+                        <ellipse class="sway-b" cx="98" cy="114" rx="14" ry="7.5" transform="rotate(18 98 114)" fill="url(#leafGrad)" />
+                        <ellipse class="sway-b" cx="184" cy="118" rx="15" ry="8" transform="rotate(32 184 118)" fill="url(#leafGrad)" />
+                        <ellipse class="sway-a" cx="162" cy="114" rx="14" ry="7.5" transform="rotate(-18 162 114)" fill="url(#leafGrad)" />
+                        <ellipse class="sway-a" cx="114" cy="96" rx="16" ry="8" transform="rotate(-24 114 96)" fill="url(#leafGrad)" />
+                        <ellipse class="sway-b" cx="146" cy="96" rx="16" ry="8" transform="rotate(24 146 96)" fill="url(#leafGrad)" />
+                        <ellipse class="sway-a" cx="130" cy="82" rx="15" ry="7.5" fill="url(#leafGrad)" />
+                        <ellipse class="sway-b" cx="70" cy="148" rx="14" ry="7" transform="rotate(-14 70 148)" fill="url(#leafGrad)" />
+                        <ellipse class="sway-a" cx="190" cy="148" rx="14" ry="7" transform="rotate(14 190 148)" fill="url(#leafGrad)" />
                     </g>
 
-                    <!-- Terracotta Pot & Soil -->
                     <ellipse cx="130" cy="192" rx="54" ry="10" fill="url(#soilGrad)" />
                     <path d="M74 192 L186 192 L173 250 C171 255, 166 258, 161 258 L99 258 C94 258, 89 255, 87 250 Z" fill="url(#potGrad)" />
                     <rect x="68" y="186" width="124" height="12" rx="5" fill="#d97b57" />
@@ -125,5 +282,14 @@
             </section>
         </div>
     </main>
+
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            const stage = document.querySelector("#plant2dStage");
+            if (stage) {
+                requestAnimationFrame(() => stage.classList.add("is-visible"));
+            }
+        });
+    </script>
 </body>
 </html>

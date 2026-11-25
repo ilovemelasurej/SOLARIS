@@ -74,6 +74,15 @@
                 linear-gradient(180deg, #0b1f1a 0%, #102a21 56%, #132216 100%);
         }
 
+        #outdoorDaySun {
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        body.mood-daylight #outdoorDaySun {
+            opacity: 1;
+        }
+
         .scene-svg {
             width: 100%;
             height: 100%;
@@ -400,8 +409,11 @@
                     </linearGradient>
                 </defs>
 
-                <circle id="outdoorSunHalo" cx="315" cy="155" r="145" fill="url(#outdoorSunGrad)" />
-                <circle id="outdoorSunCore" cx="315" cy="155" r="36" fill="#fde68a" opacity="0.88" />
+                <!-- Daylight sun: only visible when Daylight is active -->
+                <g id="outdoorDaySun">
+                    <circle cx="315" cy="155" r="145" fill="url(#outdoorSunGrad)" />
+                    <circle cx="315" cy="155" r="36" fill="#fde68a" opacity="0.88" />
+                </g>
 
                 <path d="M 0 560 Q 320 475 680 545 T 1440 500 L 1440 900 L 0 900 Z" fill="rgba(23, 56, 36, 0.52)" />
                 <path d="M 0 625 Q 420 565 860 615 T 1440 580 L 1440 900 L 0 900 Z" fill="rgba(29, 72, 44, 0.65)" />
@@ -741,6 +753,7 @@
             const indoorBtn = document.querySelector("#indoor");
             const outdoorBtn = document.querySelector("#outdoor");
             const sceneryBtns = document.querySelectorAll(".scenery-opt-btn");
+            const outdoorDaySun = document.querySelector("#outdoorDaySun");
             const fxSunset = document.querySelector("#fxSunset");
             const fxNight = document.querySelector("#fxNight");
             const fxRain = document.querySelector("#fxRain");
@@ -778,6 +791,9 @@
                     btn.classList.toggle("active", btn.getAttribute("data-scenery") === chosen);
                 });
 
+                if (outdoorDaySun) {
+                    outdoorDaySun.style.display = chosen === "daylight" ? "inline" : "none";
+                }
                 fxSunset?.classList.toggle("is-active", chosen === "sunset");
                 fxNight?.classList.toggle("is-active", chosen === "night");
                 fxRain?.classList.toggle("is-active", chosen === "rain");

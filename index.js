@@ -1,21 +1,5 @@
-import Header from "./components/Header";
-import SensorGrid from "./components/SensorGrid";
-import PlantProfile from "./components/PlantProfile";
-import IrrigationPrediction from "./components/IrrigationPrediction";
-
-function App() {
-  return (
-    <div className="dashboard">
-      <Header />
-
-      <SensorGrid />
-
-      <div className="bottom-section">
-        <PlantProfile />
-        <IrrigationPrediction />
-      </div>
-    </div>
-  );
-}
-
-export default App;
+// SOLARIS static GitHub Pages compatibility shim.
+// Main logic runs via script.js (loaded with defer in index.html & monitoring.html).
+(() => {
+    window.SOLARIS_APP_READY = true;
+})();

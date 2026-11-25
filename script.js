@@ -30,8 +30,41 @@ window.addEventListener("scroll", updateScrollRootsProgress, { passive: true });
 window.addEventListener("resize", updateScrollRootsProgress, { passive: true });
 updateScrollRootsProgress();
 
+// ===================== 2D PLANT ENTRANCE & LIVE SWITCHING =====================
+function sync2dPlantVisual(selectedPlantName, envName, animateSwap = false) {
+    const stage = document.querySelector("#plant2dStage");
+    const kalamansiArt = document.querySelector("#artworkKalamansi");
+    const oreganoArt = document.querySelector("#artworkOregano");
+    const badge = document.querySelector("#plant2dBadge");
+    const hint = document.querySelector("#plant2dHint");
+
+    if (!stage || !kalamansiArt || !oreganoArt) return;
+
+    const isOregano = String(selectedPlantName).toLowerCase() === "oregano";
+    kalamansiArt.classList.toggle("is-active", !isOregano);
+    oreganoArt.classList.toggle("is-active", isOregano);
+    stage.classList.toggle("is-oregano", isOregano);
+
+    if (badge) {
+        badge.textContent = `${isOregano ? "OREGANO" : "KALAMANSI"} · ${(envName || "Indoor").toUpperCase()}`;
+    }
+    if (hint) {
+        hint.textContent = isOregano
+            ? `Herb profile · Optimal 06:30 AM (${envName === "Outdoor" ? "0.25 L" : "0.18 L"})`
+            : `Citrus profile · Optimal 06:00 AM (${envName === "Outdoor" ? "0.50 L" : "0.35 L"})`;
+    }
+
+    if (animateSwap) {
+        stage.classList.remove("is-switching");
+        void stage.offsetWidth;
+        stage.classList.add("is-switching");
+    }
+}
+
 // ===================== PAGE 1: PLANT CONFIGURATION =====================
 const environmentButtons = document.querySelectorAll(".environment-buttons button");
+const plantType = document.querySelector("#plantType");
+const startMonitoring = document.querySelector("#startMonitoring");
 let selectedEnvironment = "Indoor";
 
 environmentButtons.forEach((button) => {
@@ -42,11 +75,9 @@ environmentButtons.forEach((button) => {
             option.setAttribute("aria-pressed", String(isSelected));
         });
         selectedEnvironment = button.textContent.trim();
+        sync2dPlantVisual(plantType ? plantType.value : "Kalamansi", selectedEnvironment, true);
     });
 });
-
-const plantType = document.querySelector("#plantType");
-const startMonitoring = document.querySelector("#startMonitoring");
 
 if (plantType && startMonitoring) {
     const savedPlant = localStorage.getItem("configuredPlant");
@@ -61,6 +92,17 @@ if (plantType && startMonitoring) {
             button.setAttribute("aria-pressed", String(isSelected));
         });
     }
+
+    // Trigger initial 2D plant state + smooth entrance animation
+    sync2dPlantVisual(plantType.value, selectedEnvironment, false);
+    window.setTimeout(() => {
+        document.querySelector("#plant2dStage")?.classList.add("is-visible");
+    }, 60);
+
+    // Live morph/swap kapag pinalitan ang Kalamansi <-> Oregano
+    plantType.addEventListener("change", () => {
+        sync2dPlantVisual(plantType.value, selectedEnvironment, true);
+    });
 
     startMonitoring.addEventListener("click", async (e) => {
         e.preventDefault();
@@ -842,33 +884,4 @@ if (scheduledIrrigateButton && customScheduleDialog) {
 if (document.querySelector("#telemetryStatus")) {
     updateDashboardFromFirebase();
     window.setInterval(updateDashboardFromFirebase, SENSOR_REFRESH_INTERVAL_MS);
-}
-function sync2dPlantVisual(selectedPlantName, envName, animateSwap = false) {
-    const stage = document.querySelector("#plant2dStage");
-    const kalamansiArt = document.querySelector("#artworkKalamansi");
-    const oreganoArt = document.querySelector("#artworkOregano");
-    const badge = document.querySelector("#plant2dBadge");
-    const hint = document.querySelector("#plant2dHint");
-
-    if (!stage || !kalamansiArt || !oreganoArt) return;
-
-    const isOregano = String(selectedPlantName).toLowerCase() === "oregano";
-    kalamansiArt.classList.toggle("is-active", !isOregano);
-    oreganoArt.classList.toggle("is-active", isOregano);
-    stage.classList.toggle("is-oregano", isOregano);
-
-    if (badge) {
-        badge.textContent = `${isOregano ? "OREGANO" : "KALAMANSI"} · ${(envName || "Indoor").toUpperCase()}`;
-    }
-    if (hint) {
-        hint.textContent = isOregano
-            ? `Herb profile · Optimal 06:30 AM (${envName === "Outdoor" ? "0.25 L" : "0.18 L"})`
-            : `Citrus profile · Optimal 06:00 AM (${envName === "Outdoor" ? "0.50 L" : "0.35 L"})`;
-    }
-
-    if (animateSwap) {
-        stage.classList.remove("is-switching");
-        void stage.offsetWidth;
-        stage.classList.add("is-switching");
-    }
 }

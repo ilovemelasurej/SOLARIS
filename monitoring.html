@@ -8,6 +8,30 @@
     <script src="script.js" defer></script>
 </head>
 <body class="monitoring-page">
+    <!-- Vibey upper gradient + subtle organic roots layer on scroll -->
+    <div class="ambient-backdrop" aria-hidden="true"></div>
+    <svg class="scroll-roots-overlay" id="scrollRootsSvg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+        <defs>
+            <linearGradient id="rootStrokeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#6ee7b7" stop-opacity="0.28" />
+                <stop offset="55%" stop-color="#c89d66" stop-opacity="0.45" />
+                <stop offset="100%" stop-color="#e2be8d" stop-opacity="0.18" />
+            </linearGradient>
+        </defs>
+        <g fill="none" stroke="url(#rootStrokeGrad)" stroke-linecap="round">
+            <path class="root-branch root-main" d="M 720 0 C 715 95, 690 155, 650 235 C 590 350, 480 420, 360 540 C 260 640, 190 755, 110 895" stroke-width="5.5" />
+            <path class="root-branch root-main" d="M 720 0 C 728 110, 765 170, 825 255 C 910 375, 1025 445, 1140 570 C 1225 660, 1295 770, 1365 895" stroke-width="5.5" />
+            <path class="root-branch" d="M 650 235 C 570 280, 470 295, 370 355 C 295 400, 235 470, 175 550" stroke-width="3.5" />
+            <path class="root-branch" d="M 520 390 C 470 480, 445 585, 420 710 C 405 780, 395 840, 385 898" stroke-width="3.2" />
+            <path class="root-branch" d="M 360 540 C 310 560, 250 565, 190 610 C 145 645, 115 700, 80 765" stroke-width="2.4" />
+            <path class="root-branch" d="M 825 255 C 905 295, 995 315, 1085 375 C 1155 422, 1215 485, 1275 565" stroke-width="3.5" />
+            <path class="root-branch" d="M 985 415 C 1035 505, 1065 610, 1095 735 C 1110 795, 1120 845, 1130 898" stroke-width="3.2" />
+            <path class="root-branch" d="M 720 120 C 710 245, 735 375, 715 515 C 698 635, 725 765, 712 898" stroke-width="2.8" />
+            <path class="root-branch" d="M 718 460 C 655 520, 595 595, 555 695 C 530 760, 515 830, 502 898" stroke-width="2.2" />
+            <path class="root-branch" d="M 718 490 C 780 550, 845 625, 890 725 C 918 785, 935 845, 948 898" stroke-width="2.2" />
+        </g>
+    </svg>
+
     <main class="dashboard">
         <header class="dashboard-header">
             <div>
@@ -33,8 +57,11 @@
             </article>
 
             <article class="sensor-card water-card">
-                <div class="sensor-title"><span aria-hidden="true">💦</span>WATER FLOW</div>
-                <div class="sensor-value"><span id="waterFlowValue">--</span> <span class="sensor-unit">L/min</span></div>
+                <div class="sensor-title"><span aria-hidden="true">💦</span>DRIPPER FLOW</div>
+                <div class="sensor-value"><span id="waterFlowValue">0.064</span> <span class="sensor-unit">L/min</span></div>
+                <div class="sensor-stats">
+                    <div class="stat" id="dripperRateDetail">~64.2 mL/min · ~1.07 mL/s (1 dripper)</div>
+                </div>
             </article>
 
             <article class="sensor-card water-card">
@@ -83,7 +110,7 @@
             </div>
         </section>
 
-        <!-- 3-MODE IRRIGATION CONTROLS (LEFT: SMART | CENTER: MANUAL | RIGHT: SCHEDULED) -->
+        <!-- 3-MODE IRRIGATION CONTROLS (NO INNER BOXES) -->
         <section class="irrigation-controls-grid" aria-label="Irrigation control modes">
             <!-- 1. LEFT: SMART IRRIGATE -->
             <article class="control-mode-card smart-mode-card">
@@ -93,22 +120,22 @@
                     <p id="configuredPlantText">No plant configured</p>
                 </div>
 
-                <div class="mode-spec-box">
-                    <div class="mode-spec-row">
+                <div class="mode-lines">
+                    <div class="mode-line-row">
                         <span>Optimal Time</span>
                         <strong id="smartOptimalTimeDisplay">06:00 AM</strong>
                     </div>
-                    <div class="mode-spec-row">
+                    <div class="mode-line-row">
                         <span>Optimal Volume</span>
-                        <strong id="smartOptimalLitersDisplay">0.35 L</strong>
+                        <strong id="smartOptimalLitersDisplay">0.35 L (350 mL)</strong>
                     </div>
-                    <div class="mode-spec-row">
-                        <span>Est. Pump Runtime</span>
-                        <strong id="smartEstDurationDisplay">~11s</strong>
+                    <div class="mode-line-row">
+                        <span>Dripper Rate</span>
+                        <strong>0.064 L/min (64.2 mL/min)</strong>
                     </div>
-                    <small class="mode-indication" id="smartModeIndication">
-                        Matches recorded optimal time &amp; required liters for this plant.
-                    </small>
+                    <p class="mode-indication" id="smartModeIndication">
+                        Matches recorded optimal time &amp; required water for this plant.
+                    </p>
                 </div>
 
                 <button type="button" id="smartIrrigateButton" class="smart-irrigate-button">Smart Irrigate</button>
@@ -128,22 +155,22 @@
                     <p id="manualSubtitle">Tap to open pump · Tap again to close</p>
                 </div>
 
-                <div class="mode-spec-box">
-                    <div class="mode-spec-row">
+                <div class="mode-lines">
+                    <div class="mode-line-row">
                         <span>Pump State</span>
                         <strong id="manualPumpStateText">CLOSED</strong>
                     </div>
-                    <div class="mode-spec-row">
+                    <div class="mode-line-row">
                         <span>Open Duration</span>
                         <strong id="manualElapsedFull">00:00:00</strong>
                     </div>
-                    <div class="mode-spec-row">
-                        <span>Live Flow</span>
-                        <strong id="manualLiveFlowText">0.00 L/min</strong>
+                    <div class="mode-line-row">
+                        <span>Dripper Output</span>
+                        <strong id="manualLiveFlowText">0.064 L/min · 64.2 mL/min</strong>
                     </div>
-                    <small class="mode-indication" id="manualModeIndication">
+                    <p class="mode-indication" id="manualModeIndication">
                         Ready for instant on-the-spot pump control.
-                    </small>
+                    </p>
                 </div>
 
                 <button type="button" id="manualIrrigateButton" class="manual-irrigate-button">
@@ -160,22 +187,22 @@
                     <p id="customScheduleSubtitle">Custom date, time &amp; water volume</p>
                 </div>
 
-                <div class="mode-spec-box">
-                    <div class="mode-spec-row">
+                <div class="mode-lines">
+                    <div class="mode-line-row">
                         <span>Scheduled Date/Time</span>
                         <strong id="customScheduleDateTimeDisplay">Not set</strong>
                     </div>
-                    <div class="mode-spec-row">
+                    <div class="mode-line-row">
                         <span>Target Water</span>
                         <strong id="customScheduleLitersDisplay">-- L</strong>
                     </div>
-                    <div class="mode-spec-row">
+                    <div class="mode-line-row">
                         <span>Schedule Status</span>
-                        <strong id="customScheduleStatusBadge">IDLE</strong>
+                        <strong id="customScheduleStatusBadge">READY</strong>
                     </div>
-                    <small class="mode-indication" id="customScheduleIndication">
+                    <p class="mode-indication" id="customScheduleIndication">
                         Set MM / DD / HR / MIN / YY and water volume in Liters (L).
-                    </small>
+                    </p>
                 </div>
 
                 <button type="button" id="scheduledIrrigateButton" class="scheduled-irrigate-button">Scheduled Irrigate</button>
@@ -191,7 +218,7 @@
                         <h2 id="historyPlantName">Plant History</h2>
                         <p class="plant-status" id="plantStatus">Status unavailable</p>
                     </div>
-                    <div class="plant-optimal-summary">
+                    <div class="plant-optimal-lines">
                         <span>Optimal Need: <strong id="lowerOptimalLiters">-- L</strong></span>
                         <span>Next Optimal Schedule: <strong id="nextSchedule">--</strong></span>
                     </div>
@@ -261,7 +288,7 @@
                 </div>
             </div>
 
-            <div class="custom-indication-box" id="customModalIndication" role="status">
+            <div class="custom-indication-text" id="customModalIndication" role="status">
                 Preview: --/--/20-- at --:-- · 0.25 L
             </div>
 

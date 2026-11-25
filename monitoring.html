@@ -8,143 +8,176 @@
     <script type="module" src="script.js"></script>
     <style>
         :root {
-            --scroll-sprout: 0;
+            --scroll-progress: 0;
+            --bg-mood-filter: brightness(1.06) saturate(1.12);
         }
 
-        /* Background-only scenery + scroll-growing sprout behind dashboard boxes */
-        .solaris-bg-layer {
+        body.bg-scenery-daylight {
+            --bg-mood-filter: brightness(1.06) saturate(1.12);
+        }
+
+        body.bg-scenery-sunset {
+            --bg-mood-filter: brightness(0.98) saturate(1.26) sepia(0.12);
+        }
+
+        body.bg-scenery-night {
+            --bg-mood-filter: brightness(0.76) saturate(1.06) hue-rotate(8deg);
+        }
+
+        body.bg-scenery-rain {
+            --bg-mood-filter: brightness(0.84) saturate(0.88) contrast(1.05);
+        }
+
+        /* Full-page background layer behind all dashboard boxes */
+        .solaris-page2-bg {
             position: fixed;
             inset: 0;
             z-index: 0;
             pointer-events: none;
             overflow: hidden;
+            filter: var(--bg-mood-filter);
             transition: filter 0.45s ease;
         }
 
-        .solaris-bg-layer svg {
+        .solaris-page2-bg svg {
             width: 100%;
             height: 100%;
             display: block;
         }
 
-        body.bg-mood-daylight .solaris-bg-layer {
-            filter: brightness(1.04) saturate(1.08);
+        /* Sky / Sun / Moon / Clouds / Rain transitions */
+        .p2-sky-tint {
+            fill: rgba(255, 240, 185, 0.14);
+            transition: fill 0.6s ease;
         }
 
-        body.bg-mood-sunset .solaris-bg-layer {
-            filter: brightness(0.96) saturate(1.24) sepia(0.12);
+        body.bg-scenery-sunset .p2-sky-tint {
+            fill: rgba(251, 146, 60, 0.22);
         }
 
-        body.bg-mood-night .solaris-bg-layer {
-            filter: brightness(0.76) saturate(1.05) hue-rotate(8deg);
+        body.bg-scenery-night .p2-sky-tint {
+            fill: rgba(15, 32, 65, 0.28);
         }
 
-        body.bg-mood-rain .solaris-bg-layer {
-            filter: brightness(0.84) saturate(0.88) contrast(1.05);
+        body.bg-scenery-rain .p2-sky-tint {
+            fill: rgba(100, 116, 139, 0.22);
         }
 
-        .bg-sun-group {
+        .p2-sun-group {
             transform: translateY(0px);
             opacity: 0.92;
             transition: transform 0.85s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.55s ease;
         }
 
-        .bg-sun-core {
+        .p2-sun-core {
             fill: #fde68a;
             transition: fill 0.75s ease;
         }
 
-        .bg-sun-halo {
-            fill: rgba(251, 191, 36, 0.35);
+        .p2-sun-halo {
+            fill: rgba(251, 191, 36, 0.34);
             transition: fill 0.75s ease;
         }
 
-        body.bg-mood-sunset .bg-sun-group {
-            transform: translateY(150px);
+        body.bg-scenery-sunset .p2-sun-group {
+            transform: translateY(145px);
             opacity: 0.95;
         }
 
-        body.bg-mood-sunset .bg-sun-core {
+        body.bg-scenery-sunset .p2-sun-core {
             fill: #fb923c;
         }
 
-        body.bg-mood-sunset .bg-sun-halo {
+        body.bg-scenery-sunset .p2-sun-halo {
             fill: rgba(249, 115, 22, 0.42);
         }
 
-        body.bg-mood-rain .bg-sun-group {
+        body.bg-scenery-rain .p2-sun-group {
             transform: translateY(10px);
-            opacity: 0.5;
+            opacity: 0.48;
         }
 
-        body.bg-mood-night .bg-sun-group {
-            transform: translateY(110px);
+        body.bg-scenery-night .p2-sun-group {
+            transform: translateY(115px);
             opacity: 0;
         }
 
-        .bg-moon-group {
+        .p2-moon-group {
             opacity: 0;
-            transform: translateY(14px);
+            transform: translateY(16px);
             transition: opacity 0.65s ease, transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        body.bg-mood-night .bg-moon-group {
-            opacity: 0.92;
+        body.bg-scenery-night .p2-moon-group {
+            opacity: 0.95;
             transform: translateY(0px);
         }
 
-        .bg-clouds-group {
+        .p2-clouds-group {
             opacity: 0;
-            transform: translateY(-10px);
+            transform: translateY(-12px);
             transition: opacity 0.55s ease, transform 0.65s ease;
         }
 
-        body.bg-mood-rain .bg-clouds-group {
-            opacity: 0.88;
+        body.bg-scenery-rain .p2-clouds-group {
+            opacity: 0.9;
             transform: translateY(0px);
         }
 
-        .bg-rain-group {
+        .p2-rain-group {
             display: none;
         }
 
-        .bg-rain-group.is-active {
+        .p2-rain-group.is-active {
             display: inline;
         }
 
-        .bg-rain-drop {
-            animation: bgDropFall 0.9s linear infinite;
+        .p2-rain-streak {
+            animation: p2RainFall 0.85s linear infinite;
         }
 
-        /* Sprout emerging upward from bottom/soil as user scrolls down */
-        .scroll-sprout-plant {
-            opacity: calc(min(1, var(--scroll-sprout) * 1.45));
+        /* Full-page background plant (matches Page 1 species + grows upward on scroll) */
+        .p2-fullpage-plant-wrap {
+            opacity: calc(0.14 + var(--scroll-progress) * 0.86);
             transform:
-                translateY(calc((1 - var(--scroll-sprout)) * 260px))
-                scale(calc(0.45 + var(--scroll-sprout) * 0.55));
+                translateY(calc((1 - var(--scroll-progress)) * 310px))
+                scale(calc(0.46 + var(--scroll-progress) * 0.54));
             transform-box: fill-box;
             transform-origin: bottom center;
-            transition: transform 0.08s linear, opacity 0.1s linear;
+            transition: transform 0.08s linear, opacity 0.12s linear;
         }
 
-        /* Compact scenery pill in top-right without shifting dashboard boxes */
-        .solaris-bg-switcher {
+        .p2-species-group {
+            display: none;
+        }
+
+        .p2-species-group.is-active {
+            display: inline;
+        }
+
+        .p2-sway {
+            transform-origin: 720px 835px;
+            animation: p2PlantBreeze 4.8s ease-in-out infinite;
+        }
+
+        /* Top-right scenery pill */
+        .p2-scenery-switcher {
             position: fixed;
             top: 14px;
             right: 18px;
-            z-index: 25;
+            z-index: 30;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
             padding: 4px 6px;
             border-radius: 999px;
-            border: 1px solid rgba(154, 208, 185, 0.25);
-            background: rgba(7, 27, 22, 0.86);
+            border: 1px solid rgba(154, 208, 185, 0.28);
+            background: rgba(7, 27, 22, 0.88);
             backdrop-filter: blur(8px);
         }
 
-        .solaris-bg-btn {
-            padding: 4px 9px;
+        .p2-scenery-btn {
+            padding: 4px 10px;
             border-radius: 999px;
             background: transparent;
             color: #9ab9a8;
@@ -152,113 +185,188 @@
             font-weight: 700;
         }
 
-        .solaris-bg-btn.active {
+        .p2-scenery-btn.active {
             background: linear-gradient(90deg, #37c982, #49bde8);
             color: #08251d;
         }
 
-        /* Keep existing dashboard boxes strictly untouched above background */
+        /* Keep dashboard boxes untouched above background */
         .dashboard {
             position: relative;
-            z-index: 1;
+            z-index: 2;
         }
 
-        @keyframes bgDropFall {
-            0% { transform: translate(-8px, -24px); opacity: 0.2; }
-            50% { opacity: 0.65; }
-            100% { transform: translate(-22px, 36px); opacity: 0.1; }
+        @keyframes p2RainFall {
+            0% { transform: translate(-10px, -26px); opacity: 0.2; }
+            50% { opacity: 0.72; }
+            100% { transform: translate(-24px, 38px); opacity: 0.1; }
+        }
+
+        @keyframes p2PlantBreeze {
+            0%, 100% { transform: rotate(-1.1deg); }
+            50% { transform: rotate(1.3deg); }
         }
     </style>
 </head>
-<body class="bg-mood-daylight">
-    <!-- BACKGROUND-ONLY LAYER WITH SCROLL-GROWING SPROUT -->
-    <div class="solaris-bg-layer" aria-hidden="true">
+<body class="bg-scenery-daylight">
+    <!-- FULL-PAGE BACKGROUND WITH SCENERY + FULL-SIZE SCROLL-GROWING PLANT -->
+    <div class="solaris-page2-bg" aria-hidden="true">
         <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
             <defs>
-                <linearGradient id="bgSkyWash" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stop-color="#071d18" stop-opacity="0.45" />
-                    <stop offset="65%" stop-color="#0a261f" stop-opacity="0.25" />
-                    <stop offset="100%" stop-color="#171009" stop-opacity="0.65" />
+                <linearGradient id="p2SkyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#071d18" stop-opacity="0.55" />
+                    <stop offset="68%" stop-color="#0b2820" stop-opacity="0.32" />
+                    <stop offset="100%" stop-color="#19110a" stop-opacity="0.72" />
                 </linearGradient>
 
-                <linearGradient id="sproutStemGrad" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stop-color="#458b29" />
-                    <stop offset="100%" stop-color="#84cc39" />
+                <linearGradient id="p2KalamansiStemGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stop-color="#3f6e58" />
+                    <stop offset="55%" stop-color="#5da87a" />
+                    <stop offset="100%" stop-color="#8be0a6" />
                 </linearGradient>
 
-                <linearGradient id="sproutLeafGrad" x1="15%" y1="10%" x2="85%" y2="90%">
-                    <stop offset="0%" stop-color="#9be148" />
-                    <stop offset="55%" stop-color="#69b82c" />
-                    <stop offset="100%" stop-color="#3f7c19" />
+                <linearGradient id="p2KalamansiLeafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#6ce09b" />
+                    <stop offset="55%" stop-color="#379e6c" />
+                    <stop offset="100%" stop-color="#1b5c42" />
+                </linearGradient>
+
+                <radialGradient id="p2RipeFruitGrad" cx="34%" cy="28%" r="72%">
+                    <stop offset="0%" stop-color="#ffe066" />
+                    <stop offset="58%" stop-color="#f59e0b" />
+                    <stop offset="100%" stop-color="#b45309" />
+                </radialGradient>
+
+                <radialGradient id="p2UnripeFruitGrad" cx="35%" cy="30%" r="72%">
+                    <stop offset="0%" stop-color="#a7f3a0" />
+                    <stop offset="62%" stop-color="#4ade80" />
+                    <stop offset="100%" stop-color="#15803d" />
+                </radialGradient>
+
+                <linearGradient id="p2OreganoStemGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stop-color="#476e60" />
+                    <stop offset="100%" stop-color="#87c2ad" />
+                </linearGradient>
+
+                <linearGradient id="p2OreganoLeafGrad" x1="15%" y1="10%" x2="85%" y2="90%">
+                    <stop offset="0%" stop-color="#b7e7d7" />
+                    <stop offset="55%" stop-color="#7ec2aa" />
+                    <stop offset="100%" stop-color="#4d8a75" />
                 </linearGradient>
             </defs>
 
-            <rect x="0" y="0" width="1440" height="900" fill="url(#bgSkyWash)" />
+            <rect x="0" y="0" width="1440" height="900" fill="url(#p2SkyGrad)" />
+            <rect class="p2-sky-tint" x="0" y="0" width="1440" height="900" />
 
-            <g class="bg-sun-group">
-                <circle class="bg-sun-halo" cx="220" cy="125" r="140" />
-                <circle class="bg-sun-core" cx="220" cy="125" r="30" />
+            <!-- Sun -->
+            <g class="p2-sun-group">
+                <circle class="p2-sun-halo" cx="250" cy="140" r="155" />
+                <circle class="p2-sun-core" cx="250" cy="140" r="36" />
             </g>
 
-            <g class="bg-moon-group">
-                <circle cx="235" cy="115" r="24" fill="#f8fafc" />
-                <circle cx="245" cy="109" r="20" fill="#071d18" />
-                <circle cx="120" cy="95" r="2" fill="#e2e8f0" opacity="0.75" />
-                <circle cx="380" cy="85" r="1.7" fill="#e2e8f0" opacity="0.65" />
-                <circle cx="510" cy="145" r="2" fill="#e2e8f0" opacity="0.7" />
+            <!-- Moon & Stars (Night) -->
+            <g class="p2-moon-group">
+                <circle cx="265" cy="130" r="28" fill="#f8fafc" />
+                <circle cx="276" cy="123" r="24" fill="#081e18" />
+                <circle cx="140" cy="105" r="2.2" fill="#e2e8f0" opacity="0.8" />
+                <circle cx="410" cy="95" r="1.9" fill="#e2e8f0" opacity="0.7" />
+                <circle cx="560" cy="150" r="2.3" fill="#e2e8f0" opacity="0.75" />
+                <circle cx="1120" cy="115" r="2.1" fill="#e2e8f0" opacity="0.75" />
+                <circle cx="1260" cy="175" r="1.8" fill="#e2e8f0" opacity="0.65" />
             </g>
 
-            <g class="bg-clouds-group">
-                <ellipse cx="205" cy="120" rx="130" ry="36" fill="#64748b" />
-                <ellipse cx="315" cy="132" rx="115" ry="32" fill="#475569" />
-                <ellipse cx="255" cy="108" rx="100" ry="28" fill="#94a3b8" opacity="0.6" />
+            <!-- Rain Clouds & Rain Streaks -->
+            <g class="p2-clouds-group">
+                <ellipse cx="220" cy="125" rx="145" ry="40" fill="#64748b" />
+                <ellipse cx="345" cy="138" rx="135" ry="36" fill="#475569" />
+                <ellipse cx="280" cy="112" rx="120" ry="32" fill="#94a3b8" opacity="0.62" />
             </g>
 
-            <g id="bgRainGroup" class="bg-rain-group">
-                <g stroke="rgba(148, 163, 184, 0.45)" stroke-width="1.6" stroke-linecap="round">
-                    <line class="bg-rain-drop" x1="140" y1="160" x2="128" y2="191" />
-                    <line class="bg-rain-drop" x1="205" y1="190" x2="193" y2="221" style="animation-delay: -0.25s;" />
-                    <line class="bg-rain-drop" x1="270" y1="150" x2="258" y2="181" style="animation-delay: -0.45s;" />
-                    <line class="bg-rain-drop" x1="340" y1="200" x2="328" y2="231" style="animation-delay: -0.15s;" />
-                    <line class="bg-rain-drop" x1="405" y1="165" x2="393" y2="196" style="animation-delay: -0.6s;" />
+            <g id="p2RainGroup" class="p2-rain-group">
+                <g stroke="rgba(165, 195, 224, 0.55)" stroke-width="1.8" stroke-linecap="round">
+                    <line class="p2-rain-streak" x1="150" y1="165" x2="136" y2="200" />
+                    <line class="p2-rain-streak" x1="220" y1="205" x2="206" y2="240" style="animation-delay: -0.25s;" />
+                    <line class="p2-rain-streak" x1="295" y1="155" x2="281" y2="190" style="animation-delay: -0.45s;" />
+                    <line class="p2-rain-streak" x1="370" y1="220" x2="356" y2="255" style="animation-delay: -0.15s;" />
+                    <line class="p2-rain-streak" x1="440" y1="180" x2="426" y2="215" style="animation-delay: -0.6s;" />
+                    <line class="p2-rain-streak" x1="980" y1="170" x2="966" y2="205" style="animation-delay: -0.2s;" />
+                    <line class="p2-rain-streak" x1="1120" y1="210" x2="1106" y2="245" style="animation-delay: -0.5s;" />
                 </g>
             </g>
 
-            <!-- Scroll-emerge 3-leaf sprout in background -->
-            <g class="scroll-sprout-plant" transform="translate(520, 350)">
-                <!-- Stem -->
-                <path d="M 192 550 C 194 455, 186 385, 205 305 C 216 258, 232 215, 250 172"
-                      stroke="#1b2614" stroke-width="26" stroke-linecap="round" fill="none" />
-                <path d="M 192 550 C 194 455, 186 385, 205 305 C 216 258, 232 215, 250 172"
-                      stroke="url(#sproutStemGrad)" stroke-width="18" stroke-linecap="round" fill="none" />
+            <!-- FULL-SIZE BACKGROUND PLANT (MATCHES PAGE 1 KALAMANSI / OREGANO) -->
+            <g class="p2-fullpage-plant-wrap">
+                <g class="p2-sway">
+                    <!-- Kalamansi full-page background artwork -->
+                    <g id="p2PlantKalamansi" class="p2-species-group is-active" transform="translate(360, 75) scale(1.5)">
+                        <path d="M 225 724 C 228 635, 212 555, 224 465 C 236 375, 214 295, 226 205 C 231 165, 226 135, 222 108"
+                              stroke="url(#p2KalamansiStemGrad)" stroke-width="11" stroke-linecap="round" fill="none" />
+                        <path d="M 220 565 C 185 548, 148 552, 108 575"
+                              stroke="url(#p2KalamansiStemGrad)" stroke-width="7.5" stroke-linecap="round" fill="none" />
+                        <path d="M 223 475 C 268 452, 315 446, 368 422"
+                              stroke="url(#p2KalamansiStemGrad)" stroke-width="8" stroke-linecap="round" fill="none" />
+                        <path d="M 221 372 C 182 342, 142 325, 98 312"
+                              stroke="url(#p2KalamansiStemGrad)" stroke-width="6.5" stroke-linecap="round" fill="none" />
+                        <path d="M 222 292 C 264 265, 304 248, 344 228"
+                              stroke="url(#p2KalamansiStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
+                        <path d="M 224 205 C 198 175, 178 152, 158 134"
+                              stroke="url(#p2KalamansiStemGrad)" stroke-width="5" stroke-linecap="round" fill="none" />
+                        <path d="M 225 182 C 254 156, 276 138, 298 122"
+                              stroke="url(#p2KalamansiStemGrad)" stroke-width="5" stroke-linecap="round" fill="none" />
 
-                <!-- Left Leaf -->
-                <path d="M 198 370 C 145 315, 68 308, 24 342 C 56 410, 128 432, 194 396 Z"
-                      fill="url(#sproutLeafGrad)" stroke="#1b2614" stroke-width="7" stroke-linejoin="round" />
-                <path d="M 188 376 Q 112 356 46 346" stroke="#2f5e13" stroke-width="3.5" stroke-linecap="round" fill="none" />
-                <ellipse cx="96" cy="342" rx="18" ry="7" transform="rotate(-14 96 342)" fill="rgba(226, 255, 168, 0.38)" />
+                        <path d="M 112 574 C 76 558, 52 575, 42 604 C 74 612, 102 598, 112 574 Z" fill="url(#p2KalamansiLeafGrad)" />
+                        <path d="M 224 510 C 182 485, 145 488, 118 506 C 148 525, 188 524, 224 510 Z" fill="url(#p2KalamansiLeafGrad)" />
+                        <path d="M 268 456 C 296 420, 336 406, 372 410 C 354 442, 312 456, 268 456 Z" fill="url(#p2KalamansiLeafGrad)" />
+                        <path d="M 185 344 C 148 312, 105 305, 68 318 C 98 345, 144 352, 185 344 Z" fill="url(#p2KalamansiLeafGrad)" />
+                        <path d="M 224 342 C 258 312, 302 308, 338 322 C 308 348, 264 352, 224 342 Z" fill="url(#p2KalamansiLeafGrad)" />
+                        <path d="M 275 262 C 304 224, 344 206, 384 208 C 364 242, 322 258, 275 262 Z" fill="url(#p2KalamansiLeafGrad)" />
+                        <path d="M 192 170 C 164 134, 132 122, 102 132 C 126 158, 160 168, 192 170 Z" fill="url(#p2KalamansiLeafGrad)" />
+                        <path d="M 224 148 C 218 106, 226 74, 244 54 C 254 88, 246 122, 224 148 Z" fill="url(#p2KalamansiLeafGrad)" />
+                        <path d="M 248 158 C 278 132, 314 124, 346 134 C 322 158, 286 164, 248 158 Z" fill="url(#p2KalamansiLeafGrad)" />
 
-                <!-- Right Leaf -->
-                <path d="M 206 432 C 255 392, 326 392, 368 424 C 338 485, 268 502, 208 462 Z"
-                      fill="url(#sproutLeafGrad)" stroke="#1b2614" stroke-width="7" stroke-linejoin="round" />
-                <path d="M 216 442 Q 286 432 346 426" stroke="#2f5e13" stroke-width="3.5" stroke-linecap="round" fill="none" />
-                <ellipse cx="294" cy="418" rx="16" ry="6.5" transform="rotate(10 294 418)" fill="rgba(226, 255, 168, 0.35)" />
+                        <circle cx="332" cy="444" r="31" fill="url(#p2RipeFruitGrad)" />
+                        <circle cx="386" cy="396" r="24" fill="url(#p2UnripeFruitGrad)" />
+                    </g>
 
-                <!-- Top Center Leaf -->
-                <path d="M 204 312 C 196 232, 224 148, 276 106 C 314 156, 304 246, 236 318 Z"
-                      fill="url(#sproutLeafGrad)" stroke="#1b2614" stroke-width="7" stroke-linejoin="round" />
-                <path d="M 212 304 Q 244 214 270 126" stroke="#2f5e13" stroke-width="3.5" stroke-linecap="round" fill="none" />
-                <ellipse cx="268" cy="186" rx="10" ry="22" transform="rotate(18 268 186)" fill="rgba(226, 255, 168, 0.38)" />
+                    <!-- Oregano full-page background artwork -->
+                    <g id="p2PlantOregano" class="p2-species-group" transform="translate(360, 75) scale(1.5)">
+                        <path d="M 232 724 C 228 635, 234 545, 226 455 C 220 385, 232 325, 228 265"
+                              stroke="url(#p2OreganoStemGrad)" stroke-width="8.5" stroke-linecap="round" fill="none" />
+                        <path d="M 230 620 C 192 585, 152 562, 110 542"
+                              stroke="url(#p2OreganoStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
+                        <path d="M 232 595 C 274 565, 318 545, 362 526"
+                              stroke="url(#p2OreganoStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
+                        <path d="M 228 475 C 186 442, 146 420, 102 398"
+                              stroke="url(#p2OreganoStemGrad)" stroke-width="5.2" stroke-linecap="round" fill="none" />
+                        <path d="M 229 452 C 274 422, 318 402, 364 380"
+                              stroke="url(#p2OreganoStemGrad)" stroke-width="5.2" stroke-linecap="round" fill="none" />
+                        <path d="M 228 345 C 196 314, 174 292, 154 272"
+                              stroke="url(#p2OreganoStemGrad)" stroke-width="4.4" stroke-linecap="round" fill="none" />
+                        <path d="M 229 332 C 262 304, 288 282, 314 260"
+                              stroke="url(#p2OreganoStemGrad)" stroke-width="4.4" stroke-linecap="round" fill="none" />
+
+                        <path d="M 118 548 C 82 522, 54 544, 48 588 C 72 612, 114 596, 134 564 Z" fill="url(#p2OreganoLeafGrad)" />
+                        <path d="M 352 532 C 388 506, 418 528, 422 574 C 396 598, 354 582, 336 548 Z" fill="url(#p2OreganoLeafGrad)" />
+                        <path d="M 226 530 C 186 496, 152 512, 148 558 C 176 584, 218 568, 234 542 Z" fill="url(#p2OreganoLeafGrad)" />
+                        <path d="M 110 404 C 72 376, 44 398, 42 444 C 68 468, 112 452, 128 420 Z" fill="url(#p2OreganoLeafGrad)" />
+                        <path d="M 354 386 C 392 358, 422 380, 424 426 C 398 450, 354 434, 338 402 Z" fill="url(#p2OreganoLeafGrad)" />
+                        <path d="M 226 392 C 184 358, 150 376, 148 422 C 176 446, 220 430, 234 402 Z" fill="url(#p2OreganoLeafGrad)" />
+                        <path d="M 234 382 C 276 348, 310 366, 312 412 C 284 436, 240 420, 228 392 Z" fill="url(#p2OreganoLeafGrad)" />
+                        <path d="M 162 278 C 132 252, 108 270, 108 308 C 130 328, 166 314, 178 290 Z" fill="url(#p2OreganoLeafGrad)" />
+                        <path d="M 304 268 C 334 242, 358 260, 358 298 C 336 318, 300 304, 288 280 Z" fill="url(#p2OreganoLeafGrad)" />
+                        <path d="M 228 275 C 202 232, 214 196, 232 182 C 250 196, 256 232, 234 275 Z" fill="url(#p2OreganoLeafGrad)" />
+                    </g>
+                </g>
             </g>
         </svg>
     </div>
 
-    <!-- BACKGROUND MODE SWITCHER -->
-    <div class="solaris-bg-switcher" role="group" aria-label="Background Scenery">
-        <button type="button" class="solaris-bg-btn active" data-bg-scenery="daylight">Daylight</button>
-        <button type="button" class="solaris-bg-btn" data-bg-scenery="sunset">Sunset</button>
-        <button type="button" class="solaris-bg-btn" data-bg-scenery="night">Night</button>
-        <button type="button" class="solaris-bg-btn" data-bg-scenery="rain">Rain</button>
+    <!-- SCENERY SWITCHER (DAYLIGHT / SUNSET / NIGHT / RAIN) -->
+    <div class="p2-scenery-switcher" role="group" aria-label="Background Scenery">
+        <button type="button" class="p2-scenery-btn active" data-p2-scenery="daylight">Daylight</button>
+        <button type="button" class="p2-scenery-btn" data-p2-scenery="sunset">Sunset</button>
+        <button type="button" class="p2-scenery-btn" data-p2-scenery="night">Night</button>
+        <button type="button" class="p2-scenery-btn" data-p2-scenery="rain">Rain</button>
     </div>
 
     <div class="ambient-backdrop"></div>
@@ -594,40 +702,83 @@
     </dialog>
 
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const buttons = document.querySelectorAll(".solaris-bg-btn");
-            const rainGroup = document.querySelector("#bgRainGroup");
+        (function () {
+            const buttons = Array.from(document.querySelectorAll(".p2-scenery-btn"));
+            const rainGroup = document.querySelector("#p2RainGroup");
+            const kalamansiEl = document.querySelector("#p2PlantKalamansi");
+            const oreganoEl = document.querySelector("#p2PlantOregano");
+            const validModes = ["daylight", "sunset", "night", "rain"];
 
-            function applyBgScenery(mode) {
-                const chosen = ["daylight", "sunset", "night", "rain"].includes(mode) ? mode : "daylight";
-                document.body.classList.remove("bg-mood-daylight", "bg-mood-sunset", "bg-mood-night", "bg-mood-rain");
-                document.body.classList.add(`bg-mood-${chosen}`);
+            function applyScenery(mode) {
+                const chosen = validModes.includes(mode) ? mode : "daylight";
+                validModes.forEach((m) => document.body.classList.remove(`bg-scenery-${m}`));
+                document.body.classList.add(`bg-scenery-${chosen}`);
+
                 buttons.forEach((btn) => {
-                    btn.classList.toggle("active", btn.getAttribute("data-bg-scenery") === chosen);
+                    const isMatch = btn.getAttribute("data-p2-scenery") === chosen;
+                    btn.classList.toggle("active", isMatch);
                 });
-                rainGroup?.classList.toggle("is-active", chosen === "rain");
-                localStorage.setItem("configuredScenery", chosen);
+
+                if (rainGroup) {
+                    rainGroup.classList.toggle("is-active", chosen === "rain");
+                }
+
+                try {
+                    localStorage.setItem("configuredScenery", chosen);
+                } catch (_) {}
             }
 
-            function updateScrollSprout() {
-                const scrollTop = window.scrollY || window.pageYOffset || 0;
+            function syncPlantSpecies() {
+                let plantName = "Kalamansi";
+                try {
+                    plantName = localStorage.getItem("configuredPlant") || "Kalamansi";
+                } catch (_) {}
+
+                const titleEl = document.querySelector("#activePlantTitle");
+                if (!localStorage.getItem("configuredPlant") && titleEl && titleEl.textContent) {
+                    if (titleEl.textContent.toLowerCase().includes("oregano")) {
+                        plantName = "Oregano";
+                    }
+                }
+
+                const isOregano = String(plantName).toLowerCase() === "oregano";
+                if (kalamansiEl) kalamansiEl.classList.toggle("is-active", !isOregano);
+                if (oreganoEl) oreganoEl.classList.toggle("is-active", isOregano);
+            }
+
+            function updateScrollGrowth() {
+                const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
                 const docHeight = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
                 const progress = Math.min(1, Math.max(0, scrollTop / docHeight));
-                document.documentElement.style.setProperty("--scroll-sprout", progress.toFixed(4));
+                document.documentElement.style.setProperty("--scroll-progress", progress.toFixed(4));
             }
 
             buttons.forEach((btn) => {
-                btn.addEventListener("click", () => {
-                    applyBgScenery(btn.getAttribute("data-bg-scenery"));
+                btn.addEventListener("click", (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    const mode = btn.getAttribute("data-p2-scenery");
+                    applyScenery(mode);
                 });
             });
 
-            window.addEventListener("scroll", updateScrollSprout, { passive: true });
-            window.addEventListener("resize", updateScrollSprout, { passive: true });
+            window.addEventListener("scroll", updateScrollGrowth, { passive: true });
+            window.addEventListener("resize", updateScrollGrowth, { passive: true });
+            window.addEventListener("storage", syncPlantSpecies);
 
-            applyBgScenery(localStorage.getItem("configuredScenery") || "daylight");
-            updateScrollSprout();
-        });
+            let initialMode = "daylight";
+            try {
+                initialMode = localStorage.getItem("configuredScenery") || "daylight";
+            } catch (_) {}
+
+            applyScenery(initialMode);
+            syncPlantSpecies();
+            updateScrollGrowth();
+
+            // Re-sync plant species briefly after module script initializes
+            setTimeout(syncPlantSpecies, 120);
+            setTimeout(syncPlantSpecies, 600);
+        })();
     </script>
 </body>
 </html>

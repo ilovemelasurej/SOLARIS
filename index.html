@@ -15,7 +15,7 @@
             color: #edf8f1;
             font-family: "Inter", Arial, Helvetica, sans-serif;
             overflow-x: hidden;
-            --sky-tint: rgba(255, 236, 179, 0.28);
+            --sky-tint: rgba(255, 232, 150, 0.18);
             --mood-filter: brightness(1.06) saturate(1.12);
         }
 
@@ -65,7 +65,7 @@
             background:
                 radial-gradient(circle at 22% 24%, var(--sky-tint), transparent 52%),
                 radial-gradient(circle at 75% 75%, rgba(55, 201, 130, 0.10), transparent 52%),
-                linear-gradient(180deg, #091d17 0%, #0d271f 68%, #0b1c17 100%);
+                linear-gradient(180deg, #071612 0%, #0a201a 68%, #040907 100%);
         }
 
         .outdoor-scene {
@@ -236,7 +236,7 @@
             max-height: 94vh;
             display: block;
             overflow: visible;
-            filter: var(--mood-filter) drop-shadow(0 16px 32px rgba(0, 0, 0, 0.55));
+            filter: var(--mood-filter) drop-shadow(0 16px 32px rgba(0, 0, 0, 0.65));
             transition: filter 0.45s ease;
         }
 
@@ -435,9 +435,8 @@
         <button type="button" class="scenery-opt-btn" data-scenery="rain">Rain</button>
     </div>
 
-    <!-- BACKGROUND ENVIRONMENT SCENES (INDOOR WINDOW WITH CARPET VS OUTDOOR FARM) -->
+    <!-- BACKGROUND ENVIRONMENT SCENES (INDOOR WINDOW WITH BLACK FLOOR VS OUTDOOR FARM) -->
     <div class="env-scene-backdrop" aria-hidden="true">
-        <!-- INDOOR SCENE: Window-clipped sun/moon/clouds/rain + strong light beam + dust + light grey carpet -->
         <div id="indoorScene" class="scene-layer indoor-scene is-active">
             <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
                 <defs>
@@ -462,18 +461,6 @@
                         <stop offset="60%" stop-color="#f5dfb9" stop-opacity="0.14" />
                         <stop offset="100%" stop-color="#8c6d49" stop-opacity="0.22" />
                     </linearGradient>
-
-                    <linearGradient id="lightGreyCarpetGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="#c4ccca" />
-                        <stop offset="50%" stop-color="#aeb7b5" />
-                        <stop offset="100%" stop-color="#949e9c" />
-                    </linearGradient>
-
-                    <pattern id="carpetFiberPattern" width="8" height="8" patternUnits="userSpaceOnUse">
-                        <rect width="8" height="8" fill="transparent" />
-                        <circle cx="2" cy="2" r="0.9" fill="#eef3f2" opacity="0.28" />
-                        <circle cx="6" cy="5" r="0.9" fill="#6b7573" opacity="0.22" />
-                    </pattern>
                 </defs>
 
                 <!-- Window glass base -->
@@ -535,10 +522,8 @@
                     <circle class="dust-mote d-slow" cx="235" cy="525" r="2.4" />
                 </g>
 
-                <!-- Light Grey Carpet floor at bottom (replaces black floor) -->
-                <rect x="0" y="765" width="1440" height="135" fill="url(#lightGreyCarpetGrad)" />
-                <rect x="0" y="765" width="1440" height="135" fill="url(#carpetFiberPattern)" />
-                <line x1="0" y1="765" x2="1440" y2="765" stroke="rgba(255, 255, 255, 0.36)" stroke-width="2" />
+                <!-- Black floor at bottom -->
+                <rect x="0" y="785" width="1440" height="115" fill="rgba(4, 10, 8, 0.92)" />
             </svg>
         </div>
 
@@ -666,7 +651,7 @@
                     </linearGradient>
                 </defs>
 
-                <ellipse cx="235" cy="724" rx="155" ry="13" fill="rgba(0, 0, 0, 0.35)" />
+                <ellipse cx="235" cy="724" rx="155" ry="13" fill="rgba(0, 0, 0, 0.55)" />
 
                 <g opacity="0.85">
                     <path class="grass-blade" d="M 88 724 Q 76 668 58 634 Q 84 668 98 724 Z" fill="url(#grassGrad)" />

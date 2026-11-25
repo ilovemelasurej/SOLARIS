@@ -7,7 +7,11 @@
     <link rel="stylesheet" href="styles.css">
     <script type="module" src="script.js"></script>
     <style>
-        /* Background-only scenery layer behind the existing dashboard */
+        :root {
+            --scroll-sprout: 0;
+        }
+
+        /* Background-only scenery + scroll-growing sprout behind dashboard boxes */
         .solaris-bg-layer {
             position: fixed;
             inset: 0;
@@ -112,6 +116,17 @@
             animation: bgDropFall 0.9s linear infinite;
         }
 
+        /* Sprout emerging upward from bottom/soil as user scrolls down */
+        .scroll-sprout-plant {
+            opacity: calc(min(1, var(--scroll-sprout) * 1.45));
+            transform:
+                translateY(calc((1 - var(--scroll-sprout)) * 260px))
+                scale(calc(0.45 + var(--scroll-sprout) * 0.55));
+            transform-box: fill-box;
+            transform-origin: bottom center;
+            transition: transform 0.08s linear, opacity 0.1s linear;
+        }
+
         /* Compact scenery pill in top-right without shifting dashboard boxes */
         .solaris-bg-switcher {
             position: fixed;
@@ -156,7 +171,7 @@
     </style>
 </head>
 <body class="bg-mood-daylight">
-    <!-- BACKGROUND-ONLY LAYER (DOES NOT AFFECT DASHBOARD BOXES) -->
+    <!-- BACKGROUND-ONLY LAYER WITH SCROLL-GROWING SPROUT -->
     <div class="solaris-bg-layer" aria-hidden="true">
         <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
             <defs>
@@ -164,6 +179,17 @@
                     <stop offset="0%" stop-color="#071d18" stop-opacity="0.45" />
                     <stop offset="65%" stop-color="#0a261f" stop-opacity="0.25" />
                     <stop offset="100%" stop-color="#171009" stop-opacity="0.65" />
+                </linearGradient>
+
+                <linearGradient id="sproutStemGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stop-color="#458b29" />
+                    <stop offset="100%" stop-color="#84cc39" />
+                </linearGradient>
+
+                <linearGradient id="sproutLeafGrad" x1="15%" y1="10%" x2="85%" y2="90%">
+                    <stop offset="0%" stop-color="#9be148" />
+                    <stop offset="55%" stop-color="#69b82c" />
+                    <stop offset="100%" stop-color="#3f7c19" />
                 </linearGradient>
             </defs>
 
@@ -196,6 +222,33 @@
                     <line class="bg-rain-drop" x1="340" y1="200" x2="328" y2="231" style="animation-delay: -0.15s;" />
                     <line class="bg-rain-drop" x1="405" y1="165" x2="393" y2="196" style="animation-delay: -0.6s;" />
                 </g>
+            </g>
+
+            <!-- Scroll-emerge 3-leaf sprout in background -->
+            <g class="scroll-sprout-plant" transform="translate(520, 350)">
+                <!-- Stem -->
+                <path d="M 192 550 C 194 455, 186 385, 205 305 C 216 258, 232 215, 250 172"
+                      stroke="#1b2614" stroke-width="26" stroke-linecap="round" fill="none" />
+                <path d="M 192 550 C 194 455, 186 385, 205 305 C 216 258, 232 215, 250 172"
+                      stroke="url(#sproutStemGrad)" stroke-width="18" stroke-linecap="round" fill="none" />
+
+                <!-- Left Leaf -->
+                <path d="M 198 370 C 145 315, 68 308, 24 342 C 56 410, 128 432, 194 396 Z"
+                      fill="url(#sproutLeafGrad)" stroke="#1b2614" stroke-width="7" stroke-linejoin="round" />
+                <path d="M 188 376 Q 112 356 46 346" stroke="#2f5e13" stroke-width="3.5" stroke-linecap="round" fill="none" />
+                <ellipse cx="96" cy="342" rx="18" ry="7" transform="rotate(-14 96 342)" fill="rgba(226, 255, 168, 0.38)" />
+
+                <!-- Right Leaf -->
+                <path d="M 206 432 C 255 392, 326 392, 368 424 C 338 485, 268 502, 208 462 Z"
+                      fill="url(#sproutLeafGrad)" stroke="#1b2614" stroke-width="7" stroke-linejoin="round" />
+                <path d="M 216 442 Q 286 432 346 426" stroke="#2f5e13" stroke-width="3.5" stroke-linecap="round" fill="none" />
+                <ellipse cx="294" cy="418" rx="16" ry="6.5" transform="rotate(10 294 418)" fill="rgba(226, 255, 168, 0.35)" />
+
+                <!-- Top Center Leaf -->
+                <path d="M 204 312 C 196 232, 224 148, 276 106 C 314 156, 304 246, 236 318 Z"
+                      fill="url(#sproutLeafGrad)" stroke="#1b2614" stroke-width="7" stroke-linejoin="round" />
+                <path d="M 212 304 Q 244 214 270 126" stroke="#2f5e13" stroke-width="3.5" stroke-linecap="round" fill="none" />
+                <ellipse cx="268" cy="186" rx="10" ry="22" transform="rotate(18 268 186)" fill="rgba(226, 255, 168, 0.38)" />
             </g>
         </svg>
     </div>
@@ -556,13 +609,24 @@
                 localStorage.setItem("configuredScenery", chosen);
             }
 
+            function updateScrollSprout() {
+                const scrollTop = window.scrollY || window.pageYOffset || 0;
+                const docHeight = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+                const progress = Math.min(1, Math.max(0, scrollTop / docHeight));
+                document.documentElement.style.setProperty("--scroll-sprout", progress.toFixed(4));
+            }
+
             buttons.forEach((btn) => {
                 btn.addEventListener("click", () => {
                     applyBgScenery(btn.getAttribute("data-bg-scenery"));
                 });
             });
 
+            window.addEventListener("scroll", updateScrollSprout, { passive: true });
+            window.addEventListener("resize", updateScrollSprout, { passive: true });
+
             applyBgScenery(localStorage.getItem("configuredScenery") || "daylight");
+            updateScrollSprout();
         });
     </script>
 </body>

@@ -2,7 +2,11 @@ const DB_URL = "https://solaris-1c-default-rtdb.firebaseio.com";
 const SENSOR_REFRESH_INTERVAL_MS = 2000;
 const REQUEST_TIMEOUT_MS = 5000;
 
-// Recorded plant profiles: optimal schedule, optimal liters, and estimated pump flow (~2.0 L/min = 33.3 mL/s)
+// Measured 1-dripper rate from 20s test (~20.5-22.3 mL => ~1.07 mL/s => ~64.2 mL/min => ~0.0642 L/min)
+const DRIPPER_ML_PER_SEC = 1.07;
+const DRIPPER_ML_PER_MIN = DRIPPER_ML_PER_SEC * 60; // ~64.2 mL/min
+const DRIPPER_L_PER_MIN  = DRIPPER_ML_PER_MIN / 1000; // ~0.0642 L/min
+
 const PLANT_PROFILES = {
     Kalamansi: {
         Indoor:  { optimalTime: "06:00", intervalHours: 36, optimalLiters: 0.35 },
@@ -14,7 +18,17 @@ const PLANT_PROFILES = {
     }
 };
 
-const ESTIMATED_PUMP_LPM = 2.0; // Ginagamit para kalkulahin ang target runtime kung walang flow pulse
+// ===================== SCROLL TRANSITION (VIBEY -> SOIL & ROOTS) =====================
+function updateScrollRootsProgress() {
+    const scrollTop = window.scrollY || window.pageYOffset || 0;
+    const docHeight = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    const progress = Math.min(1, Math.max(0, scrollTop / docHeight));
+    document.documentElement.style.setProperty("--scroll-progress", progress.toFixed(4));
+}
+
+window.addEventListener("scroll", updateScrollRootsProgress, { passive: true });
+window.addEventListener("resize", updateScrollRootsProgress, { passive: true });
+updateScrollRootsProgress();
 
 // ===================== PAGE 1: PLANT CONFIGURATION =====================
 const environmentButtons = document.querySelectorAll(".environment-buttons button");
@@ -118,9 +132,9 @@ function formatDurationHMS(totalSeconds) {
     return `${hrs}:${mins}:${secs}`;
 }
 
-function estimateDurationSecondsFromLiters(liters) {
-    const lpm = ESTIMATED_PUMP_LPM > 0 ? ESTIMATED_PUMP_LPM : 2.0;
-    return Math.max(2, Math.round((liters / lpm) * 60));
+function estimateActiveSecondsFromLiters(liters) {
+    const ml = liters * 1000;
+    return Math.max(2, Math.round(ml / DRIPPER_ML_PER_SEC));
 }
 
 function getPlantConfig() {
@@ -141,14 +155,14 @@ function getRecordedPlantOptimal(plant, environment, soilPct = null) {
     }
 
     liters = Number(Math.min(2.0, Math.max(0.10, liters)).toFixed(2));
-    const estSeconds = estimateDurationSecondsFromLiters(liters);
+    const estActiveSeconds = estimateActiveSecondsFromLiters(liters);
 
     return {
         optimalTime: base.optimalTime,
         intervalHours: base.intervalHours,
         optimalLiters: liters,
         targetVolumeMl: Math.round(liters * 1000),
-        estSeconds
+        estActiveSeconds
     };
 }
 
@@ -202,7 +216,6 @@ function isIrrigationBusy(irrigation) {
 // ===================== LIVE MANUAL TIMER STATE =====================
 let manualOpenStartedAtMs = null;
 let latestSoilMoisturePct = null;
-let latestFlowLpm = 0;
 
 function updateManualTimerUI() {
     const btn = document.querySelector("#manualIrrigateButton");
@@ -213,17 +226,20 @@ function updateManualTimerUI() {
     const indEl = document.querySelector("#manualModeIndication");
     const flowEl = document.querySelector("#manualLiveFlowText");
 
-    if (flowEl) flowEl.textContent = `${Number(latestFlowLpm || 0).toFixed(2)} L/min`;
+    if (flowEl) {
+        flowEl.textContent = `${DRIPPER_L_PER_MIN.toFixed(3)} L/min · ${DRIPPER_ML_PER_MIN.toFixed(1)} mL/min`;
+    }
 
     if (manualOpenStartedAtMs !== null) {
         const elapsedSec = (Date.now() - manualOpenStartedAtMs) / 1000;
         const formatted = formatDurationHMS(elapsedSec);
+        const estMl = (elapsedSec * DRIPPER_ML_PER_SEC).toFixed(1);
         if (btn) btn.classList.add("is-open");
         if (labelEl) labelEl.textContent = "Close Pump";
         if (pillEl) pillEl.textContent = formatted;
         if (fullTimerEl) fullTimerEl.textContent = formatted;
         if (stateEl) stateEl.textContent = "OPEN (WATERING)";
-        if (indEl) indEl.textContent = `Pump open for ${formatted} — tap button again to close.`;
+        if (indEl) indEl.textContent = `Open for ${formatted} (~${estMl} mL) — tap again to close.`;
     } else {
         if (btn) btn.classList.remove("is-open");
         if (labelEl) labelEl.textContent = "Open Pump";
@@ -239,7 +255,7 @@ window.setInterval(updateManualTimerUI, 500);
 function setDisconnectedState() {
     setReading("#temperatureValue", null);
     setReading("#humidityValue", null);
-    setReading("#waterFlowValue", null);
+    setReading("#waterFlowValue", DRIPPER_L_PER_MIN, 3);
     setReading("#waterLevelValue", null);
     setReading("#batteryVoltageValue", null);
     setReading("#solarVoltageValue", null);
@@ -297,14 +313,16 @@ async function updateDashboardFromFirebase() {
             irrigation.status = "EXPIRED";
         }
 
-        // 1. Sensor Values
-        const flowVal = readNumber(sensors, "waterFlowLpm", "waterFlow");
-        latestFlowLpm = flowVal !== null ? flowVal : 0;
-
+        // 1. Sensor Values (Dripper flow rate in L/min + mL/min)
         setReading("#temperatureValue", readNumber(sensors, "temperature", "temperatureC"), 1);
         setReading("#humidityValue", readNumber(sensors, "humidity", "humidityPercent"), 1);
-        setReading("#waterFlowValue", flowVal, 2);
+        setReading("#waterFlowValue", DRIPPER_L_PER_MIN, 3);
         setReading("#waterLevelValue", readNumber(sensors, "waterLevelPct", "waterLevelPercent"), 0);
+
+        const dripDetailEl = document.querySelector("#dripperRateDetail");
+        if (dripDetailEl) {
+            dripDetailEl.textContent = `~${DRIPPER_ML_PER_MIN.toFixed(1)} mL/min · ~${DRIPPER_ML_PER_SEC.toFixed(2)} mL/s (1 dripper)`;
+        }
 
         const batV = readNumber(sensors, "batteryVoltage");
         const solV = readNumber(sensors, "solarVoltage");
@@ -348,7 +366,6 @@ async function updateDashboardFromFirebase() {
             String(irrigation.status || "").toUpperCase() === "RUNNING" || Boolean(irrigation.manualPump);
         setDeviceState("#pumpStatus", isPumpRunning ? "on" : "off");
 
-        // Sync manual timer if opened from Firebase
         if (irrigation.manualPump) {
             if (manualOpenStartedAtMs === null) {
                 const parsedStart = irrigation.manualStartedAt ? Date.parse(irrigation.manualStartedAt) : NaN;
@@ -361,6 +378,7 @@ async function updateDashboardFromFirebase() {
 
         // 5. Render 3 Cards + Lower Status & History
         renderIrrigationFromFirebase(irrigation);
+        updateScrollRootsProgress();
 
         telemetryStatus.textContent = `Live data from Firebase · updated ${new Date().toLocaleTimeString()}`;
     } catch (error) {
@@ -391,24 +409,25 @@ function renderIrrigationFromFirebase(irrigation) {
     const irrigateBtn = document.querySelector("#smartIrrigateButton");
     const customSchedBtn = document.querySelector("#scheduledIrrigateButton");
 
-    // Smart card spec displays
     const smartTimeEl = document.querySelector("#smartOptimalTimeDisplay");
     const smartLitersEl = document.querySelector("#smartOptimalLitersDisplay");
-    const smartDurEl = document.querySelector("#smartEstDurationDisplay");
     const smartIndEl = document.querySelector("#smartModeIndication");
 
     if (smartTimeEl) smartTimeEl.textContent = formatTime(profile.optimalTime);
-    if (smartLitersEl) smartLitersEl.textContent = `${profile.optimalLiters.toFixed(2)} L`;
-    if (smartDurEl) smartDurEl.textContent = `~${profile.estSeconds}s`;
+    if (smartLitersEl) {
+        smartLitersEl.textContent = `${profile.optimalLiters.toFixed(2)} L (${profile.targetVolumeMl} mL)`;
+    }
     if (smartIndEl) {
         smartIndEl.textContent =
-            `Matches ${activePlant} (${activeEnv}) optimal time & ${profile.optimalLiters.toFixed(2)} L water need.`;
+            `Optimal for ${activePlant} (${activeEnv}) · ~${profile.estActiveSeconds}s active pump time (pulsed 90s run / 120s rest).`;
     }
 
     if (title) title.textContent = `${activePlant} Dashboard`;
     if (configuredText) configuredText.textContent = `${activePlant} · ${activeEnv}`;
     if (historyName) historyName.textContent = `${activePlant} Status & History`;
-    if (lowerOptimalLiters) lowerOptimalLiters.textContent = `${profile.optimalLiters.toFixed(2)} L`;
+    if (lowerOptimalLiters) {
+        lowerOptimalLiters.textContent = `${profile.optimalLiters.toFixed(2)} L (${profile.targetVolumeMl} mL)`;
+    }
 
     const dbStatus = String(irrigation.status || "IDLE").toUpperCase();
     const mode = String(irrigation.mode || "SMART").toUpperCase();
@@ -430,7 +449,6 @@ function renderIrrigationFromFirebase(irrigation) {
         customSchedBtn.disabled = dbStatus === "RUNNING" || Boolean(irrigation.manualPump);
     }
 
-    // Custom Schedule card display
     const customDtEl = document.querySelector("#customScheduleDateTimeDisplay");
     const customLitersEl = document.querySelector("#customScheduleLitersDisplay");
     const customBadgeEl = document.querySelector("#customScheduleStatusBadge");
@@ -439,12 +457,12 @@ function renderIrrigationFromFirebase(irrigation) {
     if (mode === "CUSTOM_SCHEDULE" && (busy || dbStatus === "COMPLETED")) {
         const customL = readNumber(irrigation, "targetLiters") ?? profile.optimalLiters;
         if (customDtEl) customDtEl.textContent = formatDateYYYYMMDDToDisplay(irrigation.optimalDate, irrigation.optimalTime);
-        if (customLitersEl) customLitersEl.textContent = `${customL.toFixed(2)} L`;
+        if (customLitersEl) customLitersEl.textContent = `${customL.toFixed(2)} L (${Math.round(customL * 1000)} mL)`;
         if (customBadgeEl) customBadgeEl.textContent = dbStatus;
         if (customIndEl) {
             customIndEl.textContent = busy
-                ? `Scheduled to dispense ${customL.toFixed(2)} L on ${irrigation.optimalDate} at ${formatTime(irrigation.optimalTime)}.`
-                : `Last custom run (${customL.toFixed(2)} L) completed.`;
+                ? `Scheduled to deliver ${customL.toFixed(2)} L on ${irrigation.optimalDate} at ${formatTime(irrigation.optimalTime)}.`
+                : `Last custom schedule (${customL.toFixed(2)} L) completed.`;
         }
     } else {
         if (customDtEl) customDtEl.textContent = "Not set";
@@ -455,9 +473,11 @@ function renderIrrigationFromFirebase(irrigation) {
 
     if (statusEl) {
         if (irrigation.manualPump) statusEl.textContent = "Manual irrigation active (pump open)";
-        else if (dbStatus === "RUNNING") statusEl.textContent = "Pump currently watering...";
+        else if (dbStatus === "RUNNING") statusEl.textContent = "Pump currently watering (pulsed mode)...";
         else if (busy) statusEl.textContent = `Irrigation scheduled (${mode === "CUSTOM_SCHEDULE" ? "Custom" : "Smart"})`;
         else if (dbStatus === "COMPLETED") statusEl.textContent = `Completed (${irrigation.lastWateredAt || "Recent"})`;
+        else if (dbStatus === "SKIPPED_RAIN") statusEl.textContent = "Full stop: Raining during trigger (records active)";
+        else if (dbStatus === "SKIPPED_MOIST") statusEl.textContent = "Skipped: Soil already moist for this plant";
         else if (dbStatus === "EXPIRED") statusEl.textContent = "Previous schedule expired · Ready";
         else statusEl.textContent = "Irrigation not scheduled";
     }
@@ -498,8 +518,9 @@ function renderIrrigationFromFirebase(irrigation) {
                 const pName = entry.plantType || activePlant;
                 const envName = entry.environment || activeEnv;
                 const ml = readNumber(entry, "dispensedMl");
-                const volText = ml !== null && ml > 0 ? ` · ${(ml / 1000).toFixed(2)} L` : "";
-                item.textContent = `${stamp} — ${pName} (${envName})${volText}`;
+                const volText = ml !== null ? ` · ${(ml / 1000).toFixed(2)} L (${ml.toFixed(0)} mL)` : "";
+                const noteText = entry.note ? ` [${entry.note}]` : "";
+                item.textContent = `${stamp} — ${pName} (${envName})${volText}${noteText}`;
                 historyList.appendChild(item);
             });
         }
@@ -526,7 +547,7 @@ if (smartIrrigateButton && irrigationDialog) {
         if (dialogPlantEl) dialogPlantEl.textContent = `Smart Irrigate: ${plant} (${environment})`;
         if (dialogScheduleEl) {
             dialogScheduleEl.textContent =
-                `Arms pump for recorded optimal time ${formatDateYYYYMMDDToDisplay(targetDate, profile.optimalTime)} to dispense ${profile.optimalLiters.toFixed(2)} L (~${profile.estSeconds}s).`;
+                `Scheduled at ${formatDateYYYYMMDDToDisplay(targetDate, profile.optimalTime)} for ${profile.optimalLiters.toFixed(2)} L (${profile.targetVolumeMl} mL, ~${profile.estActiveSeconds}s active run at ${DRIPPER_ML_PER_MIN.toFixed(1)} mL/min).`;
         }
 
         if (typeof irrigationDialog.showModal === "function") irrigationDialog.showModal();
@@ -560,7 +581,7 @@ if (smartIrrigateButton && irrigationDialog) {
                     optimalTime: profile.optimalTime,
                     targetLiters: profile.optimalLiters,
                     targetVolumeMl: profile.targetVolumeMl,
-                    targetDurationMs: profile.estSeconds * 1000,
+                    targetDurationMs: profile.estActiveSeconds * 1000,
                     triggerId: triggerId,
                     plantType: plant,
                     environment: environment
@@ -581,7 +602,7 @@ if (smartIrrigateButton && irrigationDialog) {
     });
 }
 
-// ===================== 2. CENTER: MANUAL IRRIGATE (ON-THE-SPOT TOGGLE + TIMER) =====================
+// ===================== 2. CENTER: MANUAL IRRIGATE (TOGGLE + TIMER) =====================
 const manualIrrigateButton = document.querySelector("#manualIrrigateButton");
 
 if (manualIrrigateButton) {
@@ -627,6 +648,7 @@ if (manualIrrigateButton) {
                 const durationSec = manualOpenStartedAtMs
                     ? Math.max(1, Math.round((Date.now() - manualOpenStartedAtMs) / 1000))
                     : 0;
+                const estMl = Number((durationSec * DRIPPER_ML_PER_SEC).toFixed(1));
                 manualOpenStartedAtMs = null;
 
                 if (durationSec > 0) {
@@ -645,6 +667,7 @@ if (manualIrrigateButton) {
                             plantType: plant,
                             environment: environment,
                             timestampText: `${stamp} (Manual ${formatDurationHMS(durationSec)})`,
+                            dispensedMl: estMl,
                             mode: "MANUAL",
                             durationSeconds: durationSec
                         })
@@ -683,15 +706,15 @@ function refreshCustomModalIndication() {
     if (!indBox) return;
 
     const validLiters = Number.isFinite(liters) && liters > 0 ? liters : 0;
-    const estSec = estimateDurationSecondsFromLiters(validLiters);
+    const estActiveSec = estimateActiveSecondsFromLiters(validLiters);
 
-    let msg = `Schedule: ${mm}/${dd}/20${yy} at ${hr}:${min} · Water: ${validLiters.toFixed(2)} L (~${estSec}s runtime). `;
+    let msg = `Schedule: ${mm}/${dd}/20${yy} at ${hr}:${min} · ${validLiters.toFixed(2)} L (${Math.round(validLiters * 1000)} mL) · ~${estActiveSec}s active at ${DRIPPER_ML_PER_MIN.toFixed(1)} mL/min. `;
     if (validLiters > rec.optimalLiters * 1.4) {
-        msg += `Warning: Exceeds ${plant} optimal (${rec.optimalLiters.toFixed(2)} L) — risk of overwatering.`;
+        msg += `Warning: Above ${plant} optimal (${rec.optimalLiters.toFixed(2)} L).`;
     } else if (validLiters > 0 && validLiters < rec.optimalLiters * 0.5) {
         msg += `Note: Below ${plant} optimal (${rec.optimalLiters.toFixed(2)} L).`;
     } else {
-        msg += `Within safe range for ${plant} (${environment}).`;
+        msg += `Matches ${plant} (${environment}) range.`;
     }
     indBox.textContent = msg;
 }
@@ -769,7 +792,7 @@ if (scheduledIrrigateButton && customScheduleDialog) {
         const optimalDate = `${yyyy}-${mm}-${dd}`;
         const optimalTime = `${hr}:${min}`;
         const targetVolumeMl = Math.round(liters * 1000);
-        const targetDurationMs = estimateDurationSecondsFromLiters(liters) * 1000;
+        const targetDurationMs = estimateActiveSecondsFromLiters(liters) * 1000;
         const { plant, environment } = getPlantConfig();
         const triggerId = `CUSTOM_${optimalDate}_${optimalTime}_${Date.now()}`;
 

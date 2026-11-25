@@ -1,21 +1,129 @@
-import Header from "./components/Header";
-import SensorGrid from "./components/SensorGrid";
-import PlantProfile from "./components/PlantProfile";
-import IrrigationPrediction from "./components/IrrigationPrediction";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configure Your Plant — SOLARIS</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+</head>
+<body class="config-page">
+    <main class="dashboard config-dashboard">
+        <div class="config-layout">
+            <!-- 2D ANIMATED PLANT STAGE (ENTRANCE + LIVE PLANT MORPH/SWITCH) -->
+            <aside class="plant-2d-stage is-entering" id="plant2dStage" aria-label="2D Plant Preview">
+                <div class="plant-aura" id="plantAura"></div>
 
-function App() {
-  return (
-    <div className="dashboard">
-      <Header />
+                <svg id="plant2dSvg" class="plant-2d-svg" viewBox="0 0 260 280" role="img" aria-label="2D Plant Illustration">
+                    <defs>
+                        <linearGradient id="potGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#b85d3b" />
+                            <stop offset="50%" stop-color="#d47652" />
+                            <stop offset="100%" stop-color="#8c4227" />
+                        </linearGradient>
+                        <linearGradient id="soilGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#4a2c18" />
+                            <stop offset="100%" stop-color="#241309" />
+                        </linearGradient>
+                        <linearGradient id="leafGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#58e096" />
+                            <stop offset="100%" stop-color="#1f8a5b" />
+                        </linearGradient>
+                        <radialGradient id="kalamansiFruitGrad" cx="35%" cy="30%" r="70%">
+                            <stop offset="0%" stop-color="#b8f252" />
+                            <stop offset="65%" stop-color="#6cc22b" />
+                            <stop offset="100%" stop-color="#3c8214" />
+                        </radialGradient>
+                    </defs>
 
-      <SensorGrid />
+                    <!-- Soft ground shadow -->
+                    <ellipse cx="130" cy="256" rx="74" ry="11" fill="rgba(0, 0, 0, 0.42)" />
 
-      <div className="bottom-section">
-        <PlantProfile />
-        <IrrigationPrediction />
-      </div>
-    </div>
-  );
-}
+                    <!-- KALAMANSI 2D ARTWORK -->
+                    <g id="artworkKalamansi" class="plant-artwork is-active">
+                        <!-- Main woody stem & branches -->
+                        <path class="plant-stem" d="M130 192 C130 162, 128 136, 126 104" stroke="#6d8f4d" stroke-width="6.5" stroke-linecap="round" fill="none" />
+                        <path class="plant-stem" d="M128 145 C106 130, 88 122, 72 114" stroke="#6d8f4d" stroke-width="4.5" stroke-linecap="round" fill="none" />
+                        <path class="plant-stem" d="M128 132 C150 116, 168 108, 188 100" stroke="#6d8f4d" stroke-width="4.5" stroke-linecap="round" fill="none" />
+                        <path class="plant-stem" d="M127 112 C112 92, 100 80, 88 70" stroke="#6d8f4d" stroke-width="3.8" stroke-linecap="round" fill="none" />
+                        <path class="plant-stem" d="M127 108 C142 86, 154 72, 166 62" stroke="#6d8f4d" stroke-width="3.8" stroke-linecap="round" fill="none" />
 
-export default App;
+                        <!-- Citrus leaves -->
+                        <ellipse class="plant-leaf sway-a" cx="68" cy="110" rx="22" ry="10" transform="rotate(-24 68 110)" fill="url(#leafGrad)" />
+                        <ellipse class="plant-leaf sway-b" cx="192" cy="96" rx="22" ry="10" transform="rotate(24 192 96)" fill="url(#leafGrad)" />
+                        <ellipse class="plant-leaf sway-b" cx="84" cy="66" rx="20" ry="9.5" transform="rotate(-35 84 66)" fill="url(#leafGrad)" />
+                        <ellipse class="plant-leaf sway-a" cx="170" cy="58" rx="20" ry="9.5" transform="rotate(35 170 58)" fill="url(#leafGrad)" />
+                        <ellipse class="plant-leaf sway-a" cx="128" cy="48" rx="18" ry="9" transform="rotate(-8 128 48)" fill="url(#leafGrad)" />
+                        <ellipse class="plant-leaf sway-b" cx="98" cy="156" rx="18" ry="8.5" transform="rotate(-18 98 156)" fill="url(#leafGrad)" />
+                        <ellipse class="plant-leaf sway-a" cx="160" cy="152" rx="18" ry="8.5" transform="rotate(18 160 152)" fill="url(#leafGrad)" />
+
+                        <!-- Small Kalamansi fruits -->
+                        <g class="plant-fruit sway-a">
+                            <circle cx="94" cy="126" r="10" fill="url(#kalamansiFruitGrad)" />
+                            <circle cx="91" cy="123" r="2.5" fill="rgba(255,255,255,0.45)" />
+                        </g>
+                        <g class="plant-fruit sway-b">
+                            <circle cx="164" cy="116" r="10.5" fill="url(#kalamansiFruitGrad)" />
+                            <circle cx="161" cy="113" r="2.5" fill="rgba(255,255,255,0.45)" />
+                        </g>
+                        <g class="plant-fruit sway-b">
+                            <circle cx="128" cy="82" r="9.5" fill="url(#kalamansiFruitGrad)" />
+                            <circle cx="125" cy="79" r="2.2" fill="rgba(255,255,255,0.45)" />
+                        </g>
+                    </g>
+
+                    <!-- OREGANO 2D ARTWORK -->
+                    <g id="artworkOregano" class="plant-artwork">
+                        <!-- Cluster of soft herb stems -->
+                        <path class="plant-stem" d="M130 192 C122 162, 102 142, 82 124" stroke="#75b868" stroke-width="3.6" stroke-linecap="round" fill="none" />
+                        <path class="plant-stem" d="M130 192 C130 158, 130 132, 130 102" stroke="#75b868" stroke-width="4" stroke-linecap="round" fill="none" />
+                        <path class="plant-stem" d="M130 192 C138 162, 158 142, 178 124" stroke="#75b868" stroke-width="3.6" stroke-linecap="round" fill="none" />
+                        <path class="plant-stem" d="M126 164 C106 158, 90 154, 74 150" stroke="#75b868" stroke-width="2.8" stroke-linecap="round" fill="none" />
+                        <path class="plant-stem" d="M134 164 C154 158, 170 154, 186 150" stroke="#75b868" stroke-width="2.8" stroke-linecap="round" fill="none" />
+
+                        <!-- Bushy paired oregano leaves -->
+                        <ellipse class="plant-leaf sway-a" cx="76" cy="118" rx="15" ry="8" transform="rotate(-32 76 118)" fill="url(#leafGrad)" />
+                        <ellipse class="plant-leaf sway-b" cx="98" cy="114" rx="14" ry="7.5" transform="rotate(18 98 114)" fill="url(#leafGrad)" />
+                        <ellipse class="plant-leaf sway-b" cx="184" cy="118" rx="15" ry="8" transform="rotate(32 184 118)" fill="url(#leafGrad)" />
+                        <ellipse class="plant-leaf sway-a" cx="162" cy="114" rx="14" ry="7.5" transform="rotate(-18 162 114)" fill="url(#leafGrad)" />
+                        <ellipse class="plant-leaf sway-a" cx="114" cy="96" rx="16" ry="8" transform="rotate(-24 114 96)" fill="url(#leafGrad)" />
+                        <ellipse class="plant-leaf sway-b" cx="146" cy="96" rx="16" ry="8" transform="rotate(24 146 96)" fill="url(#leafGrad)" />
+                        <ellipse class="plant-leaf sway-a" cx="130" cy="82" rx="15" ry="7.5" fill="url(#leafGrad)" />
+                        <ellipse class="plant-leaf sway-b" cx="70" cy="148" rx="14" ry="7" transform="rotate(-14 70 148)" fill="url(#leafGrad)" />
+                        <ellipse class="plant-leaf sway-a" cx="190" cy="148" rx="14" ry="7" transform="rotate(14 190 148)" fill="url(#leafGrad)" />
+                    </g>
+
+                    <!-- Terracotta Pot & Soil -->
+                    <ellipse cx="130" cy="192" rx="54" ry="10" fill="url(#soilGrad)" />
+                    <path d="M74 192 L186 192 L173 250 C171 255, 166 258, 161 258 L99 258 C94 258, 89 255, 87 250 Z" fill="url(#potGrad)" />
+                    <rect x="68" y="186" width="124" height="12" rx="5" fill="#d97b57" />
+                </svg>
+
+                <div class="plant-2d-caption">
+                    <span class="plant-2d-badge" id="plant2dBadge">KALAMANSI · 2D PREVIEW</span>
+                    <p id="plant2dHint">Citrus profile · Optimal 06:00 AM</p>
+                </div>
+            </aside>
+
+            <section class="plant-config" aria-labelledby="configure-heading">
+                <h1 id="configure-heading">Configure Your Plant</h1>
+                <p>Select the plant and environment you want the irrigation system to operate.</p>
+
+                <label for="plantType">PLANT TYPE</label>
+                <select id="plantType" name="plantType">
+                    <option value="Kalamansi">Kalamansi</option>
+                    <option value="Oregano">Oregano</option>
+                </select>
+
+                <label id="environment-label">ENVIRONMENT</label>
+                <div class="environment-buttons" role="group" aria-labelledby="environment-label">
+                    <button type="button" id="indoor" class="active" aria-pressed="true">Indoor</button>
+                    <button type="button" id="outdoor" aria-pressed="false">Outdoor</button>
+                </div>
+
+                <a id="startMonitoring" href="monitoring.html">Start Monitoring</a>
+            </section>
+        </div>
+    </main>
+</body>
+</html>

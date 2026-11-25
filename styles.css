@@ -731,3 +731,168 @@ button:hover:not(:disabled) {
         text-align: left;
     }
 }
+/* ===================== 2D PLANT ENTRANCE & PLANT SWITCHING ===================== */
+.config-layout {
+    width: min(100%, 840px);
+    display: grid;
+    grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+    gap: 28px;
+    align-items: center;
+}
+
+body:has(.plant-config) .plant-config {
+    width: 100%;
+    animation: panelSlideIn 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.plant-2d-stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 18px 20px;
+    border-radius: 20px;
+    border: 1px solid rgba(88, 224, 150, 0.28);
+    background: linear-gradient(160deg, rgba(18, 57, 44, 0.72), rgba(10, 32, 26, 0.88));
+    box-shadow: 0 20px 42px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(28px) scale(0.94);
+    transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.35s ease;
+}
+
+.plant-2d-stage.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.plant-2d-stage.is-switching .plant-artwork.is-active {
+    animation: plantSwapPop 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.plant-aura {
+    position: absolute;
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(88, 224, 150, 0.26), rgba(73, 189, 232, 0.06) 65%, transparent 75%);
+    filter: blur(8px);
+    pointer-events: none;
+    transition: background 0.45s ease;
+}
+
+.plant-2d-stage.is-oregano .plant-aura {
+    background: radial-gradient(circle, rgba(243, 187, 82, 0.22), rgba(88, 224, 150, 0.14) 65%, transparent 75%);
+}
+
+.plant-2d-svg {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 230px;
+    height: auto;
+}
+
+.plant-artwork {
+    opacity: 0;
+    transform: scale(0.86) translateY(10px);
+    transform-origin: 130px 192px;
+    transition: opacity 0.38s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+}
+
+.plant-artwork.is-active {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+
+.sway-a {
+    animation: gentleLeafSwayA 3.8s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+.sway-b {
+    animation: gentleLeafSwayB 4.4s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+.plant-2d-caption {
+    position: relative;
+    z-index: 1;
+    margin-top: 8px;
+    text-align: center;
+}
+
+.plant-2d-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    color: #9bf5c4;
+    background: rgba(55, 201, 130, 0.16);
+    border: 1px solid rgba(55, 201, 130, 0.35);
+}
+
+.plant-2d-caption p {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: var(--theme-muted);
+}
+
+@keyframes panelSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes plantSwapPop {
+    0% {
+        transform: scale(0.84) translateY(12px);
+    }
+    65% {
+        transform: scale(1.04) translateY(-2px);
+    }
+    100% {
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes gentleLeafSwayA {
+    0%, 100% {
+        transform: rotate(-2deg);
+    }
+    50% {
+        transform: rotate(3deg);
+    }
+}
+
+@keyframes gentleLeafSwayB {
+    0%, 100% {
+        transform: rotate(2.5deg);
+    }
+    50% {
+        transform: rotate(-2.5deg);
+    }
+}
+
+@media (max-width: 760px) {
+    .config-layout {
+        grid-template-columns: 1fr;
+        max-width: 474px;
+    }
+    .plant-2d-svg {
+        max-width: 185px;
+    }
+}

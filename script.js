@@ -843,3 +843,32 @@ if (document.querySelector("#telemetryStatus")) {
     updateDashboardFromFirebase();
     window.setInterval(updateDashboardFromFirebase, SENSOR_REFRESH_INTERVAL_MS);
 }
+function sync2dPlantVisual(selectedPlantName, envName, animateSwap = false) {
+    const stage = document.querySelector("#plant2dStage");
+    const kalamansiArt = document.querySelector("#artworkKalamansi");
+    const oreganoArt = document.querySelector("#artworkOregano");
+    const badge = document.querySelector("#plant2dBadge");
+    const hint = document.querySelector("#plant2dHint");
+
+    if (!stage || !kalamansiArt || !oreganoArt) return;
+
+    const isOregano = String(selectedPlantName).toLowerCase() === "oregano";
+    kalamansiArt.classList.toggle("is-active", !isOregano);
+    oreganoArt.classList.toggle("is-active", isOregano);
+    stage.classList.toggle("is-oregano", isOregano);
+
+    if (badge) {
+        badge.textContent = `${isOregano ? "OREGANO" : "KALAMANSI"} · ${(envName || "Indoor").toUpperCase()}`;
+    }
+    if (hint) {
+        hint.textContent = isOregano
+            ? `Herb profile · Optimal 06:30 AM (${envName === "Outdoor" ? "0.25 L" : "0.18 L"})`
+            : `Citrus profile · Optimal 06:00 AM (${envName === "Outdoor" ? "0.50 L" : "0.35 L"})`;
+    }
+
+    if (animateSwap) {
+        stage.classList.remove("is-switching");
+        void stage.offsetWidth;
+        stage.classList.add("is-switching");
+    }
+}

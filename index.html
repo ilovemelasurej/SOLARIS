@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Configuration</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+</head>
+<body class="plant-setup-page">
+    <main class="dashboard">
+        <section class="plant-config">
+            <h1>Configure Your Plant</h1>
+            <p>Select the plant and environment you want the irrigation system to operate.</p>
+
+            <label for="plantType">Plant Type</label>
+            <select id="plantType">
+                <option value="Kalamansi">Kalamansi</option>
+                <option value="Oregano">Oregano</option>
+            </select>
+
+            <label>Environment</label>
+            <div class="environment-buttons" role="group" aria-label="Plant environment">
+                <button type="button" id="indoor" class="active" aria-pressed="true">Indoor</button>
+                <button type="button" id="outdoor" aria-pressed="false">Outdoor</button>
+            </div>
+
+            <a href="monitoring.html" id="startMonitoring">Start Monitoring</a>
+        </section>
+    </main>
+</body>
+</html>

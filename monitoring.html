@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Irrigation Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+</head>
+<body class="monitoring-page">
+    <main class="dashboard">
+        <header class="dashboard-header">
+            <div>
+                <p class="dashboard-kicker">SMART IRRIGATION</p>
+                <h1 id="activePlantTitle">Plant Dashboard</h1>
+            </div>
+            <a class="configure-link" href="index.html">Configure Plant</a>
+        </header>
+
+        <p id="telemetryStatus" class="telemetry-status" role="status" aria-live="polite">
+            Connecting to ESP/Arduino...
+        </p>
+
+        <section class="sensor-grid" aria-label="Live sensor readings">
+            <article class="sensor-card temperature-card">
+                <div class="sensor-title"><span aria-hidden="true">🌡️</span>TEMPERATURE</div>
+                <div class="sensor-value"><span id="temperatureValue">--</span> <span class="sensor-unit">°C</span></div>
+            </article>
+
+            <article class="sensor-card water-card">
+                <div class="sensor-title"><span aria-hidden="true">💧</span>HUMIDITY</div>
+                <div class="sensor-value"><span id="humidityValue">--</span> <span class="sensor-unit">%</span></div>
+            </article>
+
+            <article class="sensor-card water-card">
+                <div class="sensor-title"><span aria-hidden="true">💦</span>WATER FLOW</div>
+                <div class="sensor-value"><span id="waterFlowValue">--</span> <span class="sensor-unit">L/min</span></div>
+            </article>
+
+            <article class="sensor-card water-card">
+                <div class="sensor-title"><span aria-hidden="true">🪣</span>WATER LEVEL</div>
+                <div class="sensor-value"><span id="waterLevelValue">--</span> <span class="sensor-unit">%</span></div>
+            </article>
+
+            <article class="sensor-card soil-card">
+                <div class="sensor-title"><span aria-hidden="true">🌱</span>SOIL MOISTURE</div>
+                <div class="sensor-value rain-reading" id="soilMoistureReading">No data</div>
+                <div class="sensor-stats"><div class="stat" id="soilMoistureStatus">Waiting for sensor</div></div>
+            </article>
+
+            <article class="sensor-card battery-voltage-card">
+                <div class="sensor-title"><span aria-hidden="true">🔋</span>BATTERY VOLTAGE</div>
+                <div class="sensor-value"><span id="batteryVoltageValue">--</span> <span class="sensor-unit">V</span></div>
+            </article>
+
+            <article class="sensor-card solar-voltage-card">
+                <div class="sensor-title"><span aria-hidden="true">☀️</span>SOLAR VOLTAGE</div>
+                <div class="sensor-value"><span id="solarVoltageValue">--</span> <span class="sensor-unit">V</span></div>
+            </article>
+
+            <article class="sensor-card rain-card">
+                <div class="sensor-title"><span aria-hidden="true">🌧️</span>RAIN</div>
+                <div class="sensor-value rain-reading" id="rainReading" aria-live="polite">No data</div>
+                <div class="sensor-stats"><div class="stat" id="rainStatus">Waiting for sensor</div></div>
+            </article>
+        </section>
+
+        <section class="device-status-section" aria-labelledby="device-status-heading">
+            <h1 id="device-status-heading">Device Status</h1>
+            <div class="device-status-grid">
+                <article class="device-status-card solar-card">
+                    <div class="sensor-title"><span aria-hidden="true">☀️</span>SOLAR PANEL</div>
+                    <p class="device-state" id="solarStatus" data-state="unknown">Unknown</p>
+                </article>
+                <article class="device-status-card battery-card">
+                    <div class="sensor-title"><span aria-hidden="true">🔋</span>BATTERY</div>
+                    <p class="device-state" id="batteryStatus" data-state="unknown">Unknown</p>
+                </article>
+                <article class="device-status-card pump-card">
+                    <div class="sensor-title"><span aria-hidden="true">🚿</span>PUMP</div>
+                    <p class="device-state" id="pumpStatus" data-state="unknown">Unknown</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- 3-MODE IRRIGATION CONTROLS (LEFT: SMART | CENTER: MANUAL | RIGHT: SCHEDULED) -->
+        <section class="irrigation-controls-grid" aria-label="Irrigation control modes">
+            <!-- 1. LEFT: SMART IRRIGATE -->
+            <article class="control-mode-card smart-mode-card">
+                <div class="mode-card-header">
+                    <p class="section-kicker">AUTOMATED CONTROL</p>
+                    <h2>Smart Irrigate</h2>
+                    <p id="configuredPlantText">No plant configured</p>
+                </div>
+
+                <div class="mode-spec-box">
+                    <div class="mode-spec-row">
+                        <span>Optimal Time</span>
+                        <strong id="smartOptimalTimeDisplay">06:00 AM</strong>
+                    </div>
+                    <div class="mode-spec-row">
+                        <span>Optimal Volume</span>
+                        <strong id="smartOptimalLitersDisplay">0.35 L</strong>
+                    </div>
+                    <div class="mode-spec-row">
+                        <span>Est. Pump Runtime</span>
+                        <strong id="smartEstDurationDisplay">~11s</strong>
+                    </div>
+                    <small class="mode-indication" id="smartModeIndication">
+                        Matches recorded optimal time &amp; required liters for this plant.
+                    </small>
+                </div>
+
+                <button type="button" id="smartIrrigateButton" class="smart-irrigate-button">Smart Irrigate</button>
+
+                <div class="schedule-sheet" id="scheduleSheet" hidden>
+                    <span>To Operate:</span>
+                    <strong id="scheduledTime">Not scheduled</strong>
+                    <small id="scheduleStatus">Waiting for confirmation</small>
+                </div>
+            </article>
+
+            <!-- 2. CENTER: MANUAL IRRIGATE -->
+            <article class="control-mode-card manual-mode-card">
+                <div class="mode-card-header">
+                    <p class="section-kicker">DIRECT OVERRIDE</p>
+                    <h2>Manual Irrigate</h2>
+                    <p id="manualSubtitle">Tap to open pump · Tap again to close</p>
+                </div>
+
+                <div class="mode-spec-box">
+                    <div class="mode-spec-row">
+                        <span>Pump State</span>
+                        <strong id="manualPumpStateText">CLOSED</strong>
+                    </div>
+                    <div class="mode-spec-row">
+                        <span>Open Duration</span>
+                        <strong id="manualElapsedFull">00:00:00</strong>
+                    </div>
+                    <div class="mode-spec-row">
+                        <span>Live Flow</span>
+                        <strong id="manualLiveFlowText">0.00 L/min</strong>
+                    </div>
+                    <small class="mode-indication" id="manualModeIndication">
+                        Ready for instant on-the-spot pump control.
+                    </small>
+                </div>
+
+                <button type="button" id="manualIrrigateButton" class="manual-irrigate-button">
+                    <span id="manualButtonLabel">Open Pump</span>
+                    <span id="manualButtonTimer" class="manual-timer-pill">00:00:00</span>
+                </button>
+            </article>
+
+            <!-- 3. RIGHT: SCHEDULED IRRIGATE -->
+            <article class="control-mode-card scheduled-mode-card">
+                <div class="mode-card-header">
+                    <p class="section-kicker">CUSTOM TIMETABLE</p>
+                    <h2>Scheduled Irrigate</h2>
+                    <p id="customScheduleSubtitle">Custom date, time &amp; water volume</p>
+                </div>
+
+                <div class="mode-spec-box">
+                    <div class="mode-spec-row">
+                        <span>Scheduled Date/Time</span>
+                        <strong id="customScheduleDateTimeDisplay">Not set</strong>
+                    </div>
+                    <div class="mode-spec-row">
+                        <span>Target Water</span>
+                        <strong id="customScheduleLitersDisplay">-- L</strong>
+                    </div>
+                    <div class="mode-spec-row">
+                        <span>Schedule Status</span>
+                        <strong id="customScheduleStatusBadge">IDLE</strong>
+                    </div>
+                    <small class="mode-indication" id="customScheduleIndication">
+                        Set MM / DD / HR / MIN / YY and water volume in Liters (L).
+                    </small>
+                </div>
+
+                <button type="button" id="scheduledIrrigateButton" class="scheduled-irrigate-button">Scheduled Irrigate</button>
+            </article>
+        </section>
+
+        <!-- LOWER SECTION: PLANT RECORD, OPTIMAL NEED & HISTORY -->
+        <section class="irrigation-section" aria-label="Plant status and irrigation history">
+            <article class="plant-status-panel plant-status-full">
+                <div class="plant-status-top">
+                    <div>
+                        <p class="section-kicker">PLANT RECORD &amp; STATUS</p>
+                        <h2 id="historyPlantName">Plant History</h2>
+                        <p class="plant-status" id="plantStatus">Status unavailable</p>
+                    </div>
+                    <div class="plant-optimal-summary">
+                        <span>Optimal Need: <strong id="lowerOptimalLiters">-- L</strong></span>
+                        <span>Next Optimal Schedule: <strong id="nextSchedule">--</strong></span>
+                    </div>
+                </div>
+
+                <h3>Irrigation History</h3>
+                <ul class="history-list" id="irrigationHistory">
+                    <li>No watering sessions recorded.</li>
+                </ul>
+            </article>
+        </section>
+    </main>
+
+    <!-- DIALOG 1: SMART IRRIGATE CONFIRMATION -->
+    <dialog id="irrigationDialog" class="irrigation-dialog">
+        <form method="dialog">
+            <p class="section-kicker">CONFIRM SMART IRRIGATION</p>
+            <h2 id="dialogPlantName">Operate irrigation?</h2>
+            <p id="dialogScheduleText">Use the optimal irrigation schedule and volume for this plant.</p>
+            <div class="dialog-actions">
+                <button type="button" id="cancelIrrigation">Cancel</button>
+                <button type="button" id="operateIrrigation" class="operate-button">Operate</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- DIALOG 2: SCHEDULED IRRIGATE (MM, DD, HR, MIN, YY + WATER IN L) -->
+    <dialog id="customScheduleDialog" class="irrigation-dialog custom-schedule-dialog">
+        <form id="customScheduleForm" method="dialog">
+            <p class="section-kicker">CUSTOM SCHEDULED IRRIGATION</p>
+            <h2 id="customDialogTitle">Set Date, Time &amp; Volume</h2>
+            <p id="customDialogSubtitle">Enter target schedule (MM / DD / HR / MIN / YY) and water in Liters.</p>
+
+            <div class="datetime-inputs-grid">
+                <label class="dt-field">
+                    <span>MM</span>
+                    <input type="number" id="schedMM" min="1" max="12" placeholder="11" required>
+                </label>
+                <label class="dt-field">
+                    <span>DD</span>
+                    <input type="number" id="schedDD" min="1" max="31" placeholder="26" required>
+                </label>
+                <label class="dt-field">
+                    <span>HR</span>
+                    <input type="number" id="schedHR" min="0" max="23" placeholder="06" required>
+                </label>
+                <label class="dt-field">
+                    <span>MIN</span>
+                    <input type="number" id="schedMIN" min="0" max="59" placeholder="30" required>
+                </label>
+                <label class="dt-field">
+                    <span>YY</span>
+                    <input type="number" id="schedYY" min="25" max="99" placeholder="26" required>
+                </label>
+            </div>
+
+            <div class="liters-input-group">
+                <label for="schedLiters">
+                    <span>WATER VOLUME (LITERS / L)</span>
+                    <input type="number" id="schedLiters" step="0.05" min="0.05" max="10.00" value="0.25" required>
+                </label>
+                <div class="liters-presets">
+                    <button type="button" class="liter-preset-btn" data-liters="0.18">0.18 L</button>
+                    <button type="button" class="liter-preset-btn" data-liters="0.25">0.25 L</button>
+                    <button type="button" class="liter-preset-btn" data-liters="0.35">0.35 L</button>
+                    <button type="button" class="liter-preset-btn" data-liters="0.50">0.50 L</button>
+                </div>
+            </div>
+
+            <div class="custom-indication-box" id="customModalIndication" role="status">
+                Preview: --/--/20-- at --:-- · 0.25 L
+            </div>
+
+            <div class="dialog-actions">
+                <button type="button" id="cancelCustomSchedule">Cancel</button>
+                <button type="submit" id="saveCustomSchedule" class="operate-button">Set Schedule</button>
+            </div>
+        </form>
+    </dialog>
+</body>
+</html>

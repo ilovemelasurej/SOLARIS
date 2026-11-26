@@ -19,7 +19,7 @@
         }
     };
 
-const AMBIENT_TRACKS = {
+    const AMBIENT_TRACKS = {
         outdoor_daylight: { file: "Outdoor daylight and sunset.mp3", label: "Outdoor Daylight" },
         outdoor_sunset:   { file: "Outdoor daylight and sunset.mp3", label: "Outdoor Sunset" },
         outdoor_rain:     { file: "Outdoor raining.mp3",              label: "Outdoor Rain" },
@@ -83,11 +83,16 @@ const AMBIENT_TRACKS = {
 
     window.addEventListener("hashchange", () => applyRouteView(getActiveRouteView()));
 
-    // ===================== SCENERY & SPECIES STATE =====================
+    // ===================== SCENERY, SPECIES & LIVE TELEMETRY STATE =====================
     let currentScenery = localStorage.getItem("configuredScenery") || "daylight";
     let currentEnvironment = localStorage.getItem("configuredEnvironment") || "Indoor";
     let currentPlant = localStorage.getItem("configuredPlant") || "Kalamansi";
-    let latestSoilMoisturePct = null;
+    let latestTelemetry = {
+        temperature: null,
+        humidity: null,
+        soilMoisturePct: null,
+        rainStatus: ""
+    };
     let manualOpenStartedAtMs = null;
     let lastClearedExpiredId = "";
 
@@ -483,6 +488,7 @@ const AMBIENT_TRACKS = {
 
     function estimateActiveSecondsFromLiters(liters) {
         const ml = liters * 1000;
+        if (ml <= 0) return 0;
         return Math.max(2, Math.round(computeTargetDurationMsFromVolumeMl(ml) / 1000));
     }
 
@@ -493,17 +499,73 @@ const AMBIENT_TRACKS = {
         };
     }
 
-    function getRecordedPlantOptimal(plant, environment, soilPct = null) {
+    function getRecordedPlantOptimal(plant, environment, telemetry = latestTelemetry) {
         const plantObj = PLANT_PROFILES[plant] || PLANT_PROFILES.Kalamansi;
         const base = plantObj[environment] || plantObj.Indoor;
-        let liters = base.optimalLiters;
+        const soilPct = telemetry?.soilMoisturePct;
+        const tempC = telemetry?.temperature;
+        const humPct = telemetry?.humidity;
+        const isRaining = String(telemetry?.rainStatus || "").trim().toLowerCase() === "raining";
 
-        if (typeof soilPct === "number" && Number.isFinite(soilPct)) {
-            if (soilPct < 35) liters *= 1.15;
-            else if (soilPct > 70) liters *= 0.75;
+        if (isRaining) {
+            return {
+                optimalTime: base.optimalTime,
+                intervalHours: base.intervalHours,
+                optimalLiters: 0,
+                targetVolumeMl: 0,
+                targetDurationMs: 0,
+                estActiveSeconds: 0,
+                isRaining: true,
+                factors: ["Rain detected: 0 mL needed"]
+            };
         }
 
-        liters = Number(Math.min(2.0, Math.max(0.10, liters)).toFixed(2));
+        let multiplier = 1.0;
+        const factors = [];
+
+        if (typeof soilPct === "number" && Number.isFinite(soilPct)) {
+            if (soilPct < 20) {
+                multiplier += 0.30;
+                factors.push(`Dry soil (${soilPct}%): +30%`);
+            } else if (soilPct < 35) {
+                multiplier += 0.15;
+                factors.push(`Low soil (${soilPct}%): +15%`);
+            } else if (soilPct > 75) {
+                multiplier -= 0.45;
+                factors.push(`Wet soil (${soilPct}%): -45%`);
+            } else if (soilPct > 60) {
+                multiplier -= 0.20;
+                factors.push(`Moist soil (${soilPct}%): -20%`);
+            } else {
+                factors.push(`Soil ${soilPct}%: normal`);
+            }
+        }
+
+        if (typeof tempC === "number" && Number.isFinite(tempC)) {
+            if (tempC >= 34) {
+                multiplier += 0.15;
+                factors.push(`High heat (${tempC.toFixed(1)}°C): +15%`);
+            } else if (tempC >= 30) {
+                multiplier += 0.08;
+                factors.push(`Warm (${tempC.toFixed(1)}°C): +8%`);
+            } else if (tempC <= 23) {
+                multiplier -= 0.10;
+                factors.push(`Cool (${tempC.toFixed(1)}°C): -10%`);
+            }
+        }
+
+        if (typeof humPct === "number" && Number.isFinite(humPct)) {
+            if (humPct <= 50) {
+                multiplier += 0.07;
+                factors.push(`Dry air (${humPct.toFixed(1)}% RH): +7%`);
+            } else if (humPct >= 85) {
+                multiplier -= 0.08;
+                factors.push(`Humid air (${humPct.toFixed(1)}% RH): -8%`);
+            }
+        }
+
+        multiplier = Math.min(1.60, Math.max(0.25, multiplier));
+        const liters = Number((base.optimalLiters * multiplier).toFixed(2));
         const targetVolumeMl = Math.round(liters * 1000);
         const targetDurationMs = computeTargetDurationMsFromVolumeMl(targetVolumeMl);
         const estActiveSeconds = Math.max(2, Math.round(targetDurationMs / 1000));
@@ -514,7 +576,9 @@ const AMBIENT_TRACKS = {
             optimalLiters: liters,
             targetVolumeMl,
             targetDurationMs,
-            estActiveSeconds
+            estActiveSeconds,
+            isRaining: false,
+            factors
         };
     }
 
@@ -603,6 +667,12 @@ const AMBIENT_TRACKS = {
     window.setInterval(updateManualTimerUI, 500);
 
     function setDisconnectedState() {
+        latestTelemetry = {
+            temperature: null,
+            humidity: null,
+            soilMoisturePct: null,
+            rainStatus: ""
+        };
         setReading("#temperatureValue", null);
         setReading("#humidityValue", null);
         setReading("#waterFlowValue", DRIPPER_L_PER_MIN, 3);
@@ -699,7 +769,6 @@ const AMBIENT_TRACKS = {
             setReading("#solarVoltageValue", solV, 2);
 
             const soilPct = readNumber(sensors, "soilMoisturePct");
-            latestSoilMoisturePct = soilPct;
             const soilEl = document.querySelector("#soilMoistureReading");
             const soilStat = document.querySelector("#soilMoistureStatus");
             if (soilEl && soilStat) {
@@ -725,6 +794,13 @@ const AMBIENT_TRACKS = {
                     rainStat.textContent = "Waiting for sensor";
                 }
             }
+
+            latestTelemetry = {
+                temperature: tempVal,
+                humidity: humVal,
+                soilMoisturePct: soilPct,
+                rainStatus: rainRawText
+            };
 
             setDeviceState("#batteryStatus", batV !== null && batV > 9.0 ? "on" : "off");
             setDeviceState("#solarStatus", solV !== null && solV > 5.0 ? "on" : "off");
@@ -764,7 +840,7 @@ const AMBIENT_TRACKS = {
         syncPlantSpeciesVisual(activePlant, false);
         syncEnvironmentScene(activeEnv);
 
-        const profile = getRecordedPlantOptimal(activePlant, activeEnv, latestSoilMoisturePct);
+        const profile = getRecordedPlantOptimal(activePlant, activeEnv, latestTelemetry);
 
         const title = document.querySelector("#activePlantTitle");
         const configuredText = document.querySelector("#configuredPlantText");
@@ -788,8 +864,10 @@ const AMBIENT_TRACKS = {
             smartLitersEl.textContent = `${profile.optimalLiters.toFixed(2)} L (${profile.targetVolumeMl} mL)`;
         }
         if (smartIndEl) {
-            smartIndEl.textContent =
-                `Optimal for ${activePlant} (${activeEnv}) · ~${profile.estActiveSeconds}s active pump time (pulsed 90s run / 120s rest).`;
+            const factorText = profile.factors?.length ? ` [${profile.factors.join(" · ")}]` : "";
+            smartIndEl.textContent = profile.isRaining
+                ? `Raining detected — 0 mL needed for ${activePlant} (${activeEnv}).`
+                : `Optimal for ${activePlant} (${activeEnv}) · ~${profile.estActiveSeconds}s active pump time (pulsed 90s run / 120s rest).${factorText}`;
         }
 
         if (title) title.textContent = `${activePlant} Dashboard`;
@@ -906,7 +984,7 @@ const AMBIENT_TRACKS = {
         smartIrrigateButton.addEventListener("click", () => {
             if (smartIrrigateButton.disabled) return;
             const { plant, environment } = getPlantConfig();
-            const profile = getRecordedPlantOptimal(plant, environment, latestSoilMoisturePct);
+            const profile = getRecordedPlantOptimal(plant, environment, latestTelemetry);
             const targetDate = getNextOptimalDateYYYYMMDD(profile.optimalTime);
 
             const dialogPlantEl = document.querySelector("#dialogPlantName");
@@ -914,8 +992,9 @@ const AMBIENT_TRACKS = {
 
             if (dialogPlantEl) dialogPlantEl.textContent = `Smart Irrigate: ${plant} (${environment})`;
             if (dialogScheduleEl) {
-                dialogScheduleEl.textContent =
-                    `Scheduled at ${formatDateYYYYMMDDToDisplay(targetDate, profile.optimalTime)} for ${profile.optimalLiters.toFixed(2)} L (${profile.targetVolumeMl} mL, ~${profile.estActiveSeconds}s active run at ${DRIPPER_ML_PER_MIN.toFixed(1)} mL/min).`;
+                dialogScheduleEl.textContent = profile.isRaining
+                    ? `Rain detected on sensor — 0.00 L (0 mL) recommended right now.`
+                    : `Scheduled at ${formatDateYYYYMMDDToDisplay(targetDate, profile.optimalTime)} for ${profile.optimalLiters.toFixed(2)} L (${profile.targetVolumeMl} mL, ~${profile.estActiveSeconds}s active run at ${DRIPPER_ML_PER_MIN.toFixed(1)} mL/min).`;
             }
 
             if (typeof irrigationDialog.showModal === "function") irrigationDialog.showModal();
@@ -929,7 +1008,7 @@ const AMBIENT_TRACKS = {
 
         operateIrrigation?.addEventListener("click", async () => {
             const { plant, environment } = getPlantConfig();
-            const profile = getRecordedPlantOptimal(plant, environment, latestSoilMoisturePct);
+            const profile = getRecordedPlantOptimal(plant, environment, latestTelemetry);
             const targetDate = getNextOptimalDateYYYYMMDD(profile.optimalTime);
             const triggerId = `SMART_${plant}_${targetDate}_${profile.optimalTime}_${Date.now()}`;
 
@@ -941,9 +1020,9 @@ const AMBIENT_TRACKS = {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        armed: true,
+                        armed: !profile.isRaining && profile.targetVolumeMl > 0,
                         manualPump: false,
-                        status: "SCHEDULED",
+                        status: profile.isRaining ? "SKIPPED_RAIN" : "SCHEDULED",
                         mode: "SMART",
                         optimalDate: targetDate,
                         optimalTime: profile.optimalTime,
@@ -1062,7 +1141,7 @@ const AMBIENT_TRACKS = {
         const liters = parseFloat(document.querySelector("#schedLiters")?.value || "0");
 
         const { plant, environment } = getPlantConfig();
-        const rec = getRecordedPlantOptimal(plant, environment, latestSoilMoisturePct);
+        const rec = getRecordedPlantOptimal(plant, environment, latestTelemetry);
         const indBox = document.querySelector("#customModalIndication");
         if (!indBox) return;
 
@@ -1070,10 +1149,10 @@ const AMBIENT_TRACKS = {
         const estActiveSec = estimateActiveSecondsFromLiters(validLiters);
 
         let msg = `Schedule: ${mm}/${dd}/20${yy} at ${hr}:${min} · ${validLiters.toFixed(2)} L (${Math.round(validLiters * 1000)} mL) · ~${estActiveSec}s active at ${DRIPPER_ML_PER_MIN.toFixed(1)} mL/min. `;
-        if (validLiters > rec.optimalLiters * 1.4) {
-            msg += `Warning: Above ${plant} optimal (${rec.optimalLiters.toFixed(2)} L).`;
-        } else if (validLiters > 0 && validLiters < rec.optimalLiters * 0.5) {
-            msg += `Note: Below ${plant} optimal (${rec.optimalLiters.toFixed(2)} L).`;
+        if (rec.optimalLiters > 0 && validLiters > rec.optimalLiters * 1.4) {
+            msg += `Warning: Above sensor-adjusted ${plant} need (${rec.optimalLiters.toFixed(2)} L).`;
+        } else if (rec.optimalLiters > 0 && validLiters > 0 && validLiters < rec.optimalLiters * 0.5) {
+            msg += `Note: Below sensor-adjusted ${plant} need (${rec.optimalLiters.toFixed(2)} L).`;
         } else {
             msg += `Matches ${plant} (${environment}) range.`;
         }
@@ -1084,7 +1163,7 @@ const AMBIENT_TRACKS = {
         scheduledIrrigateButton.addEventListener("click", () => {
             const now = new Date(Date.now() + 60000);
             const { plant, environment } = getPlantConfig();
-            const rec = getRecordedPlantOptimal(plant, environment, latestSoilMoisturePct);
+            const rec = getRecordedPlantOptimal(plant, environment, latestTelemetry);
 
             const mmEl = document.querySelector("#schedMM");
             const ddEl = document.querySelector("#schedDD");
@@ -1102,7 +1181,7 @@ const AMBIENT_TRACKS = {
 
             const sub = document.querySelector("#customDialogSubtitle");
             if (sub) {
-                sub.textContent = `${plant} (${environment}) — Optimal need: ${rec.optimalLiters.toFixed(2)} L at ${formatTime(rec.optimalTime)}.`;
+                sub.textContent = `${plant} (${environment}) — Live sensor need: ${rec.optimalLiters.toFixed(2)} L at ${formatTime(rec.optimalTime)}.`;
             }
 
             refreshCustomModalIndication();

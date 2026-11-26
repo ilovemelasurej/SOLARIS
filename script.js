@@ -1,4 +1,4 @@
-const DB_URL = "[https://solaris-1c-default-rtdb.firebaseio.com](https://solaris-1c-default-rtdb.firebaseio.com)";
+const DB_URL = "https://solaris-1c-default-rtdb.firebaseio.com";
 const SENSOR_REFRESH_INTERVAL_MS = 2000;
 const REQUEST_TIMEOUT_MS = 5000;
 

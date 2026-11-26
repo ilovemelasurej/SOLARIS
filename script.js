@@ -19,7 +19,6 @@
         }
     };
 
-    // Exact local MP3 filenames mapped per environment + scenery
     const AMBIENT_TRACKS = {
         outdoor_daylight: { file: "outdoor daylight and sunset.mp3", label: "Outdoor Daylight" },
         outdoor_sunset:   { file: "outdoor daylight and sunset.mp3", label: "Outdoor Sunset" },
@@ -48,14 +47,27 @@
         else if (dlg) dlg.removeAttribute("open");
     });
 
-    // ===================== VIEW ROUTER (PAGE 1 vs PAGE 2) =====================
+    const page2BgMusic = document.querySelector("#bgMusic");
+    const audioSink = document.querySelector("#hiddenAudioSink");
+    const isStandaloneMonitoring = Boolean(page2BgMusic);
+
+    // ===================== VIEW ROUTER (SPA) =====================
     function getActiveRouteView() {
+        if (isStandaloneMonitoring) return "monitoring";
         const hash = (window.location.hash || "").toLowerCase();
         if (hash === "#monitoring" || hash === "#/monitoring") return "monitoring";
         return "config";
     }
 
     function applyRouteView(routeName) {
+        if (isStandaloneMonitoring) {
+            document.body.classList.add("view-monitoring");
+            document.body.classList.remove("view-config");
+            updateScrollRootsProgress();
+            updateDashboardFromFirebase();
+            return;
+        }
+
         const isMonitoring = routeName === "monitoring";
         document.body.classList.toggle("view-monitoring", isMonitoring);
         document.body.classList.toggle("view-config", !isMonitoring);
@@ -88,11 +100,10 @@
         return AMBIENT_TRACKS[`${envKey}_${moodKey}`] || AMBIENT_TRACKS.indoor_daylight;
     }
 
-    // ===================== LOCAL MP3 AUDIO CONTROLLER =====================
-    const audioSink = document.querySelector("#hiddenAudioSink");
+    // ===================== AUDIO CONTROLLER =====================
     let currentLoadedFile = "";
     let userAudioUnlocked = false;
-    let desiredPlaying = true;
+    let desiredPlaying = localStorage.getItem("solarisMusicPlaying") !== "false";
 
     if (audioSink) {
         audioSink.volume = 0.65;
@@ -100,13 +111,36 @@
         audioSink.preload = "auto";
     }
 
-    function isAudioActivelyPlaying() {
-        return Boolean(audioSink && !audioSink.paused && !audioSink.muted && currentLoadedFile);
+    if (page2BgMusic) {
+        page2BgMusic.volume = 0.65;
+        page2BgMusic.loop = true;
+        page2BgMusic.preload = "auto";
+    }
+
+    function saveMusicState(forcePlaying = null) {
+        if (!page2BgMusic) return;
+        try {
+            localStorage.setItem("solarisMusicTime", String(page2BgMusic.currentTime || 0));
+            const isPlaying = forcePlaying !== null ? forcePlaying : !page2BgMusic.paused;
+            localStorage.setItem("solarisMusicPlaying", isPlaying ? "true" : "false");
+            localStorage.setItem("solarisMusicMuted", page2BgMusic.muted ? "true" : "false");
+        } catch (_) {}
     }
 
     function syncAudioButtonsUI(isPlaying) {
-        const track = resolveAmbientTrack();
         const btns = document.querySelectorAll(".audio-pill-btn");
+        if (isStandaloneMonitoring) {
+            btns.forEach((btn) => {
+                btn.classList.toggle("is-playing", Boolean(isPlaying));
+                const labelEl = btn.querySelector(".audio-label");
+                if (labelEl) {
+                    labelEl.textContent = isPlaying ? "music2.mp3 · Playing" : "music2.mp3 · Tap Audio";
+                }
+            });
+            return;
+        }
+
+        const track = resolveAmbientTrack();
         btns.forEach((btn) => {
             btn.classList.toggle("is-playing", Boolean(isPlaying));
             const labelEl = btn.querySelector(".audio-label");
@@ -130,6 +164,22 @@
     }
 
     function applyTrackToPlayer(forcePlay = false) {
+        if (isStandaloneMonitoring) {
+            if (forcePlay) {
+                desiredPlaying = true;
+                userAudioUnlocked = true;
+            }
+            if (desiredPlaying && userAudioUnlocked) {
+                playAudioElement(page2BgMusic).then((ok) => {
+                    syncAudioButtonsUI(ok);
+                    saveMusicState(ok);
+                });
+            } else {
+                syncAudioButtonsUI(Boolean(page2BgMusic && !page2BgMusic.paused && !page2BgMusic.muted));
+            }
+            return;
+        }
+
         const track = resolveAmbientTrack();
         const nextFile = track.file;
         const fileChanged = nextFile !== currentLoadedFile;
@@ -155,12 +205,25 @@
                 syncAudioButtonsUI(ok);
             });
         } else {
-            syncAudioButtonsUI(isAudioActivelyPlaying());
+            syncAudioButtonsUI(Boolean(audioSink && !audioSink.paused && !audioSink.muted && currentLoadedFile));
         }
     }
 
     function unlockOrToggleAmbientAudio(forcePlayOnly = false) {
         userAudioUnlocked = true;
+
+        if (isStandaloneMonitoring) {
+            if (!forcePlayOnly && page2BgMusic && !page2BgMusic.paused && !page2BgMusic.muted) {
+                desiredPlaying = false;
+                page2BgMusic.pause();
+                syncAudioButtonsUI(false);
+                saveMusicState(false);
+                return;
+            }
+            desiredPlaying = true;
+            applyTrackToPlayer(true);
+            return;
+        }
 
         if (!forcePlayOnly && audioSink && !audioSink.paused && !audioSink.muted) {
             desiredPlaying = false;
@@ -182,28 +245,16 @@
     });
 
     function handleScreenTapAudioUnlock() {
-        const page2BgMusic = document.querySelector("#bgMusic");
-        if (page2BgMusic) {
-            page2BgMusic.muted = false;
-            if (page2BgMusic.volume === 0) page2BgMusic.volume = 0.65;
-            page2BgMusic.play().then(() => {
-                try {
-                    localStorage.setItem("solarisMusicPlaying", "true");
-                    localStorage.setItem("solarisMusicMuted", "false");
-                } catch (_) {}
-            }).catch(() => {});
-        }
-
-        if (!audioSink) return;
-
         if (!userAudioUnlocked) {
             unlockOrToggleAmbientAudio(true);
-        } else if (desiredPlaying && (audioSink.paused || audioSink.muted)) {
-            applyTrackToPlayer(true);
+        } else if (desiredPlaying) {
+            const activeEl = isStandaloneMonitoring ? page2BgMusic : audioSink;
+            if (activeEl && (activeEl.paused || activeEl.muted)) {
+                applyTrackToPlayer(true);
+            }
         }
     }
 
-    // Unlock playback on tap/click/key anywhere on both views/pages
     ["pointerdown", "click", "touchstart"].forEach((evtName) => {
         document.addEventListener(evtName, handleScreenTapAudioUnlock, { passive: true });
     });
@@ -216,14 +267,45 @@
         syncAudioButtonsUI(false);
     });
 
+    if (page2BgMusic) {
+        const rawTime = parseFloat(localStorage.getItem("solarisMusicTime") || "0");
+        const applySavedTime = () => {
+            if (Number.isFinite(rawTime) && rawTime > 0) {
+                const maxDur = Number.isFinite(page2BgMusic.duration) && page2BgMusic.duration > 0
+                    ? page2BgMusic.duration - 0.1
+                    : rawTime;
+                try {
+                    page2BgMusic.currentTime = Math.max(0, Math.min(rawTime, maxDur));
+                } catch (_) {}
+            }
+        };
+        if (page2BgMusic.readyState >= 1) applySavedTime();
+        else page2BgMusic.addEventListener("loadedmetadata", applySavedTime, { once: true });
+
+        page2BgMusic.addEventListener("play", () => {
+            if (!page2BgMusic.muted) syncAudioButtonsUI(true);
+            saveMusicState(true);
+        });
+        page2BgMusic.addEventListener("pause", () => {
+            syncAudioButtonsUI(false);
+            saveMusicState(false);
+        });
+        page2BgMusic.addEventListener("volumechange", () => saveMusicState());
+        window.addEventListener("pagehide", () => saveMusicState());
+        window.addEventListener("beforeunload", () => saveMusicState());
+    }
+
     // ===================== SCENERY & PLANT VISUAL SYNC =====================
     function applySceneryMode(mode) {
         const chosen = ["daylight", "sunset", "night", "rain"].includes(mode) ? mode : "daylight";
         currentScenery = chosen;
         try { localStorage.setItem("configuredScenery", chosen); } catch (_) {}
 
-        document.body.classList.remove("mood-daylight", "mood-sunset", "mood-night", "mood-rain");
-        document.body.classList.add(`mood-${chosen}`);
+        document.body.classList.remove(
+            "mood-daylight", "mood-sunset", "mood-night", "mood-rain",
+            "bg-scenery-daylight", "bg-scenery-sunset", "bg-scenery-night", "bg-scenery-rain"
+        );
+        document.body.classList.add(`mood-${chosen}`, `bg-scenery-${chosen}`);
 
         document.querySelectorAll(".scenery-opt-btn").forEach((btn) => {
             btn.classList.toggle("active", btn.getAttribute("data-scenery") === chosen);
@@ -330,9 +412,9 @@
         applyRouteView("config");
     });
 
-    // ===================== PAGE 2 TELEMETRY & IRRIGATION LOGIC =====================
+    // ===================== MONITORING TELEMETRY & IRRIGATION LOGIC =====================
     function updateScrollRootsProgress() {
-        if (!document.body.classList.contains("view-monitoring") && !document.querySelector("#bgMusic")) return;
+        if (!document.body.classList.contains("view-monitoring") && !isStandaloneMonitoring) return;
         const scrollTop = window.scrollY || window.pageYOffset || 0;
         const docHeight = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
         const progress = Math.min(1, Math.max(0, scrollTop / docHeight));
@@ -551,7 +633,6 @@
         const telemetryStatus = document.querySelector("#telemetryStatus");
         if (!telemetryStatus) return;
         const isSpaMonitoring = document.body.classList.contains("view-monitoring");
-        const isStandaloneMonitoring = Boolean(document.querySelector("#bgMusic"));
         if (!isSpaMonitoring && !isStandaloneMonitoring) return;
 
         const controller = new AbortController();
@@ -816,7 +897,6 @@
         }
     }
 
-    // Smart Irrigate Dialog
     const irrigationDialog = document.querySelector("#irrigationDialog");
     const smartIrrigateButton = document.querySelector("#smartIrrigateButton");
     const cancelIrrigation = document.querySelector("#cancelIrrigation");
@@ -888,7 +968,6 @@
         });
     }
 
-    // Manual Irrigate Button
     const manualIrrigateButton = document.querySelector("#manualIrrigateButton");
     if (manualIrrigateButton) {
         manualIrrigateButton.addEventListener("click", async () => {
@@ -969,7 +1048,6 @@
         });
     }
 
-    // Custom Schedule Dialog
     const scheduledIrrigateButton = document.querySelector("#scheduledIrrigateButton");
     const customScheduleDialog = document.querySelector("#customScheduleDialog");
     const cancelCustomSchedule = document.querySelector("#cancelCustomSchedule");
@@ -1137,12 +1215,12 @@
     syncAudioButtonsUI(false);
     applyRouteView(getActiveRouteView());
 
-    if (document.querySelector("#bgMusic")) {
+    if (isStandaloneMonitoring) {
         updateDashboardFromFirebase();
     }
 
     window.setInterval(() => {
-        if (document.body.classList.contains("view-monitoring") || document.querySelector("#bgMusic")) {
+        if (document.body.classList.contains("view-monitoring") || isStandaloneMonitoring) {
             updateDashboardFromFirebase();
         }
     }, SENSOR_REFRESH_INTERVAL_MS);

@@ -6,205 +6,10 @@
     <title>Plant Monitoring — SOLARIS</title>
     <link rel="stylesheet" href="styles.css">
     <script src="script.js" defer></script>
-    <style>
-        :root {
-            --scroll-progress: 0;
-            --bg-mood-filter: brightness(1.06) saturate(1.12);
-        }
-
-        body.bg-scenery-daylight {
-            --bg-mood-filter: brightness(1.06) saturate(1.12);
-        }
-
-        body.bg-scenery-sunset {
-            --bg-mood-filter: brightness(0.98) saturate(1.26) sepia(0.12);
-        }
-
-        body.bg-scenery-night {
-            --bg-mood-filter: brightness(0.76) saturate(1.06) hue-rotate(8deg);
-        }
-
-        body.bg-scenery-rain {
-            --bg-mood-filter: brightness(0.84) saturate(0.88) contrast(1.05);
-        }
-
-        .solaris-page2-bg {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            overflow: hidden;
-            filter: var(--bg-mood-filter);
-            transition: filter 0.45s ease;
-        }
-
-        .solaris-page2-bg svg {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
-        .p2-sky-tint {
-            fill: rgba(255, 240, 185, 0.14);
-            transition: fill 0.6s ease;
-        }
-
-        body.bg-scenery-sunset .p2-sky-tint {
-            fill: rgba(251, 146, 60, 0.22);
-        }
-
-        body.bg-scenery-night .p2-sky-tint {
-            fill: rgba(15, 32, 65, 0.28);
-        }
-
-        body.bg-scenery-rain .p2-sky-tint {
-            fill: rgba(100, 116, 139, 0.22);
-        }
-
-        .p2-sun-group {
-            transform: translateY(0px);
-            opacity: 0.92;
-            transition: transform 0.85s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.55s ease;
-        }
-
-        .p2-sun-core {
-            fill: #fde68a;
-            transition: fill 0.75s ease;
-        }
-
-        .p2-sun-halo {
-            fill: rgba(251, 191, 36, 0.34);
-            transition: fill 0.75s ease;
-        }
-
-        body.bg-scenery-sunset .p2-sun-group {
-            transform: translateY(145px);
-            opacity: 0.95;
-        }
-
-        body.bg-scenery-sunset .p2-sun-core {
-            fill: #fb923c;
-        }
-
-        body.bg-scenery-sunset .p2-sun-halo {
-            fill: rgba(249, 115, 22, 0.42);
-        }
-
-        body.bg-scenery-rain .p2-sun-group {
-            transform: translateY(10px);
-            opacity: 0.48;
-        }
-
-        body.bg-scenery-night .p2-sun-group {
-            transform: translateY(115px);
-            opacity: 0;
-        }
-
-        .p2-moon-group {
-            opacity: 0;
-            transform: translateY(16px);
-            transition: opacity 0.65s ease, transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        body.bg-scenery-night .p2-moon-group {
-            opacity: 0.95;
-            transform: translateY(0px);
-        }
-
-        .p2-clouds-group {
-            opacity: 0;
-            transform: translateY(-12px);
-            transition: opacity 0.55s ease, transform 0.65s ease;
-        }
-
-        body.bg-scenery-rain .p2-clouds-group {
-            opacity: 0.9;
-            transform: translateY(0px);
-        }
-
-        .p2-rain-group {
-            display: none;
-        }
-
-        .p2-rain-group.is-active {
-            display: inline;
-        }
-
-        .p2-rain-streak {
-            animation: p2RainFall 0.85s linear infinite;
-        }
-
-        .p2-fullpage-plant-wrap {
-            opacity: calc(0.14 + var(--scroll-progress) * 0.86);
-            transform:
-                translateY(calc((1 - var(--scroll-progress)) * 310px))
-                scale(calc(0.46 + var(--scroll-progress) * 0.54));
-            transform-box: fill-box;
-            transform-origin: bottom center;
-            transition: transform 0.08s linear, opacity 0.12s linear;
-        }
-
-        .p2-species-group {
-            display: none;
-        }
-
-        .p2-species-group.is-active {
-            display: inline;
-        }
-
-        .p2-sway {
-            transform-box: fill-box;
-            transform-origin: bottom center;
-            animation: p2PlantBreeze 4.8s ease-in-out infinite;
-        }
-
-        .p2-scenery-switcher {
-            position: fixed;
-            top: 14px;
-            right: 18px;
-            z-index: 30;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 4px 6px;
-            border-radius: 999px;
-            border: 1px solid rgba(154, 208, 185, 0.28);
-            background: rgba(7, 27, 22, 0.88);
-            backdrop-filter: blur(8px);
-        }
-
-        .p2-scenery-btn {
-            padding: 4px 10px;
-            border-radius: 999px;
-            background: transparent;
-            color: #9ab9a8;
-            font-size: 11px;
-            font-weight: 700;
-        }
-
-        .p2-scenery-btn.active {
-            background: linear-gradient(90deg, #37c982, #49bde8);
-            color: #08251d;
-        }
-
-        .dashboard {
-            position: relative;
-            z-index: 2;
-        }
-
-        @keyframes p2RainFall {
-            0% { transform: translate(-10px, -26px); opacity: 0.2; }
-            50% { opacity: 0.72; }
-            100% { transform: translate(-24px, 38px); opacity: 0.1; }
-        }
-
-        @keyframes p2PlantBreeze {
-            0%, 100% { transform: rotate(-1.1deg); }
-            50% { transform: rotate(1.3deg); }
-        }
-    </style>
 </head>
-<body class="bg-scenery-daylight">
+<body class="view-monitoring env-indoor mood-daylight">
+    <div class="ambient-backdrop"></div>
+
     <div class="solaris-page2-bg" aria-hidden="true">
         <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
             <defs>
@@ -276,13 +81,13 @@
 
             <g id="p2RainGroup" class="p2-rain-group">
                 <g stroke="rgba(165, 195, 224, 0.55)" stroke-width="1.8" stroke-linecap="round">
-                    <line class="p2-rain-streak" x1="150" y1="165" x2="136" y2="200" />
-                    <line class="p2-rain-streak" x1="220" y1="205" x2="206" y2="240" style="animation-delay: -0.25s;" />
-                    <line class="p2-rain-streak" x1="295" y1="155" x2="281" y2="190" style="animation-delay: -0.45s;" />
-                    <line class="p2-rain-streak" x1="370" y1="220" x2="356" y2="255" style="animation-delay: -0.15s;" />
-                    <line class="p2-rain-streak" x1="440" y1="180" x2="426" y2="215" style="animation-delay: -0.6s;" />
-                    <line class="p2-rain-streak" x1="980" y1="170" x2="966" y2="205" style="animation-delay: -0.2s;" />
-                    <line class="p2-rain-streak" x1="1120" y1="210" x2="1106" y2="245" style="animation-delay: -0.5s;" />
+                    <line class="rain-streak" x1="150" y1="165" x2="136" y2="200" />
+                    <line class="rain-streak" x1="220" y1="205" x2="206" y2="240" style="animation-delay: -0.25s;" />
+                    <line class="rain-streak" x1="295" y1="155" x2="281" y2="190" style="animation-delay: -0.45s;" />
+                    <line class="rain-streak" x1="370" y1="220" x2="356" y2="255" style="animation-delay: -0.15s;" />
+                    <line class="rain-streak" x1="440" y1="180" x2="426" y2="215" style="animation-delay: -0.6s;" />
+                    <line class="rain-streak" x1="980" y1="170" x2="966" y2="205" style="animation-delay: -0.2s;" />
+                    <line class="rain-streak" x1="1120" y1="210" x2="1106" y2="245" style="animation-delay: -0.5s;" />
                 </g>
             </g>
 
@@ -350,15 +155,6 @@
         </svg>
     </div>
 
-    <div class="p2-scenery-switcher" role="group" aria-label="Background Scenery">
-        <button type="button" class="p2-scenery-btn active" data-p2-scenery="daylight">Daylight</button>
-        <button type="button" class="p2-scenery-btn" data-p2-scenery="sunset">Sunset</button>
-        <button type="button" class="p2-scenery-btn" data-p2-scenery="night">Night</button>
-        <button type="button" class="p2-scenery-btn" data-p2-scenery="rain">Rain</button>
-    </div>
-
-    <div class="ambient-backdrop"></div>
-
     <svg class="scroll-roots-overlay" viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
         <path class="root-branch" d="M120 900 C150 760, 110 660, 180 540 C220 470, 260 410, 240 310" fill="none" stroke="rgba(212, 163, 106, 0.35)" stroke-width="3" />
         <path class="root-branch" d="M180 540 C120 490, 80 440, 45 370" fill="none" stroke="rgba(212, 163, 106, 0.25)" stroke-width="2" />
@@ -373,119 +169,75 @@
                 <div class="dashboard-kicker">SOLARIS IRRIGATION SYSTEM</div>
                 <h1 id="activePlantTitle">Kalamansi Dashboard</h1>
             </div>
-            <a class="configure-link" href="index.html">Configure Plant</a>
+            <div class="header-actions">
+                <div class="scenery-switcher" role="group" aria-label="Time of Day and Weather Scenery">
+                    <button type="button" class="scenery-opt-btn active" data-scenery="daylight">Daylight</button>
+                    <button type="button" class="scenery-opt-btn" data-scenery="sunset">Sunset</button>
+                    <button type="button" class="scenery-opt-btn" data-scenery="night">Night</button>
+                    <button type="button" class="scenery-opt-btn" data-scenery="rain">Rain</button>
+                </div>
+                <button type="button" id="audioToggleBtnP2" class="audio-pill-btn" aria-label="Toggle Ambient Sound">
+                    <span class="audio-dot"></span>
+                    <span class="audio-label">Ambient: Ready</span>
+                </button>
+                <a class="configure-link" href="index.html">Configure Plant</a>
+            </div>
         </header>
 
         <p id="telemetryStatus" class="telemetry-status">Connecting to Firebase...</p>
 
         <section class="sensor-grid">
             <div class="sensor-card temperature-card">
-                <div class="sensor-title">
-                    <span>🌡️</span>
-                    TEMPERATURE
-                </div>
-                <div class="sensor-value">
-                    <span id="temperatureValue">--</span> <span class="sensor-unit">°C</span>
-                </div>
-                <div class="sensor-stats">
-                    <div class="stat">Waiting for sensor</div>
-                </div>
+                <div class="sensor-title"><span>🌡️</span> TEMPERATURE</div>
+                <div class="sensor-value"><span id="temperatureValue">--</span> <span class="sensor-unit">°C</span></div>
+                <div class="sensor-stats"><div class="stat">Waiting for sensor</div></div>
             </div>
 
             <div class="sensor-card humidity-card">
-                <div class="sensor-title">
-                    <span>💧</span>
-                    HUMIDITY
-                </div>
-                <div class="sensor-value">
-                    <span id="humidityValue">--</span> <span class="sensor-unit">%</span>
-                </div>
-                <div class="sensor-stats">
-                    <div class="stat">Waiting for sensor</div>
-                </div>
+                <div class="sensor-title"><span>💧</span> HUMIDITY</div>
+                <div class="sensor-value"><span id="humidityValue">--</span> <span class="sensor-unit">%</span></div>
+                <div class="sensor-stats"><div class="stat">Waiting for sensor</div></div>
             </div>
 
             <div class="sensor-card water-card">
-                <div class="sensor-title">
-                    <span>🚿</span>
-                    DRIPPER FLOW
-                </div>
-                <div class="sensor-value">
-                    <span id="waterFlowValue">0.064</span> <span class="sensor-unit">L/min</span>
-                </div>
-                <div class="sensor-stats">
-                    <div class="stat" id="dripperRateDetail">~64.2 mL/min · ~1.07 mL/s (1 dripper)</div>
-                </div>
+                <div class="sensor-title"><span>🚿</span> DRIPPER FLOW</div>
+                <div class="sensor-value"><span id="waterFlowValue">0.064</span> <span class="sensor-unit">L/min</span></div>
+                <div class="sensor-stats"><div class="stat" id="dripperRateDetail">~64.2 mL/min · ~1.07 mL/s (1 dripper)</div></div>
             </div>
 
             <div class="sensor-card water-card">
-                <div class="sensor-title">
-                    <span>🌊</span>
-                    WATER LEVEL
-                </div>
-                <div class="sensor-value">
-                    <span id="waterLevelValue">--</span> <span class="sensor-unit">%</span>
-                </div>
-                <div class="sensor-stats">
-                    <div class="stat">Waiting for sensor</div>
-                </div>
+                <div class="sensor-title"><span>🌊</span> WATER LEVEL</div>
+                <div class="sensor-value"><span id="waterLevelValue">--</span> <span class="sensor-unit">%</span></div>
+                <div class="sensor-stats"><div class="stat">Waiting for sensor</div></div>
             </div>
 
             <div class="sensor-card soil-card">
-                <div class="sensor-title">
-                    <span aria-hidden="true">🌱</span>
-                    SOIL MOISTURE
-                </div>
-                <div class="sensor-value rain-reading" id="soilMoistureReading" aria-live="polite">
-                    No data
-                </div>
-                <div class="sensor-stats">
-                    <div class="stat" id="soilMoistureStatus">Waiting for sensor</div>
-                </div>
+                <div class="sensor-title"><span aria-hidden="true">🌱</span> SOIL MOISTURE</div>
+                <div class="sensor-value rain-reading" id="soilMoistureReading" aria-live="polite">No data</div>
+                <div class="sensor-stats"><div class="stat" id="soilMoistureStatus">Waiting for sensor</div></div>
             </div>
 
             <div class="sensor-card battery-voltage-card">
-                <div class="sensor-title">
-                    <span aria-hidden="true">🔋</span>
-                    BATTERY VOLTAGE
-                </div>
-                <div class="sensor-value">
-                    <span id="batteryVoltageValue">--</span> <span class="sensor-unit">V</span>
-                </div>
-                <div class="sensor-stats">
-                    <div class="stat">12V Lead-Acid System</div>
-                </div>
+                <div class="sensor-title"><span aria-hidden="true">🔋</span> BATTERY VOLTAGE</div>
+                <div class="sensor-value"><span id="batteryVoltageValue">--</span> <span class="sensor-unit">V</span></div>
+                <div class="sensor-stats"><div class="stat">12V Lead-Acid System</div></div>
             </div>
 
             <div class="sensor-card solar-voltage-card">
-                <div class="sensor-title">
-                    <span aria-hidden="true">☀️</span>
-                    SOLAR VOLTAGE
-                </div>
-                <div class="sensor-value">
-                    <span id="solarVoltageValue">--</span> <span class="sensor-unit">V</span>
-                </div>
-                <div class="sensor-stats">
-                    <div class="stat">PV Panel Input</div>
-                </div>
+                <div class="sensor-title"><span aria-hidden="true">☀️</span> SOLAR VOLTAGE</div>
+                <div class="sensor-value"><span id="solarVoltageValue">--</span> <span class="sensor-unit">V</span></div>
+                <div class="sensor-stats"><div class="stat">PV Panel Input</div></div>
             </div>
 
             <div class="sensor-card water-card rain-card">
-                <div class="sensor-title">
-                    <span aria-hidden="true">🌧️</span>
-                    RAIN
-                </div>
-                <div class="sensor-value rain-reading" id="rainReading" aria-live="polite">
-                    No data
-                </div>
-                <div class="sensor-stats">
-                    <div class="stat" id="rainStatus">Waiting for sensor</div>
-                </div>
+                <div class="sensor-title"><span aria-hidden="true">🌧️</span> RAIN</div>
+                <div class="sensor-value rain-reading" id="rainReading" aria-live="polite">No data</div>
+                <div class="sensor-stats"><div class="stat" id="rainStatus">Waiting for sensor</div></div>
             </div>
         </section>
 
         <section class="device-status-section" aria-labelledby="device-status-heading">
-            <h1 id="device-status-heading">Device Status</h1>
+            <h2 id="device-status-heading">Device Status</h2>
             <div class="device-status-grid">
                 <article class="device-status-card solar-card" aria-live="polite">
                     <div class="sensor-title"><span aria-hidden="true">☀️</span> SOLAR PANEL</div>
@@ -529,7 +281,7 @@
                     Optimal for Kalamansi (Indoor) · ~327s active pump time (pulsed 90s run / 120s rest).
                 </p>
 
-                <button type="button" id="smartIrrigateButton" class="smart-irrigate-button">
+                <button type="button" id="smartIrrigateButton" class="action-btn smart-irrigate-button">
                     Smart Irrigate
                 </button>
 
@@ -566,7 +318,7 @@
                     Ready for instant on-the-spot pump control.
                 </p>
 
-                <button type="button" id="manualIrrigateButton" class="manual-irrigate-button">
+                <button type="button" id="manualIrrigateButton" class="action-btn manual-irrigate-button">
                     <span id="manualButtonLabel">Open Pump</span>
                     <span id="manualButtonTimer" class="manual-timer-pill">00:00:00</span>
                 </button>
@@ -598,7 +350,7 @@
                     Set MM / DD / HR / MIN / YY and water volume in Liters (L).
                 </p>
 
-                <button type="button" id="scheduledIrrigateButton" class="scheduled-irrigate-button">
+                <button type="button" id="scheduledIrrigateButton" class="action-btn scheduled-irrigate-button">
                     Scheduled Irrigate
                 </button>
             </article>
@@ -685,163 +437,14 @@
         </form>
     </dialog>
 
-    <audio id="bgMusic" src="music2.mp3" controls autoplay loop muted></audio>
+    <dialog id="noticeDialog" class="irrigation-dialog">
+        <h2 id="noticeTitle">Notice</h2>
+        <p id="noticeMessage"></p>
+        <div class="dialog-actions" style="grid-template-columns: 1fr;">
+            <button type="button" id="closeNoticeBtn" class="operate-button">OK</button>
+        </div>
+    </dialog>
 
-    <script>
-        (function () {
-            const buttons = Array.from(document.querySelectorAll(".p2-scenery-btn"));
-            const rainGroup = document.querySelector("#p2RainGroup");
-            const kalamansiEl = document.querySelector("#p2PlantKalamansi");
-            const oreganoEl = document.querySelector("#p2PlantOregano");
-            const validModes = ["daylight", "sunset", "night", "rain"];
-
-            function applyScenery(mode) {
-                const chosen = validModes.includes(mode) ? mode : "daylight";
-                validModes.forEach((m) => document.body.classList.remove(`bg-scenery-${m}`));
-                document.body.classList.add(`bg-scenery-${chosen}`);
-
-                buttons.forEach((btn) => {
-                    const isMatch = btn.getAttribute("data-p2-scenery") === chosen;
-                    btn.classList.toggle("active", isMatch);
-                });
-
-                if (rainGroup) {
-                    rainGroup.classList.toggle("is-active", chosen === "rain");
-                }
-
-                try {
-                    localStorage.setItem("configuredScenery", chosen);
-                } catch (_) {}
-            }
-
-            function syncPlantSpecies() {
-                let plantName = "Kalamansi";
-                try {
-                    plantName = localStorage.getItem("configuredPlant") || "Kalamansi";
-                } catch (_) {}
-
-                const titleEl = document.querySelector("#activePlantTitle");
-                if (!localStorage.getItem("configuredPlant") && titleEl && titleEl.textContent) {
-                    if (titleEl.textContent.toLowerCase().includes("oregano")) {
-                        plantName = "Oregano";
-                    }
-                }
-
-                const isOregano = String(plantName).toLowerCase() === "oregano";
-                if (kalamansiEl) kalamansiEl.classList.toggle("is-active", !isOregano);
-                if (oreganoEl) oreganoEl.classList.toggle("is-active", isOregano);
-            }
-
-            function updateScrollGrowth() {
-                const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
-                const docHeight = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-                const progress = Math.min(1, Math.max(0, scrollTop / docHeight));
-                document.documentElement.style.setProperty("--scroll-progress", progress.toFixed(4));
-            }
-
-            buttons.forEach((btn) => {
-                btn.addEventListener("click", (ev) => {
-                    ev.preventDefault();
-                    ev.stopPropagation();
-                    const mode = btn.getAttribute("data-p2-scenery");
-                    applyScenery(mode);
-                });
-            });
-
-            window.addEventListener("scroll", updateScrollGrowth, { passive: true });
-            window.addEventListener("resize", updateScrollGrowth, { passive: true });
-            window.addEventListener("storage", syncPlantSpecies);
-
-            let initialMode = "daylight";
-            try {
-                initialMode = localStorage.getItem("configuredScenery") || "daylight";
-            } catch (_) {}
-
-            applyScenery(initialMode);
-            syncPlantSpecies();
-            updateScrollGrowth();
-
-            setTimeout(syncPlantSpecies, 120);
-            setTimeout(syncPlantSpecies, 600);
-
-            const bgMusic = document.querySelector("#bgMusic");
-            if (!bgMusic) return;
-
-            function saveMusicState(forcePlaying = null) {
-                try {
-                    localStorage.setItem("solarisMusicTime", String(bgMusic.currentTime || 0));
-                    const isPlaying = forcePlaying !== null ? forcePlaying : !bgMusic.paused;
-                    localStorage.setItem("solarisMusicPlaying", isPlaying ? "true" : "false");
-                    localStorage.setItem("solarisMusicMuted", bgMusic.muted ? "true" : "false");
-                } catch (_) {}
-            }
-
-            async function resumeMusic() {
-                const rawTime = parseFloat(localStorage.getItem("solarisMusicTime") || "0");
-                const wasPlaying = localStorage.getItem("solarisMusicPlaying") !== "false";
-                const savedMuted = localStorage.getItem("solarisMusicMuted");
-
-                const applyTime = () => {
-                    if (Number.isFinite(rawTime) && rawTime > 0) {
-                        const maxDur = Number.isFinite(bgMusic.duration) && bgMusic.duration > 0
-                            ? bgMusic.duration - 0.1
-                            : rawTime;
-                        try {
-                            bgMusic.currentTime = Math.max(0, Math.min(rawTime, maxDur));
-                        } catch (_) {}
-                    }
-                };
-
-                if (bgMusic.readyState >= 1) {
-                    applyTime();
-                } else {
-                    bgMusic.addEventListener("loadedmetadata", applyTime, { once: true });
-                }
-
-                if (!wasPlaying) return;
-
-                if (savedMuted === "false") {
-                    bgMusic.muted = false;
-                    try {
-                        await bgMusic.play();
-                        saveMusicState(true);
-                        return;
-                    } catch (_) {}
-                }
-
-                bgMusic.muted = true;
-                try {
-                    await bgMusic.play();
-                    saveMusicState(true);
-                } catch (_) {}
-            }
-
-            function unlockAudioOnGesture() {
-                bgMusic.muted = false;
-                if (bgMusic.volume === 0) bgMusic.volume = 0.65;
-                bgMusic.play().then(() => {
-                    saveMusicState(true);
-                }).catch(() => {});
-            }
-
-            resumeMusic();
-            ["pointerdown", "click", "touchstart"].forEach((evtName) => {
-                document.addEventListener(evtName, unlockAudioOnGesture, { passive: true });
-            });
-            document.addEventListener("keydown", unlockAudioOnGesture, { passive: true });
-
-            window.setInterval(() => {
-                if (!bgMusic.paused && !bgMusic.muted) {
-                    saveMusicState(true);
-                }
-            }, 250);
-
-            bgMusic.addEventListener("play", () => saveMusicState(true));
-            bgMusic.addEventListener("pause", () => saveMusicState(false));
-            bgMusic.addEventListener("volumechange", () => saveMusicState());
-            window.addEventListener("pagehide", () => saveMusicState());
-            window.addEventListener("beforeunload", () => saveMusicState());
-        })();
-    </script>
+    <audio id="bgMusic" src="music2.mp3" loop preload="auto"></audio>
 </body>
 </html>

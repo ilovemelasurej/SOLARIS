@@ -427,7 +427,6 @@
     </style>
 </head>
 <body class="config-page env-indoor mood-daylight">
-    <!-- RIGHT-CORNER 4 SCENERY OPTIONS: DAYLIGHT / SUNSET / NIGHT / RAIN -->
     <div class="scenery-switcher-corner" role="group" aria-label="Time of Day and Weather Scenery">
         <button type="button" class="scenery-opt-btn active" data-scenery="daylight">Daylight</button>
         <button type="button" class="scenery-opt-btn" data-scenery="sunset">Sunset</button>
@@ -435,7 +434,6 @@
         <button type="button" class="scenery-opt-btn" data-scenery="rain">Rain</button>
     </div>
 
-    <!-- BACKGROUND ENVIRONMENT SCENES (INDOOR WINDOW WITH BLACK FLOOR VS OUTDOOR FARM) -->
     <div class="env-scene-backdrop" aria-hidden="true">
         <div id="indoorScene" class="scene-layer indoor-scene is-active">
             <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
@@ -463,10 +461,8 @@
                     </linearGradient>
                 </defs>
 
-                <!-- Window glass base -->
                 <rect x="85" y="105" width="430" height="445" rx="14" fill="url(#windowPaneGrad)" stroke="rgba(245, 222, 179, 0.28)" stroke-width="4" />
 
-                <!-- Clipped inside window frame: Sun, Moon, Grey Clouds & Rain never spill outside window -->
                 <g clip-path="url(#indoorWindowClip)">
                     <g class="celestial-sun">
                         <circle class="celestial-sun-halo" cx="300" cy="215" r="145" />
@@ -498,17 +494,14 @@
                     </g>
                 </g>
 
-                <!-- Window mullions & sill -->
                 <line x1="228" y1="105" x2="228" y2="550" stroke="rgba(245, 222, 179, 0.24)" stroke-width="5" />
                 <line x1="372" y1="105" x2="372" y2="550" stroke="rgba(245, 222, 179, 0.24)" stroke-width="5" />
                 <line x1="85" y1="325" x2="515" y2="325" stroke="rgba(245, 222, 179, 0.24)" stroke-width="5" />
                 <rect x="65" y="550" width="470" height="18" rx="5" fill="rgba(225, 198, 156, 0.28)" />
 
-                <!-- Curtains -->
                 <path d="M 45 75 Q 95 260 65 680 L 135 680 Q 155 260 112 75 Z" fill="url(#curtainGrad)" />
                 <path d="M 488 75 Q 455 260 475 680 L 545 680 Q 565 260 540 75 Z" fill="url(#curtainGrad)" />
 
-                <!-- Stronger volumetric light shaft & glowing dust particles -->
                 <polygon points="105,120 495,120 740,785 30,785" fill="url(#strongSunBeamGrad)" />
 
                 <g fill="#fff4c2">
@@ -522,12 +515,10 @@
                     <circle class="dust-mote d-slow" cx="235" cy="525" r="2.4" />
                 </g>
 
-                <!-- Black floor at bottom -->
                 <rect x="0" y="785" width="1440" height="115" fill="rgba(4, 10, 8, 0.92)" />
             </svg>
         </div>
 
-        <!-- OUTDOOR SCENE: Unclipped sky sun/moon/clouds/rain + farm scenery -->
         <div id="outdoorScene" class="scene-layer outdoor-scene">
             <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
                 <defs>
@@ -600,7 +591,6 @@
     </div>
 
     <main class="solaris-layout-stage">
-        <!-- FULL-HEIGHT BORDERLESS PLANT AT BOTTOM EDGE -->
         <div class="plant-floor-anchor" aria-label="Animated Plant Growth Preview">
             <svg id="plantBotanicalSvg" class="plant-botanical-svg" viewBox="0 0 480 740" role="img" aria-label="Animated Kalamansi and Oregano Plant">
                 <defs>
@@ -669,7 +659,6 @@
                 </g>
 
                 <g id="breezeWrapper" class="breeze-group">
-                    <!-- ==================== KALAMANSI ==================== -->
                     <g id="speciesKalamansi" class="botanical-species is-active">
                         <path class="grow-stem" d="M 225 724 C 228 635, 212 555, 224 465 C 236 375, 214 295, 226 205 C 231 165, 226 135, 222 108"
                               stroke="url(#kalamansiStemGrad)" stroke-width="11" stroke-linecap="round" fill="none" />
@@ -759,7 +748,6 @@
                         </g>
                     </g>
 
-                    <!-- ==================== OREGANO ==================== -->
                     <g id="speciesOregano" class="botanical-species">
                         <path class="grow-stem" d="M 232 724 C 228 635, 234 545, 226 455 C 220 385, 232 325, 228 265"
                               stroke="url(#oreganoStemGrad)" stroke-width="8.5" stroke-linecap="round" fill="none" />
@@ -827,7 +815,6 @@
                         </g>
                     </g>
 
-                    <!-- Indoor pot at base (hidden when Outdoor is selected) -->
                     <g class="indoor-pot-group">
                         <ellipse cx="230" cy="666" rx="54" ry="9" fill="#2b180e" />
                         <path d="M 176 666 L 284 666 L 273 722 C 271 725, 267 727, 263 727 L 197 727 C 193 727, 189 725, 187 722 Z" fill="url(#indoorPotGrad)" />
@@ -837,7 +824,6 @@
             </svg>
         </div>
 
-        <!-- CONFIGURE YOUR PLANT CARD ON RIGHT -->
         <div class="config-card-column">
             <section class="plant-config" aria-labelledby="configure-heading">
                 <h1 id="configure-heading">Configure Your Plant</h1>
@@ -860,6 +846,8 @@
         </div>
     </main>
 
+    <audio id="bgMusic" src="music.mp3" controls autoplay loop muted></audio>
+
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const plantSelect = document.querySelector("#plantType");
@@ -872,6 +860,85 @@
             const sceneryBtns = document.querySelectorAll(".scenery-opt-btn");
             const indoorFxRain = document.querySelector("#indoorFxRain");
             const outdoorFxRain = document.querySelector("#outdoorFxRain");
+            const bgMusic = document.querySelector("#bgMusic");
+            const startMonitoringLink = document.querySelector("#startMonitoring");
+
+            function saveMusicState(forcePlaying = null) {
+                if (!bgMusic) return;
+                try {
+                    localStorage.setItem("solarisMusicTime", String(bgMusic.currentTime || 0));
+                    const isPlaying = forcePlaying !== null ? forcePlaying : !bgMusic.paused;
+                    localStorage.setItem("solarisMusicPlaying", isPlaying ? "true" : "false");
+                    localStorage.setItem("solarisMusicMuted", bgMusic.muted ? "true" : "false");
+                } catch (_) {}
+            }
+
+            async function tryAutoplayMusic() {
+                if (!bgMusic) return;
+                const savedTime = parseFloat(localStorage.getItem("solarisMusicTime") || "0");
+                const savedMuted = localStorage.getItem("solarisMusicMuted");
+
+                const applySavedTime = () => {
+                    if (Number.isFinite(savedTime) && savedTime > 0) {
+                        const maxDur = Number.isFinite(bgMusic.duration) && bgMusic.duration > 0
+                            ? bgMusic.duration - 0.1
+                            : savedTime;
+                        try {
+                            bgMusic.currentTime = Math.max(0, Math.min(savedTime, maxDur));
+                        } catch (_) {}
+                    }
+                };
+
+                if (bgMusic.readyState >= 1) {
+                    applySavedTime();
+                } else {
+                    bgMusic.addEventListener("loadedmetadata", applySavedTime, { once: true });
+                }
+
+                if (savedMuted === "false") {
+                    bgMusic.muted = false;
+                    try {
+                        await bgMusic.play();
+                        saveMusicState(true);
+                        return;
+                    } catch (_) {}
+                }
+
+                bgMusic.muted = true;
+                try {
+                    await bgMusic.play();
+                    saveMusicState(true);
+                } catch (_) {}
+            }
+
+            function unlockAudioOnGesture() {
+                if (!bgMusic) return;
+                bgMusic.muted = false;
+                bgMusic.play().then(() => {
+                    saveMusicState(true);
+                }).catch(() => {});
+                document.removeEventListener("pointerdown", unlockAudioOnGesture);
+                document.removeEventListener("keydown", unlockAudioOnGesture);
+            }
+
+            if (bgMusic) {
+                tryAutoplayMusic();
+                document.addEventListener("pointerdown", unlockAudioOnGesture, { passive: true });
+                document.addEventListener("keydown", unlockAudioOnGesture, { passive: true });
+
+                window.setInterval(() => {
+                    if (!bgMusic.paused) {
+                        saveMusicState(true);
+                    }
+                }, 250);
+
+                bgMusic.addEventListener("play", () => saveMusicState(true));
+                bgMusic.addEventListener("pause", () => saveMusicState(false));
+                bgMusic.addEventListener("volumechange", () => saveMusicState());
+                window.addEventListener("pagehide", () => saveMusicState());
+                window.addEventListener("beforeunload", () => saveMusicState());
+                startMonitoringLink?.addEventListener("click", () => saveMusicState());
+            }
 
             function replayGrowth() {
                 if (!plantSelect || !kalamansiGroup || !oreganoGroup) return;

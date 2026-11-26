@@ -701,6 +701,9 @@
         </form>
     </dialog>
 
+    <!-- Continuous Background Audio Synced via localStorage -->
+    <audio id="bgMusic" src="music.mp3" controls autoplay loop muted></audio>
+
     <script>
         (function () {
             const buttons = Array.from(document.querySelectorAll(".p2-scenery-btn"));
@@ -778,6 +781,84 @@
             // Re-sync plant species briefly after module script initializes
             setTimeout(syncPlantSpecies, 120);
             setTimeout(syncPlantSpecies, 600);
+
+            // Continuous background audio sync across pages
+            const bgMusic = document.querySelector("#bgMusic");
+            if (!bgMusic) return;
+
+            function saveMusicState(forcePlaying = null) {
+                try {
+                    localStorage.setItem("solarisMusicTime", String(bgMusic.currentTime || 0));
+                    const isPlaying = forcePlaying !== null ? forcePlaying : !bgMusic.paused;
+                    localStorage.setItem("solarisMusicPlaying", isPlaying ? "true" : "false");
+                    localStorage.setItem("solarisMusicMuted", bgMusic.muted ? "true" : "false");
+                } catch (_) {}
+            }
+
+            async function resumeMusic() {
+                const rawTime = parseFloat(localStorage.getItem("solarisMusicTime") || "0");
+                const wasPlaying = localStorage.getItem("solarisMusicPlaying") !== "false";
+                const savedMuted = localStorage.getItem("solarisMusicMuted");
+
+                const applyTime = () => {
+                    if (Number.isFinite(rawTime) && rawTime > 0) {
+                        const maxDur = Number.isFinite(bgMusic.duration) && bgMusic.duration > 0
+                            ? bgMusic.duration - 0.1
+                            : rawTime;
+                        try {
+                            bgMusic.currentTime = Math.max(0, Math.min(rawTime, maxDur));
+                        } catch (_) {}
+                    }
+                };
+
+                if (bgMusic.readyState >= 1) {
+                    applyTime();
+                } else {
+                    bgMusic.addEventListener("loadedmetadata", applyTime, { once: true });
+                }
+
+                if (!wasPlaying) return;
+
+                if (savedMuted === "false") {
+                    bgMusic.muted = false;
+                    try {
+                        await bgMusic.play();
+                        saveMusicState(true);
+                        return;
+                    } catch (_) {}
+                }
+
+                bgMusic.muted = true;
+                try {
+                    await bgMusic.play();
+                    saveMusicState(true);
+                } catch (_) {}
+            }
+
+            function unlockAudioOnGesture() {
+                bgMusic.muted = false;
+                bgMusic.play().then(() => {
+                    saveMusicState(true);
+                }).catch(() => {});
+                document.removeEventListener("pointerdown", unlockAudioOnGesture);
+                document.removeEventListener("keydown", unlockAudioOnGesture);
+            }
+
+            resumeMusic();
+            document.addEventListener("pointerdown", unlockAudioOnGesture, { passive: true });
+            document.addEventListener("keydown", unlockAudioOnGesture, { passive: true });
+
+            window.setInterval(() => {
+                if (!bgMusic.paused) {
+                    saveMusicState(true);
+                }
+            }, 250);
+
+            bgMusic.addEventListener("play", () => saveMusicState(true));
+            bgMusic.addEventListener("pause", () => saveMusicState(false));
+            bgMusic.addEventListener("volumechange", () => saveMusicState());
+            window.addEventListener("pagehide", () => saveMusicState());
+            window.addEventListener("beforeunload", () => saveMusicState());
         })();
     </script>
 </body>

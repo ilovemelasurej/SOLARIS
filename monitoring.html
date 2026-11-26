@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plant Monitoring — SOLARIS</title>
     <link rel="stylesheet" href="styles.css">
-    <script type="module" src="script.js"></script>
+    <script src="script.js" defer></script>
     <style>
         :root {
             --scroll-progress: 0;
@@ -28,7 +28,6 @@
             --bg-mood-filter: brightness(0.84) saturate(0.88) contrast(1.05);
         }
 
-        /* Full-page background layer behind all dashboard boxes */
         .solaris-page2-bg {
             position: fixed;
             inset: 0;
@@ -45,7 +44,6 @@
             display: block;
         }
 
-        /* Sky / Sun / Moon / Clouds / Rain transitions */
         .p2-sky-tint {
             fill: rgba(255, 240, 185, 0.14);
             transition: fill 0.6s ease;
@@ -136,7 +134,6 @@
             animation: p2RainFall 0.85s linear infinite;
         }
 
-        /* Full-page background plant (matches Page 1 species + grows upward on scroll) */
         .p2-fullpage-plant-wrap {
             opacity: calc(0.14 + var(--scroll-progress) * 0.86);
             transform:
@@ -156,11 +153,11 @@
         }
 
         .p2-sway {
-            transform-origin: 720px 835px;
+            transform-box: fill-box;
+            transform-origin: bottom center;
             animation: p2PlantBreeze 4.8s ease-in-out infinite;
         }
 
-        /* Top-right scenery pill */
         .p2-scenery-switcher {
             position: fixed;
             top: 14px;
@@ -190,7 +187,6 @@
             color: #08251d;
         }
 
-        /* Keep dashboard boxes untouched above background */
         .dashboard {
             position: relative;
             z-index: 2;
@@ -209,7 +205,6 @@
     </style>
 </head>
 <body class="bg-scenery-daylight">
-    <!-- FULL-PAGE BACKGROUND WITH SCENERY + FULL-SIZE SCROLL-GROWING PLANT -->
     <div class="solaris-page2-bg" aria-hidden="true">
         <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
             <defs>
@@ -258,13 +253,11 @@
             <rect x="0" y="0" width="1440" height="900" fill="url(#p2SkyGrad)" />
             <rect class="p2-sky-tint" x="0" y="0" width="1440" height="900" />
 
-            <!-- Sun -->
             <g class="p2-sun-group">
                 <circle class="p2-sun-halo" cx="250" cy="140" r="155" />
                 <circle class="p2-sun-core" cx="250" cy="140" r="36" />
             </g>
 
-            <!-- Moon & Stars (Night) -->
             <g class="p2-moon-group">
                 <circle cx="265" cy="130" r="28" fill="#f8fafc" />
                 <circle cx="276" cy="123" r="24" fill="#081e18" />
@@ -275,7 +268,6 @@
                 <circle cx="1260" cy="175" r="1.8" fill="#e2e8f0" opacity="0.65" />
             </g>
 
-            <!-- Rain Clouds & Rain Streaks -->
             <g class="p2-clouds-group">
                 <ellipse cx="220" cy="125" rx="145" ry="40" fill="#64748b" />
                 <ellipse cx="345" cy="138" rx="135" ry="36" fill="#475569" />
@@ -294,10 +286,8 @@
                 </g>
             </g>
 
-            <!-- FULL-SIZE BACKGROUND PLANT (MATCHES PAGE 1 KALAMANSI / OREGANO) -->
             <g class="p2-fullpage-plant-wrap">
                 <g class="p2-sway">
-                    <!-- Kalamansi full-page background artwork -->
                     <g id="p2PlantKalamansi" class="p2-species-group is-active" transform="translate(360, 75) scale(1.5)">
                         <path d="M 225 724 C 228 635, 212 555, 224 465 C 236 375, 214 295, 226 205 C 231 165, 226 135, 222 108"
                               stroke="url(#p2KalamansiStemGrad)" stroke-width="11" stroke-linecap="round" fill="none" />
@@ -328,7 +318,6 @@
                         <circle cx="386" cy="396" r="24" fill="url(#p2UnripeFruitGrad)" />
                     </g>
 
-                    <!-- Oregano full-page background artwork -->
                     <g id="p2PlantOregano" class="p2-species-group" transform="translate(360, 75) scale(1.5)">
                         <path d="M 232 724 C 228 635, 234 545, 226 455 C 220 385, 232 325, 228 265"
                               stroke="url(#p2OreganoStemGrad)" stroke-width="8.5" stroke-linecap="round" fill="none" />
@@ -361,7 +350,6 @@
         </svg>
     </div>
 
-    <!-- SCENERY SWITCHER (DAYLIGHT / SUNSET / NIGHT / RAIN) -->
     <div class="p2-scenery-switcher" role="group" aria-label="Background Scenery">
         <button type="button" class="p2-scenery-btn active" data-p2-scenery="daylight">Daylight</button>
         <button type="button" class="p2-scenery-btn" data-p2-scenery="sunset">Sunset</button>
@@ -514,7 +502,6 @@
             </div>
         </section>
 
-        <!-- 3-COLUMN IRRIGATION CONTROLS: SMART | MANUAL | SCHEDULED -->
         <section class="irrigation-controls-grid" aria-label="Irrigation Controls">
             <article class="control-mode-card">
                 <div class="mode-card-header">
@@ -617,7 +604,6 @@
             </article>
         </section>
 
-        <!-- LOWER PLANT RECORD, OPTIMAL NEED & HISTORY -->
         <section class="irrigation-section" aria-label="Plant Status and Watering History">
             <div class="plant-status-panel">
                 <div class="plant-status-top">
@@ -640,7 +626,6 @@
         </section>
     </main>
 
-    <!-- 1. SMART IRRIGATE CONFIRMATION MODAL -->
     <dialog id="irrigationDialog" class="irrigation-dialog">
         <h2 id="dialogPlantName">Smart Irrigate</h2>
         <p id="dialogScheduleText">Schedule Smart Irrigate for the configured plant?</p>
@@ -650,7 +635,6 @@
         </div>
     </dialog>
 
-    <!-- 2. CUSTOM SCHEDULED IRRIGATE MODAL (MM, DD, HR, MIN, YY + LITERS) -->
     <dialog id="customScheduleDialog" class="irrigation-dialog custom-schedule-dialog">
         <h2>Scheduled Irrigate</h2>
         <p id="customDialogSubtitle">Set date, time, and water volume in Liters (L).</p>
@@ -701,7 +685,6 @@
         </form>
     </dialog>
 
-    <!-- Continuous Background Audio Synced via localStorage -->
     <audio id="bgMusic" src="music.mp3" controls autoplay loop muted></audio>
 
     <script>
@@ -778,11 +761,9 @@
             syncPlantSpecies();
             updateScrollGrowth();
 
-            // Re-sync plant species briefly after module script initializes
             setTimeout(syncPlantSpecies, 120);
             setTimeout(syncPlantSpecies, 600);
 
-            // Continuous background audio sync across pages
             const bgMusic = document.querySelector("#bgMusic");
             if (!bgMusic) return;
 

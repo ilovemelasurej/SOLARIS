@@ -39,7 +39,6 @@
             --mood-filter: brightness(0.86) saturate(0.88) contrast(1.04);
         }
 
-        /* Dynamic background scene (Indoor window vs Outdoor farm) */
         .env-scene-backdrop {
             position: fixed;
             inset: 0;
@@ -80,7 +79,6 @@
             display: block;
         }
 
-        /* Shared Sun transition logic across Daylight / Sunset / Rain / Night */
         .celestial-sun {
             transform: translateY(0px);
             opacity: 0.96;
@@ -154,7 +152,6 @@
             animation: rainFall 0.85s linear infinite;
         }
 
-        /* Floating dust particles in light beam */
         .dust-mote {
             animation: dustDrift 7s ease-in-out infinite;
         }
@@ -169,7 +166,6 @@
             animation-delay: -4.1s;
         }
 
-        /* Right-corner 4-option scenery switcher */
         .scenery-switcher-corner {
             position: fixed;
             top: 18px;
@@ -219,7 +215,6 @@
             box-sizing: border-box;
         }
 
-        /* Borderless plant anchored straight to bottom edge */
         .plant-floor-anchor {
             position: relative;
             align-self: stretch;
@@ -257,7 +252,6 @@
             opacity: 0;
         }
 
-        /* Stem rising & extending upward */
         .grow-stem {
             stroke-dasharray: 950;
             stroke-dashoffset: 950;
@@ -298,7 +292,8 @@
         .d6 { animation-delay: 1.35s; }
 
         .breeze-group {
-            transform-origin: 235px 675px;
+            transform-box: fill-box;
+            transform-origin: bottom center;
             animation: nightGardenSway 4.8s ease-in-out 1.4s infinite;
         }
 
@@ -956,12 +951,14 @@
                 });
             }
 
-            function syncEnvironmentScene() {
-                const isOutdoor = outdoorBtn?.classList.contains("active");
-                document.body.classList.toggle("env-outdoor", Boolean(isOutdoor));
+            function syncEnvironmentScene(envValue = null) {
+                const isOutdoor = envValue
+                    ? String(envValue).toLowerCase() === "outdoor"
+                    : Boolean(outdoorBtn?.classList.contains("active"));
+                document.body.classList.toggle("env-outdoor", isOutdoor);
                 document.body.classList.toggle("env-indoor", !isOutdoor);
                 indoorScene?.classList.toggle("is-active", !isOutdoor);
-                outdoorScene?.classList.toggle("is-active", Boolean(isOutdoor));
+                outdoorScene?.classList.toggle("is-active", isOutdoor);
             }
 
             function applySceneryMode(mode) {
@@ -975,7 +972,9 @@
 
                 indoorFxRain?.classList.toggle("is-active", chosen === "rain");
                 outdoorFxRain?.classList.toggle("is-active", chosen === "rain");
-                localStorage.setItem("configuredScenery", chosen);
+                try {
+                    localStorage.setItem("configuredScenery", chosen);
+                } catch (_) {}
             }
 
             sceneryBtns.forEach((btn) => {
@@ -986,15 +985,27 @@
 
             plantSelect?.addEventListener("change", replayGrowth);
             indoorBtn?.addEventListener("click", () => {
-                window.setTimeout(syncEnvironmentScene, 10);
+                try {
+                    localStorage.setItem("configuredEnvironment", "Indoor");
+                } catch (_) {}
+                syncEnvironmentScene("Indoor");
             });
             outdoorBtn?.addEventListener("click", () => {
-                window.setTimeout(syncEnvironmentScene, 10);
+                try {
+                    localStorage.setItem("configuredEnvironment", "Outdoor");
+                } catch (_) {}
+                syncEnvironmentScene("Outdoor");
             });
 
-            const savedScenery = localStorage.getItem("configuredScenery") || "daylight";
+            let savedScenery = "daylight";
+            let savedEnv = null;
+            try {
+                savedScenery = localStorage.getItem("configuredScenery") || "daylight";
+                savedEnv = localStorage.getItem("configuredEnvironment");
+            } catch (_) {}
+
             replayGrowth();
-            syncEnvironmentScene();
+            syncEnvironmentScene(savedEnv);
             applySceneryMode(savedScenery);
         });
     </script>

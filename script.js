@@ -1,11 +1,11 @@
-const DB_URL = "https://solaris-1c-default-rtdb.firebaseio.com";
+const DB_URL = "[https://solaris-1c-default-rtdb.firebaseio.com](https://solaris-1c-default-rtdb.firebaseio.com)";
 const SENSOR_REFRESH_INTERVAL_MS = 2000;
 const REQUEST_TIMEOUT_MS = 5000;
 
 // Measured 1-dripper rate from 20s test (~20.5-22.3 mL => ~1.07 mL/s => ~64.2 mL/min => ~0.0642 L/min)
 const DRIPPER_ML_PER_SEC = 1.07;
-const DRIPPER_ML_PER_MIN = DRIPPER_ML_PER_SEC * 60; // ~64.2 mL/min
-const DRIPPER_L_PER_MIN  = DRIPPER_ML_PER_MIN / 1000; // ~0.0642 L/min
+const DRIPPER_ML_PER_MIN = DRIPPER_ML_PER_SEC * 60;
+const DRIPPER_L_PER_MIN  = DRIPPER_ML_PER_MIN / 1000;
 
 const PLANT_PROFILES = {
     Kalamansi: {
@@ -18,7 +18,6 @@ const PLANT_PROFILES = {
     }
 };
 
-// ===================== SCROLL TRANSITION (VIBEY -> SOIL & ROOTS) =====================
 function updateScrollRootsProgress() {
     const scrollTop = window.scrollY || window.pageYOffset || 0;
     const docHeight = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
@@ -30,7 +29,6 @@ window.addEventListener("scroll", updateScrollRootsProgress, { passive: true });
 window.addEventListener("resize", updateScrollRootsProgress, { passive: true });
 updateScrollRootsProgress();
 
-// ===================== 2D PLANT ENTRANCE & LIVE SWITCHING =====================
 function sync2dPlantVisual(selectedPlantName, envName, animateSwap = false) {
     const stage = document.querySelector("#plant2dStage");
     const kalamansiArt = document.querySelector("#artworkKalamansi");
@@ -61,7 +59,6 @@ function sync2dPlantVisual(selectedPlantName, envName, animateSwap = false) {
     }
 }
 
-// ===================== PAGE 1: PLANT CONFIGURATION =====================
 const environmentButtons = document.querySelectorAll(".environment-buttons button");
 const plantType = document.querySelector("#plantType");
 const startMonitoring = document.querySelector("#startMonitoring");
@@ -93,13 +90,11 @@ if (plantType && startMonitoring) {
         });
     }
 
-    // Trigger initial 2D plant state + smooth entrance animation
     sync2dPlantVisual(plantType.value, selectedEnvironment, false);
     window.setTimeout(() => {
         document.querySelector("#plant2dStage")?.classList.add("is-visible");
     }, 60);
 
-    // Live morph/swap kapag pinalitan ang Kalamansi <-> Oregano
     plantType.addEventListener("change", () => {
         sync2dPlantVisual(plantType.value, selectedEnvironment, true);
     });
@@ -126,7 +121,6 @@ if (plantType && startMonitoring) {
     });
 }
 
-// ===================== HELPERS =====================
 function readNumber(data, ...keys) {
     for (const key of keys) {
         if (data && data[key] !== undefined && data[key] !== null) {
@@ -255,7 +249,6 @@ function isIrrigationBusy(irrigation) {
     return false;
 }
 
-// ===================== LIVE MANUAL TIMER STATE =====================
 let manualOpenStartedAtMs = null;
 let latestSoilMoisturePct = null;
 
@@ -317,7 +310,6 @@ function setDisconnectedState() {
     setDeviceState("#pumpStatus", "unknown");
 }
 
-// ===================== PAGE 2: TELEMETRY & IRRIGATION SYNC =====================
 let lastClearedExpiredId = "";
 
 async function updateDashboardFromFirebase() {
@@ -355,7 +347,6 @@ async function updateDashboardFromFirebase() {
             irrigation.status = "EXPIRED";
         }
 
-        // 1. Sensor Values (Dripper flow rate in L/min + mL/min)
         setReading("#temperatureValue", readNumber(sensors, "temperature", "temperatureC"), 1);
         setReading("#humidityValue", readNumber(sensors, "humidity", "humidityPercent"), 1);
         setReading("#waterFlowValue", DRIPPER_L_PER_MIN, 3);
@@ -371,7 +362,6 @@ async function updateDashboardFromFirebase() {
         setReading("#batteryVoltageValue", batV, 2);
         setReading("#solarVoltageValue", solV, 2);
 
-        // 2. Soil Moisture
         const soilPct = readNumber(sensors, "soilMoisturePct");
         latestSoilMoisturePct = soilPct;
         const soilEl = document.querySelector("#soilMoistureReading");
@@ -386,7 +376,6 @@ async function updateDashboardFromFirebase() {
             }
         }
 
-        // 3. Rain Sensor
         const rainRawText = String(sensors.rainStatus || "").trim();
         const rainEl = document.querySelector("#rainReading");
         const rainStat = document.querySelector("#rainStatus");
@@ -401,7 +390,6 @@ async function updateDashboardFromFirebase() {
             }
         }
 
-        // 4. Device Status Cards
         setDeviceState("#batteryStatus", batV !== null && batV > 9.0 ? "on" : "off");
         setDeviceState("#solarStatus", solV !== null && solV > 5.0 ? "on" : "off");
         const isPumpRunning =
@@ -418,7 +406,6 @@ async function updateDashboardFromFirebase() {
         }
         updateManualTimerUI();
 
-        // 5. Render 3 Cards + Lower Status & History
         renderIrrigationFromFirebase(irrigation);
         updateScrollRootsProgress();
 
@@ -569,7 +556,6 @@ function renderIrrigationFromFirebase(irrigation) {
     }
 }
 
-// ===================== 1. LEFT: SMART IRRIGATE MODAL & TRIGGER =====================
 const irrigationDialog = document.querySelector("#irrigationDialog");
 const smartIrrigateButton = document.querySelector("#smartIrrigateButton");
 const cancelIrrigation = document.querySelector("#cancelIrrigation");
@@ -644,7 +630,6 @@ if (smartIrrigateButton && irrigationDialog) {
     });
 }
 
-// ===================== 2. CENTER: MANUAL IRRIGATE (TOGGLE + TIMER) =====================
 const manualIrrigateButton = document.querySelector("#manualIrrigateButton");
 
 if (manualIrrigateButton) {
@@ -728,7 +713,6 @@ if (manualIrrigateButton) {
     });
 }
 
-// ===================== 3. RIGHT: SCHEDULED IRRIGATE (MM, DD, HR, MIN, YY + LITERS) =====================
 const scheduledIrrigateButton = document.querySelector("#scheduledIrrigateButton");
 const customScheduleDialog = document.querySelector("#customScheduleDialog");
 const cancelCustomSchedule = document.querySelector("#cancelCustomSchedule");
@@ -767,12 +751,19 @@ if (scheduledIrrigateButton && customScheduleDialog) {
         const { plant, environment } = getPlantConfig();
         const rec = getRecordedPlantOptimal(plant, environment, latestSoilMoisturePct);
 
-        document.querySelector("#schedMM").value = String(now.getMonth() + 1).padStart(2, "0");
-        document.querySelector("#schedDD").value = String(now.getDate()).padStart(2, "0");
-        document.querySelector("#schedHR").value = String(now.getHours()).padStart(2, "0");
-        document.querySelector("#schedMIN").value = String(now.getMinutes()).padStart(2, "0");
-        document.querySelector("#schedYY").value = String(now.getFullYear()).slice(-2);
-        document.querySelector("#schedLiters").value = rec.optimalLiters.toFixed(2);
+        const mmEl = document.querySelector("#schedMM");
+        const ddEl = document.querySelector("#schedDD");
+        const hrEl = document.querySelector("#schedHR");
+        const minEl = document.querySelector("#schedMIN");
+        const yyEl = document.querySelector("#schedYY");
+        const litEl = document.querySelector("#schedLiters");
+
+        if (mmEl) mmEl.value = String(now.getMonth() + 1).padStart(2, "0");
+        if (ddEl) ddEl.value = String(now.getDate()).padStart(2, "0");
+        if (hrEl) hrEl.value = String(now.getHours()).padStart(2, "0");
+        if (minEl) minEl.value = String(now.getMinutes()).padStart(2, "0");
+        if (yyEl) yyEl.value = String(now.getFullYear()).slice(-2);
+        if (litEl) litEl.value = rec.optimalLiters.toFixed(2);
 
         const sub = document.querySelector("#customDialogSubtitle");
         if (sub) {
@@ -806,12 +797,12 @@ if (scheduledIrrigateButton && customScheduleDialog) {
 
     customScheduleForm?.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const mmNum = parseInt(document.querySelector("#schedMM").value, 10);
-        const ddNum = parseInt(document.querySelector("#schedDD").value, 10);
-        const hrNum = parseInt(document.querySelector("#schedHR").value, 10);
-        const minNum = parseInt(document.querySelector("#schedMIN").value, 10);
-        const yyNum = parseInt(document.querySelector("#schedYY").value, 10);
-        const liters = parseFloat(document.querySelector("#schedLiters").value);
+        const mmNum = parseInt(document.querySelector("#schedMM")?.value ?? "", 10);
+        const ddNum = parseInt(document.querySelector("#schedDD")?.value ?? "", 10);
+        const hrNum = parseInt(document.querySelector("#schedHR")?.value ?? "", 10);
+        const minNum = parseInt(document.querySelector("#schedMIN")?.value ?? "", 10);
+        const yyNum = parseInt(document.querySelector("#schedYY")?.value ?? "", 10);
+        const liters = parseFloat(document.querySelector("#schedLiters")?.value ?? "");
 
         if (
             mmNum < 1 || mmNum > 12 ||

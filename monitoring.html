@@ -818,19 +818,20 @@
 
             function unlockAudioOnGesture() {
                 bgMusic.muted = false;
+                if (bgMusic.volume === 0) bgMusic.volume = 0.65;
                 bgMusic.play().then(() => {
                     saveMusicState(true);
                 }).catch(() => {});
-                document.removeEventListener("pointerdown", unlockAudioOnGesture);
-                document.removeEventListener("keydown", unlockAudioOnGesture);
             }
 
             resumeMusic();
-            document.addEventListener("pointerdown", unlockAudioOnGesture, { passive: true });
+            ["pointerdown", "click", "touchstart"].forEach((evtName) => {
+                document.addEventListener(evtName, unlockAudioOnGesture, { passive: true });
+            });
             document.addEventListener("keydown", unlockAudioOnGesture, { passive: true });
 
             window.setInterval(() => {
-                if (!bgMusic.paused) {
+                if (!bgMusic.paused && !bgMusic.muted) {
                     saveMusicState(true);
                 }
             }, 250);

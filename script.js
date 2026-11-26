@@ -66,6 +66,7 @@
             updateScrollRootsProgress();
             updateDashboardFromFirebase();
         }
+        applyTrackToPlayer(false);
     }
 
     window.addEventListener("hashchange", () => applyRouteView(getActiveRouteView()));
@@ -96,6 +97,7 @@
     if (audioSink) {
         audioSink.volume = 0.65;
         audioSink.loop = true;
+        audioSink.preload = "auto";
     }
 
     function isAudioActivelyPlaying() {
@@ -116,6 +118,17 @@
         });
     }
 
+    function playAudioElement(el) {
+        if (!el) return Promise.resolve(false);
+        el.muted = false;
+        if (el.volume === 0) el.volume = 0.65;
+        const p = el.play();
+        if (p && typeof p.then === "function") {
+            return p.then(() => true).catch(() => false);
+        }
+        return Promise.resolve(!el.paused);
+    }
+
     function applyTrackToPlayer(forcePlay = false) {
         const track = resolveAmbientTrack();
         const nextFile = track.file;
@@ -131,21 +144,16 @@
             return;
         }
 
-        if (fileChanged) {
+        if (fileChanged || !audioSink.getAttribute("src")) {
             currentLoadedFile = nextFile;
             audioSink.src = encodeURI(nextFile);
             audioSink.load();
         }
 
         if (desiredPlaying && userAudioUnlocked) {
-            audioSink.muted = false;
-            audioSink.play()
-                .then(() => {
-                    syncAudioButtonsUI(true);
-                })
-                .catch(() => {
-                    syncAudioButtonsUI(false);
-                });
+            playAudioElement(audioSink).then((ok) => {
+                syncAudioButtonsUI(ok);
+            });
         } else {
             syncAudioButtonsUI(isAudioActivelyPlaying());
         }
@@ -167,19 +175,46 @@
 
     document.querySelectorAll(".audio-pill-btn").forEach((btn) => {
         btn.addEventListener("click", (e) => {
+            e.preventDefault();
             e.stopPropagation();
             unlockOrToggleAmbientAudio(false);
         });
     });
 
-    // Unlock playback seamlessly on first user click/tap anywhere
-    document.addEventListener("pointerdown", () => {
+    function handleScreenTapAudioUnlock() {
+        const page2BgMusic = document.querySelector("#bgMusic");
+        if (page2BgMusic) {
+            page2BgMusic.muted = false;
+            if (page2BgMusic.volume === 0) page2BgMusic.volume = 0.65;
+            page2BgMusic.play().then(() => {
+                try {
+                    localStorage.setItem("solarisMusicPlaying", "true");
+                    localStorage.setItem("solarisMusicMuted", "false");
+                } catch (_) {}
+            }).catch(() => {});
+        }
+
+        if (!audioSink) return;
+
         if (!userAudioUnlocked) {
             unlockOrToggleAmbientAudio(true);
-        } else if (desiredPlaying && audioSink && audioSink.paused && currentLoadedFile) {
-            audioSink.play().then(() => syncAudioButtonsUI(true)).catch(() => {});
+        } else if (desiredPlaying && (audioSink.paused || audioSink.muted)) {
+            applyTrackToPlayer(true);
         }
-    }, { passive: true });
+    }
+
+    // Unlock playback on tap/click/key anywhere on both views/pages
+    ["pointerdown", "click", "touchstart"].forEach((evtName) => {
+        document.addEventListener(evtName, handleScreenTapAudioUnlock, { passive: true });
+    });
+    document.addEventListener("keydown", handleScreenTapAudioUnlock, { passive: true });
+
+    audioSink?.addEventListener("play", () => {
+        if (!audioSink.muted) syncAudioButtonsUI(true);
+    });
+    audioSink?.addEventListener("pause", () => {
+        syncAudioButtonsUI(false);
+    });
 
     // ===================== SCENERY & PLANT VISUAL SYNC =====================
     function applySceneryMode(mode) {
@@ -267,6 +302,7 @@
 
     document.querySelector("#startMonitoring")?.addEventListener("click", async (e) => {
         e.preventDefault();
+        unlockOrToggleAmbientAudio(true);
         const plantToSave = plantSelect ? plantSelect.value : currentPlant;
         const envToSave = currentEnvironment;
         syncPlantSpeciesVisual(plantToSave, false);
@@ -289,13 +325,14 @@
 
     document.querySelector("#backToConfigLink")?.addEventListener("click", (e) => {
         e.preventDefault();
+        unlockOrToggleAmbientAudio(true);
         window.location.hash = "#configure";
         applyRouteView("config");
     });
 
     // ===================== PAGE 2 TELEMETRY & IRRIGATION LOGIC =====================
     function updateScrollRootsProgress() {
-        if (!document.body.classList.contains("view-monitoring")) return;
+        if (!document.body.classList.contains("view-monitoring") && !document.querySelector("#bgMusic")) return;
         const scrollTop = window.scrollY || window.pageYOffset || 0;
         const docHeight = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
         const progress = Math.min(1, Math.max(0, scrollTop / docHeight));
@@ -512,7 +549,10 @@
 
     async function updateDashboardFromFirebase() {
         const telemetryStatus = document.querySelector("#telemetryStatus");
-        if (!telemetryStatus || !document.body.classList.contains("view-monitoring")) return;
+        if (!telemetryStatus) return;
+        const isSpaMonitoring = document.body.classList.contains("view-monitoring");
+        const isStandaloneMonitoring = Boolean(document.querySelector("#bgMusic"));
+        if (!isSpaMonitoring && !isStandaloneMonitoring) return;
 
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -1097,8 +1137,12 @@
     syncAudioButtonsUI(false);
     applyRouteView(getActiveRouteView());
 
+    if (document.querySelector("#bgMusic")) {
+        updateDashboardFromFirebase();
+    }
+
     window.setInterval(() => {
-        if (document.body.classList.contains("view-monitoring")) {
+        if (document.body.classList.contains("view-monitoring") || document.querySelector("#bgMusic")) {
             updateDashboardFromFirebase();
         }
     }, SENSOR_REFRESH_INTERVAL_MS);

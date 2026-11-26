@@ -3,44 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configure Your Plant — SOLARIS</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="script.js" defer></script>
+    <title>SOLARIS — Plant Configuration & Irrigation Monitoring</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        html, body.config-page {
-            min-height: 100vh;
-            width: 100%;
-            margin: 0;
-            background: #040b09;
-            color: #edf8f1;
-            font-family: "Inter", Arial, Helvetica, sans-serif;
-            overflow-x: hidden;
-            --sky-tint: rgba(255, 232, 150, 0.18);
+        :root {
+            --scroll-progress: 0;
+            --theme-bg: #071b16;
+            --theme-surface: #0d2b22;
+            --theme-surface-light: #12392c;
+            --theme-border: #245641;
+            --theme-text: #edf8f1;
+            --theme-muted: #9ab9a8;
+            --emerald: #37c982;
+            --solar-amber: #f3bb52;
+            --water-blue: #49bde8;
+            --soil-glow: #d4a36a;
+            --sky-tint: rgba(255, 240, 185, 0.24);
             --mood-filter: brightness(1.06) saturate(1.12);
         }
 
-        body.config-page.mood-daylight {
-            --sky-tint: rgba(255, 240, 185, 0.34);
-            --mood-filter: brightness(1.08) saturate(1.14);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        body.config-page.mood-sunset {
-            --sky-tint: rgba(251, 146, 60, 0.34);
-            --mood-filter: brightness(0.98) saturate(1.26) sepia(0.12);
+        html, body {
+            font-family: "Inter", Arial, Helvetica, sans-serif;
+            background-color: var(--theme-bg);
+            color: var(--theme-text);
+            max-width: 100%;
+            overflow-x: hidden;
         }
 
-        body.config-page.mood-night {
-            --sky-tint: rgba(30, 64, 120, 0.28);
-            --mood-filter: brightness(0.78) saturate(1.06) hue-rotate(8deg);
+        /* Page 1: Strictly non-scrollable 100vh lock */
+        body.view-config {
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
         }
 
-        body.config-page.mood-rain {
-            --sky-tint: rgba(100, 116, 139, 0.26);
-            --mood-filter: brightness(0.86) saturate(0.88) contrast(1.04);
+        /* Page 2: Full scrolling enabled */
+        body.view-monitoring {
+            min-height: 100vh;
+            width: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* Mood / Weather / Time-of-day filters */
+        body.mood-daylight {
+            --sky-tint: rgba(255, 240, 185, 0.26);
+            --mood-filter: brightness(1.06) saturate(1.12);
+        }
+
+        body.mood-sunset {
+            --sky-tint: rgba(251, 146, 60, 0.30);
+            --mood-filter: brightness(0.98) saturate(1.24) sepia(0.10);
+        }
+
+        body.mood-night {
+            --sky-tint: rgba(22, 46, 92, 0.30);
+            --mood-filter: brightness(0.78) saturate(1.05) hue-rotate(8deg);
+        }
+
+        body.mood-rain {
+            --sky-tint: rgba(100, 116, 139, 0.24);
+            --mood-filter: brightness(0.85) saturate(0.88) contrast(1.04);
+        }
+
+        /* Hidden YouTube player & hidden <audio> element (never displayed as a control bar) */
+        #hiddenAudioSink,
+        #ytAudioHost {
+            position: fixed;
+            width: 1px;
+            height: 1px;
+            left: -9999px;
+            top: -9999px;
+            opacity: 0;
+            pointer-events: none;
+            overflow: hidden;
+            display: none;
+        }
+
+        /* ===================== PAGE 1: CONFIGURATION & LIVE SCENERY ===================== */
+        #pageConfigView {
+            display: none;
+            position: relative;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        body.view-config #pageConfigView {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+        }
+
+        .p1-topbar {
+            position: relative;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 22px;
+            flex-wrap: wrap;
+        }
+
+        .brand-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(8, 26, 20, 0.78);
+            border: 1px solid rgba(88, 224, 150, 0.26);
+            backdrop-filter: blur(10px);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            color: #9bf5c4;
+        }
+
+        .p1-controls-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .scenery-switcher {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 6px;
+            border-radius: 999px;
+            border: 1px solid rgba(237, 248, 241, 0.18);
+            background: rgba(8, 24, 19, 0.80);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
+        }
+
+        .scenery-opt-btn {
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: transparent;
+            color: #9ab9a8;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .scenery-opt-btn:hover {
+            color: #edf8f1;
+        }
+
+        .scenery-opt-btn.active {
+            background: linear-gradient(90deg, #37c982, #49bde8);
+            color: #072219;
+        }
+
+        .audio-pill-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(73, 189, 232, 0.34);
+            background: rgba(8, 24, 19, 0.82);
+            backdrop-filter: blur(10px);
+            color: #dff6ee;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .audio-pill-btn:hover {
+            border-color: var(--emerald);
+        }
+
+        .audio-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #94a3b8;
+        }
+
+        .audio-pill-btn.is-playing .audio-dot {
+            background: #37c982;
+            box-shadow: 0 0 8px #37c982;
         }
 
         .env-scene-backdrop {
-            position: fixed;
+            position: absolute;
             inset: 0;
             z-index: 0;
             pointer-events: none;
@@ -53,7 +216,7 @@
             position: absolute;
             inset: 0;
             opacity: 0;
-            transition: opacity 0.55s ease;
+            transition: opacity 0.5s ease;
         }
 
         .scene-layer.is-active {
@@ -82,21 +245,21 @@
         .celestial-sun {
             transform: translateY(0px);
             opacity: 0.96;
-            transition: transform 0.85s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.55s ease;
+            transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s ease;
         }
 
         .celestial-sun-core {
             fill: #fde68a;
-            transition: fill 0.75s ease;
+            transition: fill 0.7s ease;
         }
 
         .celestial-sun-halo {
-            fill: rgba(251, 191, 36, 0.42);
-            transition: fill 0.75s ease;
+            fill: rgba(251, 191, 36, 0.40);
+            transition: fill 0.7s ease;
         }
 
         body.mood-sunset .celestial-sun {
-            transform: translateY(150px);
+            transform: translateY(145px);
             opacity: 0.96;
         }
 
@@ -105,12 +268,12 @@
         }
 
         body.mood-sunset .celestial-sun-halo {
-            fill: rgba(249, 115, 22, 0.46);
+            fill: rgba(249, 115, 22, 0.45);
         }
 
         body.mood-rain .celestial-sun {
             transform: translateY(12px);
-            opacity: 0.55;
+            opacity: 0.52;
         }
 
         body.mood-night .celestial-sun {
@@ -121,7 +284,7 @@
         .celestial-moon {
             opacity: 0;
             transform: translateY(16px);
-            transition: opacity 0.65s ease, transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+            transition: opacity 0.6s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         body.mood-night .celestial-moon {
@@ -132,7 +295,7 @@
         .grey-rain-clouds {
             opacity: 0;
             transform: translateY(-12px);
-            transition: opacity 0.55s ease, transform 0.65s ease;
+            transition: opacity 0.5s ease, transform 0.6s ease;
         }
 
         body.mood-rain .grey-rain-clouds {
@@ -166,72 +329,38 @@
             animation-delay: -4.1s;
         }
 
-        .scenery-switcher-corner {
-            position: fixed;
-            top: 18px;
-            right: 22px;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 8px;
-            border-radius: 999px;
-            border: 1px solid rgba(237, 248, 241, 0.18);
-            background: rgba(8, 24, 19, 0.78);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
-        }
-
-        .scenery-opt-btn {
-            padding: 6px 11px;
-            border-radius: 999px;
-            background: transparent;
-            color: #9ab9a8;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.4px;
-            transition: background 0.2s ease, color 0.2s ease;
-        }
-
-        .scenery-opt-btn:hover {
-            color: #edf8f1;
-            transform: none;
-        }
-
-        .scenery-opt-btn.active {
-            background: linear-gradient(90deg, #37c982, #49bde8);
-            color: #072219;
-        }
-
         .solaris-layout-stage {
             position: relative;
             z-index: 2;
-            min-height: 100vh;
+            height: 100%;
+            min-height: 0;
             width: 100%;
             display: grid;
-            grid-template-columns: minmax(330px, 47vw) minmax(0, 1fr);
+            grid-template-columns: minmax(280px, 46vw) minmax(0, 1fr);
             align-items: center;
-            padding: 20px 36px 0 0;
-            box-sizing: border-box;
+            padding: 0 32px 0 12px;
+            overflow: hidden;
         }
 
         .plant-floor-anchor {
             position: relative;
-            align-self: stretch;
+            height: 100%;
+            max-height: 100%;
             display: flex;
             align-items: flex-end;
             justify-content: center;
-            min-height: 100vh;
             pointer-events: none;
+            overflow: hidden;
         }
 
         .plant-botanical-svg {
-            width: min(100%, 500px);
-            height: min(94vh, 780px);
-            max-height: 94vh;
+            width: auto;
+            max-width: 100%;
+            height: 100%;
+            max-height: 100%;
             display: block;
             overflow: visible;
-            filter: var(--mood-filter) drop-shadow(0 16px 32px rgba(0, 0, 0, 0.65));
+            filter: var(--mood-filter) drop-shadow(0 14px 28px rgba(0, 0, 0, 0.65));
             transition: filter 0.45s ease;
         }
 
@@ -255,46 +384,46 @@
         .grow-stem {
             stroke-dasharray: 950;
             stroke-dashoffset: 950;
-            animation: nightStemGrow 1.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            animation: nightStemGrow 1.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
 
         .grow-branch-1 {
             stroke-dasharray: 520;
             stroke-dashoffset: 520;
-            animation: nightStemGrow 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.28s forwards;
+            animation: nightStemGrow 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.22s forwards;
         }
 
         .grow-branch-2 {
             stroke-dasharray: 520;
             stroke-dashoffset: 520;
-            animation: nightStemGrow 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.52s forwards;
+            animation: nightStemGrow 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.44s forwards;
         }
 
         .grow-branch-3 {
             stroke-dasharray: 520;
             stroke-dashoffset: 520;
-            animation: nightStemGrow 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.76s forwards;
+            animation: nightStemGrow 1.0s cubic-bezier(0.22, 1, 0.36, 1) 0.66s forwards;
         }
 
         .sprout-leaf {
             opacity: 0;
-            transform: scale(0.18) translateY(12px);
+            transform: scale(0.2) translateY(10px);
             transform-box: fill-box;
             transform-origin: bottom center;
-            animation: nightLeafBloom 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            animation: nightLeafBloom 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
 
-        .d1 { animation-delay: 0.35s; }
-        .d2 { animation-delay: 0.55s; }
-        .d3 { animation-delay: 0.75s; }
-        .d4 { animation-delay: 0.95s; }
-        .d5 { animation-delay: 1.15s; }
-        .d6 { animation-delay: 1.35s; }
+        .d1 { animation-delay: 0.25s; }
+        .d2 { animation-delay: 0.42s; }
+        .d3 { animation-delay: 0.58s; }
+        .d4 { animation-delay: 0.74s; }
+        .d5 { animation-delay: 0.90s; }
+        .d6 { animation-delay: 1.05s; }
 
         .breeze-group {
             transform-box: fill-box;
             transform-origin: bottom center;
-            animation: nightGardenSway 4.8s ease-in-out 1.4s infinite;
+            animation: nightGardenSway 4.8s ease-in-out 1.2s infinite;
         }
 
         .grass-blade {
@@ -326,16 +455,830 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 24px 16px 40px;
+            padding: 8px 16px;
+            min-height: 0;
         }
 
-        .config-card-column .plant-config {
+        .plant-config {
             width: 100%;
-            max-width: 474px;
-            margin: 0;
-            box-sizing: border-box;
-            background: linear-gradient(145deg, rgba(16, 48, 38, 0.84), rgba(11, 34, 27, 0.88));
+            max-width: 460px;
+            padding: 26px 28px;
+            border: 1px solid var(--theme-border);
+            border-radius: 16px;
+            background: linear-gradient(145deg, rgba(16, 48, 38, 0.86), rgba(11, 34, 27, 0.90));
             backdrop-filter: blur(10px);
+            box-shadow: 0 18px 36px rgba(2, 7, 16, 0.38);
+        }
+
+        .plant-config h1 {
+            margin-bottom: 10px;
+            color: var(--theme-text);
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .plant-config p {
+            margin-bottom: 20px;
+            color: var(--theme-muted);
+            font-size: 13px;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .plant-config label {
+            display: block;
+            margin: 0 0 8px;
+            color: var(--theme-muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .plant-config select,
+        .plant-config .environment-buttons button {
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            border: 1px solid var(--theme-border);
+            border-radius: 8px;
+            background: #103529;
+            color: var(--theme-text);
+            font: inherit;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .plant-config select {
+            margin-bottom: 18px;
+        }
+
+        .plant-config .environment-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .plant-config .environment-buttons button {
+            color: var(--theme-muted);
+            transition: 0.2s ease;
+        }
+
+        .plant-config .environment-buttons button.active {
+            border: 2px solid var(--emerald);
+            background: #164632;
+            color: #eafff2;
+        }
+
+        .plant-config .environment-buttons button#outdoor.active {
+            border-color: var(--solar-amber);
+            background: #49391e;
+            color: #fff3d4;
+        }
+
+        .plant-config #startMonitoring {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 48px;
+            border-radius: 8px;
+            background: linear-gradient(90deg, var(--emerald), var(--water-blue));
+            color: #08251d;
+            font-size: 15px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+
+        .plant-config #startMonitoring:hover {
+            opacity: 0.94;
+            transform: translateY(-1px);
+        }
+
+        /* ===================== PAGE 2: MONITORING DASHBOARD ===================== */
+        #pageMonitoringView {
+            display: none;
+            position: relative;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        body.view-monitoring #pageMonitoringView {
+            display: block;
+        }
+
+        .ambient-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 18% 14%, rgba(73, 189, 232, 0.22), transparent 42%),
+                radial-gradient(circle at 82% 22%, rgba(55, 201, 130, 0.20), transparent 45%),
+                radial-gradient(circle at 50% 88%, rgba(92, 54, 24, calc(0.18 + var(--scroll-progress) * 0.65)), transparent 65%),
+                linear-gradient(
+                    180deg,
+                    #071c19 0%,
+                    #0b2923 38%,
+                    #161b14 calc(58% - var(--scroll-progress) * 16%),
+                    #26180f calc(82% - var(--scroll-progress) * 10%),
+                    #1c110a 100%
+                );
+        }
+
+        .ambient-backdrop::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            opacity: calc(var(--scroll-progress) * 0.32);
+            background-image:
+                radial-gradient(rgba(218, 177, 128, 0.18) 1px, transparent 0),
+                radial-gradient(rgba(35, 19, 9, 0.55) 1.5px, transparent 0);
+            background-size: 26px 26px, 44px 44px;
+            background-position: 0 0, 13px 17px;
+            pointer-events: none;
+        }
+
+        .solaris-page2-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+            filter: var(--mood-filter);
+            transition: filter 0.45s ease;
+        }
+
+        .solaris-page2-bg svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .p2-sky-tint {
+            fill: rgba(255, 240, 185, 0.14);
+            transition: fill 0.6s ease;
+        }
+
+        body.mood-sunset .p2-sky-tint {
+            fill: rgba(251, 146, 60, 0.22);
+        }
+
+        body.mood-night .p2-sky-tint {
+            fill: rgba(15, 32, 65, 0.28);
+        }
+
+        body.mood-rain .p2-sky-tint {
+            fill: rgba(100, 116, 139, 0.22);
+        }
+
+        .p2-sun-group {
+            transform: translateY(0px);
+            opacity: 0.92;
+            transition: transform 0.85s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.55s ease;
+        }
+
+        .p2-sun-core {
+            fill: #fde68a;
+            transition: fill 0.75s ease;
+        }
+
+        .p2-sun-halo {
+            fill: rgba(251, 191, 36, 0.34);
+            transition: fill 0.75s ease;
+        }
+
+        body.mood-sunset .p2-sun-group {
+            transform: translateY(145px);
+            opacity: 0.95;
+        }
+
+        body.mood-sunset .p2-sun-core {
+            fill: #fb923c;
+        }
+
+        body.mood-sunset .p2-sun-halo {
+            fill: rgba(249, 115, 22, 0.42);
+        }
+
+        body.mood-rain .p2-sun-group {
+            transform: translateY(10px);
+            opacity: 0.48;
+        }
+
+        body.mood-night .p2-sun-group {
+            transform: translateY(115px);
+            opacity: 0;
+        }
+
+        .p2-moon-group {
+            opacity: 0;
+            transform: translateY(16px);
+            transition: opacity 0.65s ease, transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        body.mood-night .p2-moon-group {
+            opacity: 0.95;
+            transform: translateY(0px);
+        }
+
+        .p2-clouds-group {
+            opacity: 0;
+            transform: translateY(-12px);
+            transition: opacity 0.55s ease, transform 0.65s ease;
+        }
+
+        body.mood-rain .p2-clouds-group {
+            opacity: 0.9;
+            transform: translateY(0px);
+        }
+
+        .p2-rain-group {
+            display: none;
+        }
+
+        .p2-rain-group.is-active {
+            display: inline;
+        }
+
+        .p2-rain-streak {
+            animation: rainFall 0.85s linear infinite;
+        }
+
+        .p2-fullpage-plant-wrap {
+            opacity: calc(0.14 + var(--scroll-progress) * 0.86);
+            transform:
+                translateY(calc((1 - var(--scroll-progress)) * 310px))
+                scale(calc(0.46 + var(--scroll-progress) * 0.54));
+            transform-box: fill-box;
+            transform-origin: bottom center;
+        }
+
+        .p2-species-group {
+            display: none;
+        }
+
+        .p2-species-group.is-active {
+            display: inline;
+        }
+
+        .p2-sway {
+            transform-box: fill-box;
+            transform-origin: bottom center;
+            animation: nightGardenSway 4.8s ease-in-out infinite;
+        }
+
+        .scroll-roots-overlay {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: calc(0.12 + var(--scroll-progress) * 0.78);
+            transform: translateY(calc((1 - var(--scroll-progress)) * 90px));
+        }
+
+        .root-branch {
+            stroke-dasharray: 1200;
+            stroke-dashoffset: calc(1200 - (var(--scroll-progress) * 1100));
+        }
+
+        .dashboard {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            padding: 24px 30px 44px;
+            background: transparent;
+            color: var(--theme-text);
+        }
+
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .dashboard-header h1 {
+            color: var(--theme-text);
+            font-size: clamp(24px, 4vw, 36px);
+        }
+
+        .dashboard-kicker,
+        .section-kicker {
+            color: var(--emerald);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            margin-bottom: 6px;
+        }
+
+        .configure-link {
+            border: 1px solid var(--theme-border);
+            border-radius: 10px;
+            background: rgba(13, 43, 34, 0.88);
+            color: var(--theme-text);
+            padding: 10px 14px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .configure-link:hover {
+            border-color: var(--emerald);
+        }
+
+        .telemetry-status {
+            margin: 0 0 18px;
+            color: var(--theme-muted);
+            font-size: 13px;
+        }
+
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 20px;
+            width: 100%;
+            margin: 18px 0;
+        }
+
+        .sensor-card {
+            background: linear-gradient(145deg, rgba(18, 57, 44, 0.88), rgba(13, 43, 34, 0.90));
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--theme-border);
+            border-radius: 18px;
+            padding: 22px;
+            min-width: 0;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .sensor-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--emerald);
+        }
+
+        .sensor-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--theme-muted);
+        }
+
+        .sensor-title span {
+            font-size: 20px;
+        }
+
+        .sensor-value {
+            font-size: clamp(26px, 3vw, 38px);
+            font-weight: 700;
+            color: var(--theme-text);
+            margin-top: 18px;
+            margin-bottom: 10px;
+            word-break: break-word;
+        }
+
+        .sensor-unit {
+            font-size: 14px;
+            font-weight: 400;
+            color: #86a999;
+        }
+
+        .sensor-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .stat {
+            background-color: rgba(16, 53, 41, 0.85);
+            border: 1px solid rgba(55, 201, 130, 0.25);
+            color: #b7d4c4;
+            padding: 6px 9px;
+            border-radius: 8px;
+            font-size: 11px;
+        }
+
+        .rain-reading {
+            font-size: 24px;
+        }
+
+        .rain-card {
+            border-color: #287ba0;
+        }
+
+        .rain-card .sensor-title,
+        .rain-card .rain-reading {
+            color: var(--water-blue);
+        }
+
+        .soil-card {
+            border-color: #4b8a57;
+        }
+
+        .battery-voltage-card {
+            border-color: #2b8f63;
+        }
+
+        .solar-voltage-card {
+            border-color: #b28338;
+        }
+
+        .device-status-section {
+            margin-top: 28px;
+        }
+
+        .device-status-section > h2 {
+            margin-bottom: 14px;
+            color: var(--theme-text);
+            font-size: 20px;
+        }
+
+        .device-status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .device-status-card {
+            min-width: 0;
+            padding: 22px;
+            border: 1px solid var(--theme-border);
+            border-radius: 18px;
+            background: linear-gradient(145deg, rgba(18, 57, 44, 0.88), rgba(13, 43, 34, 0.90));
+            backdrop-filter: blur(8px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+        }
+
+        .solar-card .sensor-title {
+            color: var(--solar-amber);
+        }
+
+        .battery-card .sensor-title {
+            color: var(--emerald);
+        }
+
+        .pump-card .sensor-title {
+            color: var(--water-blue);
+        }
+
+        .device-state {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-top: 20px;
+            color: var(--theme-text);
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .device-state::before {
+            width: 9px;
+            height: 9px;
+            flex: 0 0 9px;
+            border-radius: 50%;
+            background: #82988c;
+            content: "";
+        }
+
+        .device-state[data-state="on"]::before {
+            background: var(--emerald);
+        }
+
+        .device-state[data-state="off"]::before {
+            background: var(--solar-amber);
+        }
+
+        .irrigation-controls-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .control-mode-card {
+            border: 1px solid rgba(212, 163, 106, 0.35);
+            border-radius: 18px;
+            background: linear-gradient(160deg, rgba(18, 57, 44, 0.84), rgba(38, 25, 16, 0.88));
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 18px;
+            box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+        }
+
+        .mode-card-header h2 {
+            margin-bottom: 6px;
+            color: var(--theme-text);
+            font-size: 20px;
+        }
+
+        .mode-card-header p {
+            color: var(--theme-muted);
+            font-size: 13px;
+        }
+
+        .mode-lines {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 4px 0;
+        }
+
+        .mode-line-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(237, 248, 241, 0.10);
+            font-size: 13px;
+            color: var(--theme-muted);
+        }
+
+        .mode-line-row strong {
+            color: var(--theme-text);
+            font-weight: 700;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .mode-indication {
+            margin-top: 2px;
+            color: var(--soil-glow);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .action-btn,
+        .dialog-actions button {
+            cursor: pointer;
+            border: none;
+            transition: 0.2s ease;
+            min-height: 44px;
+            width: 100%;
+            border-radius: 10px;
+            padding: 10px 16px;
+            font: inherit;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .action-btn:hover:not(:disabled),
+        .dialog-actions button:hover:not(:disabled) {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        .smart-irrigate-button {
+            background: linear-gradient(90deg, var(--emerald), var(--water-blue));
+            color: #08251d;
+        }
+
+        .manual-irrigate-button {
+            background: var(--emerald);
+            color: #072219;
+        }
+
+        .manual-irrigate-button.is-open {
+            background: #ef4444;
+            color: #ffffff;
+        }
+
+        .manual-timer-pill {
+            background: rgba(0, 0, 0, 0.24);
+            padding: 3px 9px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .scheduled-irrigate-button {
+            background: linear-gradient(90deg, var(--solar-amber), #e59a24);
+            color: #1e1404;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .schedule-sheet {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(55, 201, 130, 0.28);
+            font-size: 12px;
+        }
+
+        .schedule-sheet[hidden] {
+            display: none;
+        }
+
+        .schedule-sheet span,
+        .schedule-sheet small {
+            color: var(--theme-muted);
+        }
+
+        .schedule-sheet strong {
+            color: var(--emerald);
+            font-size: 13px;
+        }
+
+        .irrigation-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-top: 24px;
+            padding-bottom: 44px;
+        }
+
+        .plant-status-panel {
+            border: 1px solid rgba(212, 163, 106, 0.42);
+            border-radius: 18px;
+            background: linear-gradient(165deg, rgba(34, 22, 14, 0.86), rgba(22, 14, 9, 0.92));
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+        }
+
+        .plant-status-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .plant-status-panel h2 {
+            margin-bottom: 8px;
+            color: var(--theme-text);
+        }
+
+        .plant-status-panel p {
+            color: var(--theme-muted);
+        }
+
+        .plant-optimal-lines {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--theme-muted);
+            text-align: right;
+        }
+
+        .plant-optimal-lines strong {
+            color: var(--soil-glow);
+        }
+
+        .plant-status-panel h3 {
+            margin: 18px 0 8px;
+            color: var(--theme-text);
+            font-size: 13px;
+        }
+
+        .history-list {
+            max-height: 170px;
+            overflow-y: auto;
+            margin: 0;
+            padding-left: 18px;
+            color: var(--theme-muted);
+            font-size: 13px;
+        }
+
+        .history-list li {
+            margin: 7px 0;
+        }
+
+        .irrigation-dialog {
+            position: fixed;
+            inset: 50% auto auto 50%;
+            margin: 0;
+            transform: translate(-50%, -50%);
+            width: min(430px, calc(100% - 32px));
+            border: 1px solid var(--theme-border);
+            border-radius: 16px;
+            background: #0d2b22;
+            color: var(--theme-text);
+            padding: 24px;
+            text-align: center;
+        }
+
+        .irrigation-dialog::backdrop {
+            background: rgba(2, 12, 9, 0.78);
+        }
+
+        .irrigation-dialog h2 {
+            margin-bottom: 10px;
+        }
+
+        .irrigation-dialog p {
+            color: var(--theme-muted);
+        }
+
+        .dialog-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 22px;
+        }
+
+        .dialog-actions button {
+            border: 1px solid var(--theme-border);
+            background: #12392c;
+            color: var(--theme-text);
+        }
+
+        .dialog-actions .operate-button {
+            border: 0;
+            background: linear-gradient(90deg, var(--emerald), var(--water-blue));
+            color: #08251d;
+        }
+
+        .custom-schedule-dialog {
+            width: min(470px, calc(100% - 32px));
+            text-align: left;
+        }
+
+        .datetime-inputs-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin: 18px 0 14px;
+        }
+
+        .dt-field,
+        .liters-input-group label {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: var(--theme-muted);
+        }
+
+        .dt-field input,
+        .liters-input-group input {
+            width: 100%;
+            height: 42px;
+            padding: 0 10px;
+            border: 1px solid var(--theme-border);
+            border-radius: 8px;
+            background: #103529;
+            color: var(--theme-text);
+            font: inherit;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .liters-presets {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .liter-preset-btn {
+            min-height: 36px;
+            border: 1px solid var(--theme-border);
+            border-radius: 8px;
+            background: #12392c;
+            color: var(--theme-text);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .custom-indication-text {
+            margin-top: 14px;
+            color: var(--solar-amber);
+            font-size: 12px;
+            line-height: 1.45;
         }
 
         @keyframes nightStemGrow {
@@ -345,11 +1288,11 @@
         @keyframes nightLeafBloom {
             0% {
                 opacity: 0;
-                transform: scale(0.18) translateY(12px);
+                transform: scale(0.2) translateY(10px);
             }
             70% {
                 opacity: 1;
-                transform: scale(1.05) translateY(-2px);
+                transform: scale(1.04) translateY(-2px);
             }
             100% {
                 opacity: 1;
@@ -359,7 +1302,7 @@
 
         @keyframes nightGardenSway {
             0%, 100% { transform: rotate(-1.1deg); }
-            50% { transform: rotate(1.4deg); }
+            50% { transform: rotate(1.35deg); }
         }
 
         @keyframes grassSway {
@@ -395,619 +1338,2092 @@
             }
         }
 
-        @media (max-width: 900px) {
-            .scenery-switcher-corner {
-                top: 12px;
-                right: 12px;
-                flex-wrap: wrap;
-                max-width: calc(100% - 24px);
+        @media (max-width: 1024px) {
+            .sensor-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
-            .solaris-layout-stage {
+            .irrigation-controls-grid {
                 grid-template-columns: 1fr;
-                padding: 58px 14px 0;
             }
-            .plant-floor-anchor {
-                min-height: 360px;
+        }
+
+        @media (max-width: 900px) {
+            body.view-config .solaris-layout-stage {
+                grid-template-columns: 1fr;
+                grid-template-rows: minmax(0, 42%) minmax(0, 58%);
+                padding: 4px 12px 10px;
+                gap: 6px;
+            }
+            body.view-config .plant-floor-anchor {
                 order: 2;
+                height: 100%;
             }
-            .plant-botanical-svg {
-                height: 360px;
-                max-height: 360px;
-            }
-            .config-card-column {
+            body.view-config .config-card-column {
                 order: 1;
-                padding-bottom: 12px;
+                padding: 2px 6px;
+            }
+            body.view-config .plant-config {
+                padding: 16px 18px;
+            }
+            body.view-config .plant-config h1 {
+                font-size: 20px;
+                margin-bottom: 6px;
+            }
+            body.view-config .plant-config p {
+                margin-bottom: 12px;
+                font-size: 12px;
+            }
+            body.view-config .plant-config select,
+            body.view-config .plant-config .environment-buttons button {
+                height: 38px;
+            }
+            body.view-config .plant-config select {
+                margin-bottom: 12px;
+            }
+            body.view-config .plant-config .environment-buttons {
+                margin-bottom: 12px;
+            }
+            body.view-config .plant-config #startMonitoring {
+                min-height: 42px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .dashboard {
+                padding: 16px;
+            }
+            .sensor-grid,
+            .device-status-grid {
+                grid-template-columns: 1fr;
+            }
+            .plant-optimal-lines {
+                text-align: left;
             }
         }
     </style>
 </head>
-<body class="config-page env-indoor mood-daylight">
-    <div class="scenery-switcher-corner" role="group" aria-label="Time of Day and Weather Scenery">
-        <button type="button" class="scenery-opt-btn active" data-scenery="daylight">Daylight</button>
-        <button type="button" class="scenery-opt-btn" data-scenery="sunset">Sunset</button>
-        <button type="button" class="scenery-opt-btn" data-scenery="night">Night</button>
-        <button type="button" class="scenery-opt-btn" data-scenery="rain">Rain</button>
-    </div>
+<body class="view-config env-indoor mood-daylight">
+    <!-- Hidden audio sink & hidden YouTube player host (never displayed as a control bar) -->
+    <audio id="hiddenAudioSink" hidden></audio>
+    <div id="ytAudioHost" aria-hidden="true"></div>
 
-    <div class="env-scene-backdrop" aria-hidden="true">
-        <div id="indoorScene" class="scene-layer indoor-scene is-active">
-            <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
-                <defs>
-                    <clipPath id="indoorWindowClip">
-                        <rect x="85" y="105" width="430" height="445" rx="12" />
-                    </clipPath>
+    <!-- ==================== PAGE 1: CONFIGURATION & SCENERY ==================== -->
+    <div id="pageConfigView">
+        <div class="env-scene-backdrop" aria-hidden="true">
+            <div id="indoorScene" class="scene-layer indoor-scene is-active">
+                <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
+                    <defs>
+                        <clipPath id="indoorWindowClip">
+                            <rect x="85" y="105" width="430" height="445" rx="12" />
+                        </clipPath>
+                        <linearGradient id="windowPaneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fff1c4" stop-opacity="0.42" />
+                            <stop offset="55%" stop-color="#f7ca7e" stop-opacity="0.22" />
+                            <stop offset="100%" stop-color="#225745" stop-opacity="0.30" />
+                        </linearGradient>
+                        <linearGradient id="strongSunBeamGrad" x1="0%" y1="0%" x2="85%" y2="100%">
+                            <stop offset="0%" stop-color="#ffe8a3" stop-opacity="0.26" />
+                            <stop offset="55%" stop-color="#ffd573" stop-opacity="0.11" />
+                            <stop offset="100%" stop-color="#ffd573" stop-opacity="0" />
+                        </linearGradient>
+                        <linearGradient id="curtainGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#d8b88c" stop-opacity="0.25" />
+                            <stop offset="60%" stop-color="#f5dfb9" stop-opacity="0.14" />
+                            <stop offset="100%" stop-color="#8c6d49" stop-opacity="0.22" />
+                        </linearGradient>
+                    </defs>
 
-                    <linearGradient id="windowPaneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#fff1c4" stop-opacity="0.42" />
-                        <stop offset="55%" stop-color="#f7ca7e" stop-opacity="0.22" />
-                        <stop offset="100%" stop-color="#225745" stop-opacity="0.30" />
-                    </linearGradient>
+                    <rect x="85" y="105" width="430" height="445" rx="14" fill="url(#windowPaneGrad)" stroke="rgba(245, 222, 179, 0.28)" stroke-width="4" />
 
-                    <linearGradient id="strongSunBeamGrad" x1="0%" y1="0%" x2="85%" y2="100%">
-                        <stop offset="0%" stop-color="#ffe8a3" stop-opacity="0.26" />
-                        <stop offset="55%" stop-color="#ffd573" stop-opacity="0.11" />
-                        <stop offset="100%" stop-color="#ffd573" stop-opacity="0" />
-                    </linearGradient>
+                    <g clip-path="url(#indoorWindowClip)">
+                        <g class="celestial-sun">
+                            <circle class="celestial-sun-halo" cx="300" cy="215" r="145" />
+                            <circle class="celestial-sun-core" cx="300" cy="215" r="36" />
+                        </g>
 
-                    <linearGradient id="curtainGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="#d8b88c" stop-opacity="0.25" />
-                        <stop offset="60%" stop-color="#f5dfb9" stop-opacity="0.14" />
-                        <stop offset="100%" stop-color="#8c6d49" stop-opacity="0.22" />
-                    </linearGradient>
-                </defs>
+                        <g class="celestial-moon">
+                            <circle cx="315" cy="205" r="28" fill="#f8fafc" opacity="0.88" />
+                            <circle cx="326" cy="199" r="24" fill="#0d271f" opacity="0.92" />
+                            <circle cx="155" cy="175" r="2" fill="#e2e8f0" opacity="0.78" />
+                            <circle cx="220" cy="150" r="1.7" fill="#e2e8f0" opacity="0.68" />
+                            <circle cx="430" cy="170" r="2.1" fill="#e2e8f0" opacity="0.8" />
+                        </g>
 
-                <rect x="85" y="105" width="430" height="445" rx="14" fill="url(#windowPaneGrad)" stroke="rgba(245, 222, 179, 0.28)" stroke-width="4" />
+                        <g class="grey-rain-clouds">
+                            <ellipse cx="250" cy="185" rx="135" ry="38" fill="#64748b" opacity="0.78" />
+                            <ellipse cx="365" cy="198" rx="125" ry="34" fill="#475569" opacity="0.82" />
+                            <ellipse cx="305" cy="172" rx="110" ry="30" fill="#94a3b8" opacity="0.62" />
+                        </g>
 
-                <g clip-path="url(#indoorWindowClip)">
+                        <g id="indoorFxRain" class="fx-group">
+                            <g stroke="rgba(186, 204, 222, 0.56)" stroke-width="1.8" stroke-linecap="round">
+                                <line class="rain-streak" x1="150" y1="240" x2="138" y2="272" />
+                                <line class="rain-streak" x1="215" y1="275" x2="203" y2="307" style="animation-delay: -0.25s;" />
+                                <line class="rain-streak" x1="285" y1="230" x2="273" y2="262" style="animation-delay: -0.45s;" />
+                                <line class="rain-streak" x1="355" y1="290" x2="343" y2="322" style="animation-delay: -0.15s;" />
+                                <line class="rain-streak" x1="425" y1="250" x2="413" y2="282" style="animation-delay: -0.6s;" />
+                            </g>
+                        </g>
+                    </g>
+
+                    <line x1="228" y1="105" x2="228" y2="550" stroke="rgba(245, 222, 179, 0.24)" stroke-width="5" />
+                    <line x1="372" y1="105" x2="372" y2="550" stroke="rgba(245, 222, 179, 0.24)" stroke-width="5" />
+                    <line x1="85" y1="325" x2="515" y2="325" stroke="rgba(245, 222, 179, 0.24)" stroke-width="5" />
+                    <rect x="65" y="550" width="470" height="18" rx="5" fill="rgba(225, 198, 156, 0.28)" />
+
+                    <path d="M 45 75 Q 95 260 65 680 L 135 680 Q 155 260 112 75 Z" fill="url(#curtainGrad)" />
+                    <path d="M 488 75 Q 455 260 475 680 L 545 680 Q 565 260 540 75 Z" fill="url(#curtainGrad)" />
+
+                    <polygon points="105,120 495,120 740,785 30,785" fill="url(#strongSunBeamGrad)" />
+
+                    <g fill="#fff4c2">
+                        <circle class="dust-mote" cx="195" cy="285" r="2.6" />
+                        <circle class="dust-mote d-slow" cx="265" cy="340" r="2.1" />
+                        <circle class="dust-mote d-fast" cx="335" cy="265" r="2.8" />
+                        <circle class="dust-mote" cx="410" cy="365" r="2.2" />
+                        <circle class="dust-mote d-slow" cx="170" cy="430" r="2.5" />
+                        <circle class="dust-mote d-fast" cx="295" cy="465" r="2.3" />
+                        <circle class="dust-mote" cx="385" cy="440" r="2.0" />
+                        <circle class="dust-mote d-slow" cx="235" cy="525" r="2.4" />
+                    </g>
+
+                    <rect x="0" y="785" width="1440" height="115" fill="rgba(4, 10, 8, 0.92)" />
+                </svg>
+            </div>
+
+            <div id="outdoorScene" class="scene-layer outdoor-scene">
+                <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
+                    <defs>
+                        <linearGradient id="outdoorGroundGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#1b3822" />
+                            <stop offset="45%" stop-color="#261c12" />
+                            <stop offset="100%" stop-color="#130d08" />
+                        </linearGradient>
+                    </defs>
+
                     <g class="celestial-sun">
-                        <circle class="celestial-sun-halo" cx="300" cy="215" r="145" />
-                        <circle class="celestial-sun-core" cx="300" cy="215" r="36" />
+                        <circle class="celestial-sun-halo" cx="315" cy="155" r="155" />
+                        <circle class="celestial-sun-core" cx="315" cy="155" r="38" />
                     </g>
 
                     <g class="celestial-moon">
-                        <circle cx="315" cy="205" r="28" fill="#f8fafc" opacity="0.88" />
-                        <circle cx="326" cy="199" r="24" fill="#0d271f" opacity="0.92" />
-                        <circle cx="155" cy="175" r="2" fill="#e2e8f0" opacity="0.78" />
-                        <circle cx="220" cy="150" r="1.7" fill="#e2e8f0" opacity="0.68" />
-                        <circle cx="430" cy="170" r="2.1" fill="#e2e8f0" opacity="0.8" />
+                        <circle cx="330" cy="145" r="30" fill="#f8fafc" opacity="0.88" />
+                        <circle cx="342" cy="138" r="26" fill="#0b1f1a" opacity="0.92" />
+                        <circle cx="150" cy="120" r="2" fill="#e2e8f0" opacity="0.75" />
+                        <circle cx="235" cy="85" r="1.8" fill="#e2e8f0" opacity="0.65" />
+                        <circle cx="465" cy="115" r="2.2" fill="#e2e8f0" opacity="0.8" />
+                        <circle cx="530" cy="175" r="1.6" fill="#e2e8f0" opacity="0.6" />
                     </g>
 
                     <g class="grey-rain-clouds">
-                        <ellipse cx="250" cy="185" rx="135" ry="38" fill="#64748b" opacity="0.78" />
-                        <ellipse cx="365" cy="198" rx="125" ry="34" fill="#475569" opacity="0.82" />
-                        <ellipse cx="305" cy="172" rx="110" ry="30" fill="#94a3b8" opacity="0.62" />
+                        <ellipse cx="265" cy="135" rx="145" ry="42" fill="#64748b" opacity="0.74" />
+                        <ellipse cx="385" cy="148" rx="130" ry="38" fill="#475569" opacity="0.78" />
+                        <ellipse cx="320" cy="122" rx="115" ry="34" fill="#94a3b8" opacity="0.58" />
                     </g>
 
-                    <g id="indoorFxRain" class="fx-group">
-                        <g stroke="rgba(186, 204, 222, 0.56)" stroke-width="1.8" stroke-linecap="round">
-                            <line class="rain-streak" x1="150" y1="240" x2="138" y2="272" />
-                            <line class="rain-streak" x1="215" y1="275" x2="203" y2="307" style="animation-delay: -0.25s;" />
-                            <line class="rain-streak" x1="285" y1="230" x2="273" y2="262" style="animation-delay: -0.45s;" />
-                            <line class="rain-streak" x1="355" y1="290" x2="343" y2="322" style="animation-delay: -0.15s;" />
-                            <line class="rain-streak" x1="425" y1="250" x2="413" y2="282" style="animation-delay: -0.6s;" />
+                    <g id="outdoorFxRain" class="fx-group">
+                        <g stroke="rgba(148, 163, 184, 0.54)" stroke-width="1.8" stroke-linecap="round">
+                            <line class="rain-streak" x1="160" y1="185" x2="146" y2="220" />
+                            <line class="rain-streak" x1="230" y1="225" x2="216" y2="260" style="animation-delay: -0.25s;" />
+                            <line class="rain-streak" x1="305" y1="175" x2="291" y2="210" style="animation-delay: -0.45s;" />
+                            <line class="rain-streak" x1="380" y1="245" x2="366" y2="280" style="animation-delay: -0.15s;" />
+                            <line class="rain-streak" x1="455" y1="200" x2="441" y2="235" style="animation-delay: -0.6s;" />
+                            <line class="rain-streak" x1="520" y1="265" x2="506" y2="300" style="animation-delay: -0.35s;" />
                         </g>
                     </g>
-                </g>
 
-                <line x1="228" y1="105" x2="228" y2="550" stroke="rgba(245, 222, 179, 0.24)" stroke-width="5" />
-                <line x1="372" y1="105" x2="372" y2="550" stroke="rgba(245, 222, 179, 0.24)" stroke-width="5" />
-                <line x1="85" y1="325" x2="515" y2="325" stroke="rgba(245, 222, 179, 0.24)" stroke-width="5" />
-                <rect x="65" y="550" width="470" height="18" rx="5" fill="rgba(225, 198, 156, 0.28)" />
+                    <path d="M 0 560 Q 320 475 680 545 T 1440 500 L 1440 900 L 0 900 Z" fill="rgba(23, 56, 36, 0.52)" />
+                    <path d="M 0 625 Q 420 565 860 615 T 1440 580 L 1440 900 L 0 900 Z" fill="rgba(29, 72, 44, 0.65)" />
 
-                <path d="M 45 75 Q 95 260 65 680 L 135 680 Q 155 260 112 75 Z" fill="url(#curtainGrad)" />
-                <path d="M 488 75 Q 455 260 475 680 L 545 680 Q 565 260 540 75 Z" fill="url(#curtainGrad)" />
-
-                <polygon points="105,120 495,120 740,785 30,785" fill="url(#strongSunBeamGrad)" />
-
-                <g fill="#fff4c2">
-                    <circle class="dust-mote" cx="195" cy="285" r="2.6" />
-                    <circle class="dust-mote d-slow" cx="265" cy="340" r="2.1" />
-                    <circle class="dust-mote d-fast" cx="335" cy="265" r="2.8" />
-                    <circle class="dust-mote" cx="410" cy="365" r="2.2" />
-                    <circle class="dust-mote d-slow" cx="170" cy="430" r="2.5" />
-                    <circle class="dust-mote d-fast" cx="295" cy="465" r="2.3" />
-                    <circle class="dust-mote" cx="385" cy="440" r="2.0" />
-                    <circle class="dust-mote d-slow" cx="235" cy="525" r="2.4" />
-                </g>
-
-                <rect x="0" y="785" width="1440" height="115" fill="rgba(4, 10, 8, 0.92)" />
-            </svg>
-        </div>
-
-        <div id="outdoorScene" class="scene-layer outdoor-scene">
-            <svg class="scene-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
-                <defs>
-                    <linearGradient id="outdoorGroundGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="#1b3822" />
-                        <stop offset="45%" stop-color="#261c12" />
-                        <stop offset="100%" stop-color="#130d08" />
-                    </linearGradient>
-                </defs>
-
-                <g class="celestial-sun">
-                    <circle class="celestial-sun-halo" cx="315" cy="155" r="155" />
-                    <circle class="celestial-sun-core" cx="315" cy="155" r="38" />
-                </g>
-
-                <g class="celestial-moon">
-                    <circle cx="330" cy="145" r="30" fill="#f8fafc" opacity="0.88" />
-                    <circle cx="342" cy="138" r="26" fill="#0b1f1a" opacity="0.92" />
-                    <circle cx="150" cy="120" r="2" fill="#e2e8f0" opacity="0.75" />
-                    <circle cx="235" cy="85" r="1.8" fill="#e2e8f0" opacity="0.65" />
-                    <circle cx="465" cy="115" r="2.2" fill="#e2e8f0" opacity="0.8" />
-                    <circle cx="530" cy="175" r="1.6" fill="#e2e8f0" opacity="0.6" />
-                </g>
-
-                <g class="grey-rain-clouds">
-                    <ellipse cx="265" cy="135" rx="145" ry="42" fill="#64748b" opacity="0.74" />
-                    <ellipse cx="385" cy="148" rx="130" ry="38" fill="#475569" opacity="0.78" />
-                    <ellipse cx="320" cy="122" rx="115" ry="34" fill="#94a3b8" opacity="0.58" />
-                </g>
-
-                <g id="outdoorFxRain" class="fx-group">
-                    <g stroke="rgba(148, 163, 184, 0.54)" stroke-width="1.8" stroke-linecap="round">
-                        <line class="rain-streak" x1="160" y1="185" x2="146" y2="220" />
-                        <line class="rain-streak" x1="230" y1="225" x2="216" y2="260" style="animation-delay: -0.25s;" />
-                        <line class="rain-streak" x1="305" y1="175" x2="291" y2="210" style="animation-delay: -0.45s;" />
-                        <line class="rain-streak" x1="380" y1="245" x2="366" y2="280" style="animation-delay: -0.15s;" />
-                        <line class="rain-streak" x1="455" y1="200" x2="441" y2="235" style="animation-delay: -0.6s;" />
-                        <line class="rain-streak" x1="520" y1="265" x2="506" y2="300" style="animation-delay: -0.35s;" />
+                    <g opacity="0.48" stroke="#9be5c8" stroke-width="2.2" fill="rgba(148, 224, 196, 0.08)">
+                        <path d="M 435 615 L 435 535 Q 525 470 615 535 L 615 615 Z" />
+                        <line x1="435" y1="565" x2="615" y2="565" />
+                        <line x1="495" y1="505" x2="495" y2="615" />
+                        <line x1="555" y1="505" x2="555" y2="615" />
                     </g>
-                </g>
 
-                <path d="M 0 560 Q 320 475 680 545 T 1440 500 L 1440 900 L 0 900 Z" fill="rgba(23, 56, 36, 0.52)" />
-                <path d="M 0 625 Q 420 565 860 615 T 1440 580 L 1440 900 L 0 900 Z" fill="rgba(29, 72, 44, 0.65)" />
+                    <g fill="rgba(66, 148, 88, 0.45)">
+                        <ellipse cx="95" cy="645" rx="22" ry="9" />
+                        <ellipse cx="145" cy="650" rx="24" ry="9" />
+                        <ellipse cx="385" cy="652" rx="26" ry="9" />
+                        <ellipse cx="445" cy="648" rx="24" ry="9" />
+                    </g>
 
-                <g opacity="0.48" stroke="#9be5c8" stroke-width="2.2" fill="rgba(148, 224, 196, 0.08)">
-                    <path d="M 435 615 L 435 535 Q 525 470 615 535 L 615 615 Z" />
-                    <line x1="435" y1="565" x2="615" y2="565" />
-                    <line x1="495" y1="505" x2="495" y2="615" />
-                    <line x1="555" y1="505" x2="555" y2="615" />
-                </g>
+                    <g transform="translate(655, 578)" opacity="0.68">
+                        <rect x="18" y="18" width="44" height="24" rx="4" fill="#d97706" />
+                        <rect x="44" y="4" width="22" height="18" rx="3" fill="#475569" />
+                        <rect x="6" y="25" width="14" height="12" rx="2" fill="#b45309" />
+                        <circle cx="16" cy="46" r="10" fill="#1e293b" stroke="#94a3b8" stroke-width="2.5" />
+                        <circle cx="52" cy="43" r="15" fill="#1e293b" stroke="#94a3b8" stroke-width="3" />
+                    </g>
 
-                <g fill="rgba(66, 148, 88, 0.45)">
-                    <ellipse cx="95" cy="645" rx="22" ry="9" />
-                    <ellipse cx="145" cy="650" rx="24" ry="9" />
-                    <ellipse cx="385" cy="652" rx="26" ry="9" />
-                    <ellipse cx="445" cy="648" rx="24" ry="9" />
-                </g>
-
-                <g transform="translate(655, 578)" opacity="0.68">
-                    <rect x="18" y="18" width="44" height="24" rx="4" fill="#d97706" />
-                    <rect x="44" y="4" width="22" height="18" rx="3" fill="#475569" />
-                    <rect x="6" y="25" width="14" height="12" rx="2" fill="#b45309" />
-                    <circle cx="16" cy="46" r="10" fill="#1e293b" stroke="#94a3b8" stroke-width="2.5" />
-                    <circle cx="52" cy="43" r="15" fill="#1e293b" stroke="#94a3b8" stroke-width="3" />
-                </g>
-
-                <rect x="0" y="750" width="1440" height="150" fill="url(#outdoorGroundGrad)" />
-            </svg>
+                    <rect x="0" y="750" width="1440" height="150" fill="url(#outdoorGroundGrad)" />
+                </svg>
+            </div>
         </div>
+
+        <header class="p1-topbar">
+            <div class="brand-pill">SOLARIS · LIVE SCENERY</div>
+            <div class="p1-controls-right">
+                <div class="scenery-switcher" role="group" aria-label="Time of Day and Weather Scenery">
+                    <button type="button" class="scenery-opt-btn active" data-scenery="daylight">Daylight</button>
+                    <button type="button" class="scenery-opt-btn" data-scenery="sunset">Sunset</button>
+                    <button type="button" class="scenery-opt-btn" data-scenery="night">Night</button>
+                    <button type="button" class="scenery-opt-btn" data-scenery="rain">Rain</button>
+                </div>
+                <button type="button" id="audioToggleBtnP1" class="audio-pill-btn" aria-label="Toggle Ambient Sound">
+                    <span class="audio-dot"></span>
+                    <span class="audio-label">Ambient: Ready</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="solaris-layout-stage">
+            <div class="plant-floor-anchor" aria-label="Animated Plant Growth Preview">
+                <svg id="plantBotanicalSvg" class="plant-botanical-svg" viewBox="0 0 480 740" role="img" aria-label="Lush Dark Leafy Kalamansi and Oregano Plant">
+                    <defs>
+                        <linearGradient id="kalamansiStemGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%" stop-color="#1b3a2b" />
+                            <stop offset="55%" stop-color="#295941" />
+                            <stop offset="100%" stop-color="#3c7a59" />
+                        </linearGradient>
+
+                        <linearGradient id="kalamansiLeafDarkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#2c6e4b" />
+                            <stop offset="55%" stop-color="#1c4d34" />
+                            <stop offset="100%" stop-color="#0f2e1f" />
+                        </linearGradient>
+
+                        <linearGradient id="kalamansiLeafMidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#37825a" />
+                            <stop offset="60%" stop-color="#21593c" />
+                            <stop offset="100%" stop-color="#123624" />
+                        </linearGradient>
+
+                        <!-- Dark green tiny Kalamansi fruit gradient -->
+                        <radialGradient id="tinyDarkKalamansiGrad" cx="35%" cy="28%" r="72%">
+                            <stop offset="0%" stop-color="#3b7d44" />
+                            <stop offset="58%" stop-color="#205229" />
+                            <stop offset="100%" stop-color="#0e2b14" />
+                        </radialGradient>
+
+                        <linearGradient id="oreganoStemGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%" stop-color="#476e60" />
+                            <stop offset="100%" stop-color="#87c2ad" />
+                        </linearGradient>
+
+                        <linearGradient id="oreganoLeafGrad" x1="15%" y1="10%" x2="85%" y2="90%">
+                            <stop offset="0%" stop-color="#b7e7d7" />
+                            <stop offset="55%" stop-color="#7ec2aa" />
+                            <stop offset="100%" stop-color="#4d8a75" />
+                        </linearGradient>
+
+                        <linearGradient id="grassGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%" stop-color="#0e2b22" />
+                            <stop offset="100%" stop-color="#2c7a5d" />
+                        </linearGradient>
+
+                        <linearGradient id="indoorPotGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#8c4227" />
+                            <stop offset="50%" stop-color="#b85d3c" />
+                            <stop offset="100%" stop-color="#692d17" />
+                        </linearGradient>
+                    </defs>
+
+                    <ellipse cx="235" cy="724" rx="155" ry="13" fill="rgba(0, 0, 0, 0.55)" />
+
+                    <g opacity="0.85">
+                        <path class="grass-blade" d="M 88 724 Q 76 668 58 634 Q 84 668 98 724 Z" fill="url(#grassGrad)" />
+                        <path class="grass-blade alt" d="M 118 724 Q 112 680 102 652 Q 120 680 128 724 Z" fill="url(#grassGrad)" />
+                        <path class="grass-blade" d="M 358 724 Q 368 676 384 646 Q 374 678 368 724 Z" fill="url(#grassGrad)" />
+                        <path class="grass-blade alt" d="M 386 724 Q 402 664 424 628 Q 408 668 396 724 Z" fill="url(#grassGrad)" />
+                    </g>
+
+                    <g>
+                        <circle class="firefly-dot" cx="122" cy="430" r="2.8" fill="#9ae6b4" />
+                        <circle class="firefly-dot f2" cx="352" cy="340" r="3.2" fill="#fde68a" />
+                        <circle class="firefly-dot f3" cx="288" cy="195" r="2.5" fill="#99f6e4" />
+                        <circle class="firefly-dot f2" cx="155" cy="245" r="2.6" fill="#bbf7d0" />
+                        <circle class="firefly-dot" cx="325" cy="510" r="2.4" fill="#fef08a" />
+                    </g>
+
+                    <g class="breeze-group">
+                        <!-- LUSH DARK LEAFY KALAMANSI WITH TINY DARK GREEN FRUITS NESTLED IN FOLIAGE -->
+                        <g id="speciesKalamansi" class="botanical-species is-active">
+                            <!-- Woody main trunk & dense multi-tiered branches -->
+                            <path class="grow-stem" d="M 228 724 C 230 645, 218 575, 226 495 C 234 415, 216 335, 226 250 C 230 205, 226 165, 224 128"
+                                  stroke="url(#kalamansiStemGrad)" stroke-width="11" stroke-linecap="round" fill="none" />
+                            <path class="grow-branch-1" d="M 224 595 C 188 575, 145 572, 98 588"
+                                  stroke="url(#kalamansiStemGrad)" stroke-width="7.5" stroke-linecap="round" fill="none" />
+                            <path class="grow-branch-1" d="M 225 568 C 268 548, 315 544, 362 558"
+                                  stroke="url(#kalamansiStemGrad)" stroke-width="7.5" stroke-linecap="round" fill="none" />
+                            <path class="grow-branch-1" d="M 225 485 C 180 462, 132 454, 82 464"
+                                  stroke="url(#kalamansiStemGrad)" stroke-width="7" stroke-linecap="round" fill="none" />
+                            <path class="grow-branch-2" d="M 226 462 C 274 438, 326 428, 378 435"
+                                  stroke="url(#kalamansiStemGrad)" stroke-width="7" stroke-linecap="round" fill="none" />
+                            <path class="grow-branch-2" d="M 224 362 C 182 336, 138 322, 95 318"
+                                  stroke="url(#kalamansiStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
+                            <path class="grow-branch-2" d="M 225 338 C 268 312, 314 298, 358 292"
+                                  stroke="url(#kalamansiStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
+                            <path class="grow-branch-3" d="M 225 245 C 194 218, 166 196, 138 182"
+                                  stroke="url(#kalamansiStemGrad)" stroke-width="5" stroke-linecap="round" fill="none" />
+                            <path class="grow-branch-3" d="M 226 225 C 258 198, 288 176, 318 160"
+                                  stroke="url(#kalamansiStemGrad)" stroke-width="5" stroke-linecap="round" fill="none" />
+
+                            <!-- Back-layer dense dark leaves -->
+                            <g class="sprout-leaf d1">
+                                <path d="M 142 582 C 110 554, 72 556, 48 584 C 78 606, 118 602, 142 582 Z" fill="url(#kalamansiLeafDarkGrad)" />
+                                <path d="M 168 574 C 138 538, 102 532, 74 552 C 102 580, 140 584, 168 574 Z" fill="url(#kalamansiLeafMidGrad)" />
+                                <path d="M 288 552 C 322 522, 362 522, 392 548 C 362 574, 322 572, 288 552 Z" fill="url(#kalamansiLeafDarkGrad)" />
+                                <path d="M 262 560 C 296 582, 334 594, 368 586 C 344 558, 304 550, 262 560 Z" fill="url(#kalamansiLeafMidGrad)" />
+                            </g>
+
+                            <g class="sprout-leaf d2">
+                                <path d="M 145 462 C 110 430, 68 428, 38 456 C 70 482, 114 480, 145 462 Z" fill="url(#kalamansiLeafDarkGrad)" />
+                                <path d="M 176 472 C 142 496, 104 504, 72 494 C 100 468, 138 462, 176 472 Z" fill="url(#kalamansiLeafMidGrad)" />
+                                <path d="M 294 442 C 330 408, 374 404, 408 428 C 376 456, 332 456, 294 442 Z" fill="url(#kalamansiLeafDarkGrad)" />
+                                <path d="M 266 454 C 304 474, 344 482, 378 470 C 350 444, 308 440, 266 454 Z" fill="url(#kalamansiLeafMidGrad)" />
+                            </g>
+
+                            <g class="sprout-leaf d3">
+                                <path d="M 152 332 C 118 298, 78 292, 48 316 C 78 344, 120 346, 152 332 Z" fill="url(#kalamansiLeafDarkGrad)" />
+                                <path d="M 182 346 C 148 368, 112 374, 82 362 C 110 338, 146 334, 182 346 Z" fill="url(#kalamansiLeafMidGrad)" />
+                                <path d="M 284 312 C 318 278, 358 272, 390 296 C 360 324, 318 326, 284 312 Z" fill="url(#kalamansiLeafDarkGrad)" />
+                                <path d="M 258 328 C 294 348, 332 354, 364 340 C 336 316, 296 314, 258 328 Z" fill="url(#kalamansiLeafMidGrad)" />
+                            </g>
+
+                            <g class="sprout-leaf d4">
+                                <path d="M 184 202 C 154 166, 118 158, 92 178 C 118 206, 154 212, 184 202 Z" fill="url(#kalamansiLeafDarkGrad)" />
+                                <path d="M 264 192 C 296 158, 334 150, 362 172 C 334 200, 296 204, 264 192 Z" fill="url(#kalamansiLeafDarkGrad)" />
+                                <path d="M 224 166 C 194 128, 184 94, 202 70 C 222 98, 232 132, 224 166 Z" fill="url(#kalamansiLeafMidGrad)" />
+                                <path d="M 228 156 C 248 118, 268 90, 294 76 C 286 112, 264 138, 228 156 Z" fill="url(#kalamansiLeafDarkGrad)" />
+                            </g>
+
+                            <!-- Tiny dark green Kalamansi fruit clusters nestled along branches -->
+                            <!-- Cluster 1 (Lower-right branch, tucked by leaves) -->
+                            <g class="sprout-leaf d4">
+                                <line x1="305" y1="548" x2="302" y2="562" stroke="#1e4d34" stroke-width="2" stroke-linecap="round" />
+                                <circle cx="301" cy="569" r="9.5" fill="url(#tinyDarkKalamansiGrad)" />
+                                <circle cx="301" cy="560" r="2.2" fill="#13331d" />
+                                <circle cx="298" cy="566" r="2.4" fill="rgba(167, 243, 208, 0.22)" />
+
+                                <line x1="316" y1="549" x2="318" y2="565" stroke="#1e4d34" stroke-width="2" stroke-linecap="round" />
+                                <circle cx="319" cy="572" r="8.5" fill="url(#tinyDarkKalamansiGrad)" />
+                                <circle cx="319" cy="564" r="2" fill="#13331d" />
+                            </g>
+
+                            <!-- Cluster 2 (Mid-left branch, tiny dark green pair) -->
+                            <g class="sprout-leaf d5">
+                                <line x1="142" y1="464" x2="139" y2="478" stroke="#1e4d34" stroke-width="2" stroke-linecap="round" />
+                                <circle cx="138" cy="485" r="9" fill="url(#tinyDarkKalamansiGrad)" />
+                                <circle cx="138" cy="477" r="2" fill="#13331d" />
+
+                                <line x1="152" y1="466" x2="154" y2="479" stroke="#1e4d34" stroke-width="1.8" stroke-linecap="round" />
+                                <circle cx="155" cy="485" r="7.5" fill="url(#tinyDarkKalamansiGrad)" />
+                            </g>
+
+                            <!-- Cluster 3 (Mid-right branch, tiny dark green fruits) -->
+                            <g class="sprout-leaf d5">
+                                <line x1="322" y1="436" x2="320" y2="450" stroke="#1e4d34" stroke-width="2" stroke-linecap="round" />
+                                <circle cx="319" cy="457" r="9.5" fill="url(#tinyDarkKalamansiGrad)" />
+                                <circle cx="319" cy="448" r="2.1" fill="#13331d" />
+
+                                <line x1="334" y1="436" x2="336" y2="449" stroke="#1e4d34" stroke-width="1.8" stroke-linecap="round" />
+                                <circle cx="337" cy="455" r="8" fill="url(#tinyDarkKalamansiGrad)" />
+                            </g>
+
+                            <!-- Cluster 4 (Upper-left foliage, tiny dark green fruit) -->
+                            <g class="sprout-leaf d6">
+                                <line x1="168" y1="328" x2="166" y2="341" stroke="#1e4d34" stroke-width="1.8" stroke-linecap="round" />
+                                <circle cx="165" cy="347" r="8.5" fill="url(#tinyDarkKalamansiGrad)" />
+                                <circle cx="165" cy="340" r="1.9" fill="#13331d" />
+                            </g>
+
+                            <!-- Cluster 5 (Upper-right foliage, tiny dark green fruit) -->
+                            <g class="sprout-leaf d6">
+                                <line x1="292" y1="306" x2="290" y2="319" stroke="#1e4d34" stroke-width="1.8" stroke-linecap="round" />
+                                <circle cx="289" cy="325" r="8.5" fill="url(#tinyDarkKalamansiGrad)" />
+                                <circle cx="289" cy="318" r="1.9" fill="#13331d" />
+                            </g>
+
+                            <!-- Foreground leaves layered slightly in front for natural depth -->
+                            <g class="sprout-leaf d5">
+                                <path d="M 225 535 C 186 512, 152 518, 128 538 C 158 556, 196 552, 225 535 Z" fill="url(#kalamansiLeafMidGrad)" />
+                                <path d="M 226 420 C 264 398, 298 402, 322 422 C 292 440, 256 436, 226 420 Z" fill="url(#kalamansiLeafMidGrad)" />
+                                <path d="M 225 288 C 190 264, 158 268, 136 286 C 164 304, 198 302, 225 288 Z" fill="url(#kalamansiLeafMidGrad)" />
+                                <path d="M 226 196 C 216 154, 226 120, 246 98 C 256 132, 248 168, 226 196 Z" fill="url(#kalamansiLeafMidGrad)" />
+                            </g>
+                        </g>
+
+                        <!-- OREGANO SPECIES -->
+                        <g id="speciesOregano" class="botanical-species">
+                            <path class="grow-stem" d="M 232 724 C 228 635, 234 545, 226 455 C 220 385, 232 325, 228 265"
+                                  stroke="url(#oreganoStemGrad)" stroke-width="8.5" stroke-linecap="round" fill="none" />
+                            <path class="grow-branch-1" d="M 230 620 C 192 585, 152 562, 110 542"
+                                  stroke="url(#oreganoStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
+                            <path class="grow-branch-1" d="M 232 595 C 274 565, 318 545, 362 526"
+                                  stroke="url(#oreganoStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
+                            <path class="grow-branch-2" d="M 228 475 C 186 442, 146 420, 102 398"
+                                  stroke="url(#oreganoStemGrad)" stroke-width="5.2" stroke-linecap="round" fill="none" />
+                            <path class="grow-branch-2" d="M 229 452 C 274 422, 318 402, 364 380"
+                                  stroke="url(#oreganoStemGrad)" stroke-width="5.2" stroke-linecap="round" fill="none" />
+                            <path class="grow-branch-3" d="M 228 345 C 196 314, 174 292, 154 272"
+                                  stroke="url(#oreganoStemGrad)" stroke-width="4.4" stroke-linecap="round" fill="none" />
+                            <path class="grow-branch-3" d="M 229 332 C 262 304, 288 282, 314 260"
+                                  stroke="url(#oreganoStemGrad)" stroke-width="4.4" stroke-linecap="round" fill="none" />
+
+                            <g class="sprout-leaf d1">
+                                <path d="M 118 548 C 82 522, 54 544, 48 588 C 72 612, 114 596, 134 564 Z" fill="url(#oreganoLeafGrad)" />
+                            </g>
+                            <g class="sprout-leaf d2">
+                                <path d="M 352 532 C 388 506, 418 528, 422 574 C 396 598, 354 582, 336 548 Z" fill="url(#oreganoLeafGrad)" />
+                            </g>
+                            <g class="sprout-leaf d2">
+                                <path d="M 226 530 C 186 496, 152 512, 148 558 C 176 584, 218 568, 234 542 Z" fill="url(#oreganoLeafGrad)" />
+                            </g>
+                            <g class="sprout-leaf d3">
+                                <path d="M 110 404 C 72 376, 44 398, 42 444 C 68 468, 112 452, 128 420 Z" fill="url(#oreganoLeafGrad)" />
+                            </g>
+                            <g class="sprout-leaf d3">
+                                <path d="M 354 386 C 392 358, 422 380, 424 426 C 398 450, 354 434, 338 402 Z" fill="url(#oreganoLeafGrad)" />
+                            </g>
+                            <g class="sprout-leaf d4">
+                                <path d="M 226 392 C 184 358, 150 376, 148 422 C 176 446, 220 430, 234 402 Z" fill="url(#oreganoLeafGrad)" />
+                            </g>
+                            <g class="sprout-leaf d4">
+                                <path d="M 234 382 C 276 348, 310 366, 312 412 C 284 436, 240 420, 228 392 Z" fill="url(#oreganoLeafGrad)" />
+                            </g>
+                            <g class="sprout-leaf d5">
+                                <path d="M 162 278 C 132 252, 108 270, 108 308 C 130 328, 166 314, 178 290 Z" fill="url(#oreganoLeafGrad)" />
+                            </g>
+                            <g class="sprout-leaf d5">
+                                <path d="M 304 268 C 334 242, 358 260, 358 298 C 336 318, 300 304, 288 280 Z" fill="url(#oreganoLeafGrad)" />
+                            </g>
+                            <g class="sprout-leaf d6">
+                                <path d="M 228 275 C 202 232, 214 196, 232 182 C 250 196, 256 232, 234 275 Z" fill="url(#oreganoLeafGrad)" />
+                            </g>
+                        </g>
+
+                        <!-- INDOOR POT -->
+                        <g class="indoor-pot-group">
+                            <ellipse cx="230" cy="666" rx="54" ry="9" fill="#2b180e" />
+                            <path d="M 176 666 L 284 666 L 273 722 C 271 725, 267 727, 263 727 L 197 727 C 193 727, 189 725, 187 722 Z" fill="url(#indoorPotGrad)" />
+                            <rect x="171" y="661" width="118" height="10" rx="4" fill="#c96b47" />
+                        </g>
+                    </g>
+                </svg>
+            </div>
+
+            <div class="config-card-column">
+                <section class="plant-config" aria-labelledby="configure-heading">
+                    <h1 id="configure-heading">Configure Your Plant</h1>
+                    <p>Select the plant and environment you want the irrigation system to operate.</p>
+
+                    <label for="plantType">PLANT TYPE</label>
+                    <select id="plantType" name="plantType">
+                        <option value="Kalamansi">Kalamansi</option>
+                        <option value="Oregano">Oregano</option>
+                    </select>
+
+                    <label id="environment-label">ENVIRONMENT</label>
+                    <div class="environment-buttons" role="group" aria-labelledby="environment-label">
+                        <button type="button" id="indoor" class="active" aria-pressed="true">Indoor</button>
+                        <button type="button" id="outdoor" aria-pressed="false">Outdoor</button>
+                    </div>
+
+                    <a id="startMonitoring" href="#monitoring">Start Monitoring</a>
+                </section>
+            </div>
+        </main>
     </div>
 
-    <main class="solaris-layout-stage">
-        <div class="plant-floor-anchor" aria-label="Animated Plant Growth Preview">
-            <svg id="plantBotanicalSvg" class="plant-botanical-svg" viewBox="0 0 480 740" role="img" aria-label="Animated Kalamansi and Oregano Plant">
+    <!-- ==================== PAGE 2: IRRIGATION MONITORING DASHBOARD ==================== -->
+    <div id="pageMonitoringView">
+        <div class="ambient-backdrop"></div>
+
+        <div class="solaris-page2-bg" aria-hidden="true">
+            <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice">
                 <defs>
-                    <linearGradient id="kalamansiStemGrad" x1="0%" y1="100%" x2="0%" y2="0%">
-                        <stop offset="0%" stop-color="#3f6e58" />
-                        <stop offset="55%" stop-color="#5da87a" />
-                        <stop offset="100%" stop-color="#8be0a6" />
+                    <linearGradient id="p2SkyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#071d18" stop-opacity="0.55" />
+                        <stop offset="68%" stop-color="#0b2820" stop-opacity="0.32" />
+                        <stop offset="100%" stop-color="#19110a" stop-opacity="0.72" />
                     </linearGradient>
 
-                    <linearGradient id="kalamansiLeafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#6ce09b" />
-                        <stop offset="55%" stop-color="#379e6c" />
-                        <stop offset="100%" stop-color="#1b5c42" />
+                    <linearGradient id="p2KalamansiStemGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                        <stop offset="0%" stop-color="#1b3a2b" />
+                        <stop offset="55%" stop-color="#295941" />
+                        <stop offset="100%" stop-color="#3c7a59" />
                     </linearGradient>
 
-                    <radialGradient id="ripeKalamansiGrad" cx="34%" cy="28%" r="72%">
-                        <stop offset="0%" stop-color="#ffe066" />
-                        <stop offset="58%" stop-color="#f59e0b" />
-                        <stop offset="100%" stop-color="#b45309" />
+                    <linearGradient id="p2KalamansiLeafDarkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#2c6e4b" />
+                        <stop offset="55%" stop-color="#1c4d34" />
+                        <stop offset="100%" stop-color="#0f2e1f" />
+                    </linearGradient>
+
+                    <linearGradient id="p2KalamansiLeafMidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#37825a" />
+                        <stop offset="60%" stop-color="#21593c" />
+                        <stop offset="100%" stop-color="#123624" />
+                    </linearGradient>
+
+                    <radialGradient id="p2TinyDarkKalamansiGrad" cx="35%" cy="28%" r="72%">
+                        <stop offset="0%" stop-color="#3b7d44" />
+                        <stop offset="58%" stop-color="#205229" />
+                        <stop offset="100%" stop-color="#0e2b14" />
                     </radialGradient>
 
-                    <radialGradient id="unripeKalamansiGrad" cx="35%" cy="30%" r="72%">
-                        <stop offset="0%" stop-color="#a7f3a0" />
-                        <stop offset="62%" stop-color="#4ade80" />
-                        <stop offset="100%" stop-color="#15803d" />
-                    </radialGradient>
-
-                    <linearGradient id="oreganoStemGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <linearGradient id="p2OreganoStemGrad" x1="0%" y1="100%" x2="0%" y2="0%">
                         <stop offset="0%" stop-color="#476e60" />
                         <stop offset="100%" stop-color="#87c2ad" />
                     </linearGradient>
 
-                    <linearGradient id="oreganoLeafGrad" x1="15%" y1="10%" x2="85%" y2="90%">
+                    <linearGradient id="p2OreganoLeafGrad" x1="15%" y1="10%" x2="85%" y2="90%">
                         <stop offset="0%" stop-color="#b7e7d7" />
                         <stop offset="55%" stop-color="#7ec2aa" />
                         <stop offset="100%" stop-color="#4d8a75" />
                     </linearGradient>
-
-                    <linearGradient id="grassGrad" x1="0%" y1="100%" x2="0%" y2="0%">
-                        <stop offset="0%" stop-color="#0e2b22" />
-                        <stop offset="100%" stop-color="#369672" />
-                    </linearGradient>
-
-                    <linearGradient id="indoorPotGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="#9e4c2e" />
-                        <stop offset="50%" stop-color="#c96b47" />
-                        <stop offset="100%" stop-color="#75341c" />
-                    </linearGradient>
                 </defs>
 
-                <ellipse cx="235" cy="724" rx="155" ry="13" fill="rgba(0, 0, 0, 0.55)" />
+                <rect x="0" y="0" width="1440" height="900" fill="url(#p2SkyGrad)" />
+                <rect class="p2-sky-tint" x="0" y="0" width="1440" height="900" />
 
-                <g opacity="0.85">
-                    <path class="grass-blade" d="M 88 724 Q 76 668 58 634 Q 84 668 98 724 Z" fill="url(#grassGrad)" />
-                    <path class="grass-blade alt" d="M 118 724 Q 112 680 102 652 Q 120 680 128 724 Z" fill="url(#grassGrad)" />
-                    <path class="grass-blade" d="M 358 724 Q 368 676 384 646 Q 374 678 368 724 Z" fill="url(#grassGrad)" />
-                    <path class="grass-blade alt" d="M 386 724 Q 402 664 424 628 Q 408 668 396 724 Z" fill="url(#grassGrad)" />
+                <g class="p2-sun-group">
+                    <circle class="p2-sun-halo" cx="250" cy="140" r="155" />
+                    <circle class="p2-sun-core" cx="250" cy="140" r="36" />
                 </g>
 
-                <g>
-                    <circle class="firefly-dot" cx="122" cy="430" r="3" fill="#b9f8d3" />
-                    <circle class="firefly-dot f2" cx="352" cy="340" r="3.5" fill="#fde68a" />
-                    <circle class="firefly-dot f3" cx="288" cy="195" r="2.6" fill="#99f6e4" />
-                    <circle class="firefly-dot f2" cx="155" cy="245" r="2.8" fill="#bbf7d0" />
-                    <circle class="firefly-dot" cx="325" cy="510" r="2.5" fill="#fef08a" />
+                <g class="p2-moon-group">
+                    <circle cx="265" cy="130" r="28" fill="#f8fafc" />
+                    <circle cx="276" cy="123" r="24" fill="#081e18" />
+                    <circle cx="140" cy="105" r="2.2" fill="#e2e8f0" opacity="0.8" />
+                    <circle cx="410" cy="95" r="1.9" fill="#e2e8f0" opacity="0.7" />
+                    <circle cx="560" cy="150" r="2.3" fill="#e2e8f0" opacity="0.75" />
+                    <circle cx="1120" cy="115" r="2.1" fill="#e2e8f0" opacity="0.75" />
+                    <circle cx="1260" cy="175" r="1.8" fill="#e2e8f0" opacity="0.65" />
                 </g>
 
-                <g id="breezeWrapper" class="breeze-group">
-                    <g id="speciesKalamansi" class="botanical-species is-active">
-                        <path class="grow-stem" d="M 225 724 C 228 635, 212 555, 224 465 C 236 375, 214 295, 226 205 C 231 165, 226 135, 222 108"
-                              stroke="url(#kalamansiStemGrad)" stroke-width="11" stroke-linecap="round" fill="none" />
-                        <path class="grow-branch-1" d="M 220 565 C 185 548, 148 552, 108 575"
-                              stroke="url(#kalamansiStemGrad)" stroke-width="7.5" stroke-linecap="round" fill="none" />
-                        <path class="grow-branch-1" d="M 223 475 C 268 452, 315 446, 368 422"
-                              stroke="url(#kalamansiStemGrad)" stroke-width="8" stroke-linecap="round" fill="none" />
-                        <path class="grow-branch-2" d="M 221 372 C 182 342, 142 325, 98 312"
-                              stroke="url(#kalamansiStemGrad)" stroke-width="6.5" stroke-linecap="round" fill="none" />
-                        <path class="grow-branch-2" d="M 222 292 C 264 265, 304 248, 344 228"
-                              stroke="url(#kalamansiStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
-                        <path class="grow-branch-3" d="M 224 205 C 198 175, 178 152, 158 134"
-                              stroke="url(#kalamansiStemGrad)" stroke-width="5" stroke-linecap="round" fill="none" />
-                        <path class="grow-branch-3" d="M 225 182 C 254 156, 276 138, 298 122"
-                              stroke="url(#kalamansiStemGrad)" stroke-width="5" stroke-linecap="round" fill="none" />
+                <g class="p2-clouds-group">
+                    <ellipse cx="220" cy="125" rx="145" ry="40" fill="#64748b" />
+                    <ellipse cx="345" cy="138" rx="135" ry="36" fill="#475569" />
+                    <ellipse cx="280" cy="112" rx="120" ry="32" fill="#94a3b8" opacity="0.62" />
+                </g>
 
-                        <g class="sprout-leaf d1">
-                            <path d="M 112 574 C 76 558, 52 575, 42 604 C 74 612, 102 598, 112 574 Z" fill="url(#kalamansiLeafGrad)" />
-                            <path d="M 110 575 Q 76 588 46 602" stroke="#9ef0be" stroke-width="1.8" fill="none" />
-                        </g>
-
-                        <g class="sprout-leaf d2">
-                            <path d="M 224 510 C 182 485, 145 488, 118 506 C 148 525, 188 524, 224 510 Z" fill="url(#kalamansiLeafGrad)" />
-                            <path d="M 220 509 Q 170 505 122 506" stroke="#9ef0be" stroke-width="1.8" fill="none" />
-                        </g>
-
-                        <g class="sprout-leaf d2">
-                            <path d="M 268 456 C 296 420, 336 406, 372 410 C 354 442, 312 456, 268 456 Z" fill="url(#kalamansiLeafGrad)" />
-                            <path d="M 272 454 Q 320 430 368 412" stroke="#9ef0be" stroke-width="1.8" fill="none" />
-                        </g>
-
-                        <g class="sprout-leaf d3">
-                            <path d="M 185 344 C 148 312, 105 305, 68 318 C 98 345, 144 352, 185 344 Z" fill="url(#kalamansiLeafGrad)" />
-                            <path d="M 181 342 Q 125 326 72 318" stroke="#9ef0be" stroke-width="1.8" fill="none" />
-                        </g>
-
-                        <g class="sprout-leaf d3">
-                            <path d="M 224 342 C 258 312, 302 308, 338 322 C 308 348, 264 352, 224 342 Z" fill="url(#kalamansiLeafGrad)" />
-                            <path d="M 228 340 Q 282 326 334 323" stroke="#9ef0be" stroke-width="1.8" fill="none" />
-                        </g>
-
-                        <g class="sprout-leaf d4">
-                            <path d="M 275 262 C 304 224, 344 206, 384 208 C 364 242, 322 258, 275 262 Z" fill="url(#kalamansiLeafGrad)" />
-                            <path d="M 278 260 Q 330 232 380 210" stroke="#9ef0be" stroke-width="1.8" fill="none" />
-                        </g>
-
-                        <g class="sprout-leaf d4">
-                            <path d="M 192 170 C 164 134, 132 122, 102 132 C 126 158, 160 168, 192 170 Z" fill="url(#kalamansiLeafGrad)" />
-                        </g>
-
-                        <g class="sprout-leaf d5">
-                            <path d="M 224 148 C 218 106, 226 74, 244 54 C 254 88, 246 122, 224 148 Z" fill="url(#kalamansiLeafGrad)" />
-                        </g>
-
-                        <g class="sprout-leaf d5">
-                            <path d="M 248 158 C 278 132, 314 124, 346 134 C 322 158, 286 164, 248 158 Z" fill="url(#kalamansiLeafGrad)" />
-                        </g>
-
-                        <g class="sprout-leaf d5" transform="translate(148, 128)">
-                            <circle cx="0" cy="-7" r="6" fill="#fffdf5" />
-                            <circle cx="7" cy="-2" r="6" fill="#fffdf5" />
-                            <circle cx="4.5" cy="6" r="6" fill="#fffdf5" />
-                            <circle cx="-4.5" cy="6" r="6" fill="#fffdf5" />
-                            <circle cx="-7" cy="-2" r="6" fill="#fffdf5" />
-                            <circle cx="0" cy="0" r="3" fill="#f5b82e" />
-                        </g>
-
-                        <g class="sprout-leaf d6" transform="translate(222, 92)">
-                            <circle cx="0" cy="-6" r="5.5" fill="#fffdf5" />
-                            <circle cx="6" cy="-2" r="5.5" fill="#fffdf5" />
-                            <circle cx="4" cy="5" r="5.5" fill="#fffdf5" />
-                            <circle cx="-4" cy="5" r="5.5" fill="#fffdf5" />
-                            <circle cx="-6" cy="-2" r="5.5" fill="#fffdf5" />
-                            <circle cx="0" cy="0" r="2.8" fill="#f5b82e" />
-                        </g>
-
-                        <g class="sprout-leaf d5">
-                            <circle cx="332" cy="444" r="31" fill="url(#ripeKalamansiGrad)" />
-                            <circle cx="321" cy="432" r="8" fill="rgba(255, 255, 255, 0.32)" />
-                            <path d="M 332 413 L 332 403" stroke="#5da87a" stroke-width="3" stroke-linecap="round" />
-                        </g>
-
-                        <g class="sprout-leaf d6">
-                            <circle cx="386" cy="396" r="24" fill="url(#unripeKalamansiGrad)" />
-                            <circle cx="378" cy="387" r="6" fill="rgba(255, 255, 255, 0.28)" />
-                            <path d="M 380 374 L 368 422" stroke="#5da87a" stroke-width="3.5" fill="none" />
-                        </g>
+                <g id="p2RainGroup" class="p2-rain-group">
+                    <g stroke="rgba(165, 195, 224, 0.55)" stroke-width="1.8" stroke-linecap="round">
+                        <line class="rain-streak" x1="150" y1="165" x2="136" y2="200" />
+                        <line class="rain-streak" x1="220" y1="205" x2="206" y2="240" style="animation-delay: -0.25s;" />
+                        <line class="rain-streak" x1="295" y1="155" x2="281" y2="190" style="animation-delay: -0.45s;" />
+                        <line class="rain-streak" x1="370" y1="220" x2="356" y2="255" style="animation-delay: -0.15s;" />
+                        <line class="rain-streak" x1="440" y1="180" x2="426" y2="215" style="animation-delay: -0.6s;" />
                     </g>
+                </g>
 
-                    <g id="speciesOregano" class="botanical-species">
-                        <path class="grow-stem" d="M 232 724 C 228 635, 234 545, 226 455 C 220 385, 232 325, 228 265"
-                              stroke="url(#oreganoStemGrad)" stroke-width="8.5" stroke-linecap="round" fill="none" />
-                        <path class="grow-branch-1" d="M 230 620 C 192 585, 152 562, 110 542"
-                              stroke="url(#oreganoStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
-                        <path class="grow-branch-1" d="M 232 595 C 274 565, 318 545, 362 526"
-                              stroke="url(#oreganoStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
-                        <path class="grow-branch-2" d="M 228 475 C 186 442, 146 420, 102 398"
-                              stroke="url(#oreganoStemGrad)" stroke-width="5.2" stroke-linecap="round" fill="none" />
-                        <path class="grow-branch-2" d="M 229 452 C 274 422, 318 402, 364 380"
-                              stroke="url(#oreganoStemGrad)" stroke-width="5.2" stroke-linecap="round" fill="none" />
-                        <path class="grow-branch-3" d="M 228 345 C 196 314, 174 292, 154 272"
-                              stroke="url(#oreganoStemGrad)" stroke-width="4.4" stroke-linecap="round" fill="none" />
-                        <path class="grow-branch-3" d="M 229 332 C 262 304, 288 282, 314 260"
-                              stroke="url(#oreganoStemGrad)" stroke-width="4.4" stroke-linecap="round" fill="none" />
+                <g class="p2-fullpage-plant-wrap">
+                    <g class="p2-sway">
+                        <g id="p2PlantKalamansi" class="p2-species-group is-active" transform="translate(360, 75) scale(1.5)">
+                            <path d="M 228 724 C 230 645, 218 575, 226 495 C 234 415, 216 335, 226 250 C 230 205, 226 165, 224 128"
+                                  stroke="url(#p2KalamansiStemGrad)" stroke-width="11" stroke-linecap="round" fill="none" />
+                            <path d="M 224 595 C 188 575, 145 572, 98 588"
+                                  stroke="url(#p2KalamansiStemGrad)" stroke-width="7.5" stroke-linecap="round" fill="none" />
+                            <path d="M 225 568 C 268 548, 315 544, 362 558"
+                                  stroke="url(#p2KalamansiStemGrad)" stroke-width="7.5" stroke-linecap="round" fill="none" />
+                            <path d="M 225 485 C 180 462, 132 454, 82 464"
+                                  stroke="url(#p2KalamansiStemGrad)" stroke-width="7" stroke-linecap="round" fill="none" />
+                            <path d="M 226 462 C 274 438, 326 428, 378 435"
+                                  stroke="url(#p2KalamansiStemGrad)" stroke-width="7" stroke-linecap="round" fill="none" />
+                            <path d="M 224 362 C 182 336, 138 322, 95 318"
+                                  stroke="url(#p2KalamansiStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
+                            <path d="M 225 338 C 268 312, 314 298, 358 292"
+                                  stroke="url(#p2KalamansiStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
 
-                        <g class="sprout-leaf d1">
-                            <path d="M 118 548 C 82 522, 54 544, 48 588 C 72 612, 114 596, 134 564 Z" fill="url(#oreganoLeafGrad)" />
-                            <path d="M 124 562 L 62 582 M 102 568 L 84 545 M 96 572 L 88 596" stroke="#3c6e5d" stroke-width="1.6" fill="none" />
+                            <path d="M 142 582 C 110 554, 72 556, 48 584 C 78 606, 118 602, 142 582 Z" fill="url(#p2KalamansiLeafDarkGrad)" />
+                            <path d="M 288 552 C 322 522, 362 522, 392 548 C 362 574, 322 572, 288 552 Z" fill="url(#p2KalamansiLeafDarkGrad)" />
+                            <path d="M 145 462 C 110 430, 68 428, 38 456 C 70 482, 114 480, 145 462 Z" fill="url(#p2KalamansiLeafDarkGrad)" />
+                            <path d="M 294 442 C 330 408, 374 404, 408 428 C 376 456, 332 456, 294 442 Z" fill="url(#p2KalamansiLeafDarkGrad)" />
+                            <path d="M 152 332 C 118 298, 78 292, 48 316 C 78 344, 120 346, 152 332 Z" fill="url(#p2KalamansiLeafDarkGrad)" />
+                            <path d="M 284 312 C 318 278, 358 272, 390 296 C 360 324, 318 326, 284 312 Z" fill="url(#p2KalamansiLeafDarkGrad)" />
+                            <path d="M 225 535 C 186 512, 152 518, 128 538 C 158 556, 196 552, 225 535 Z" fill="url(#p2KalamansiLeafMidGrad)" />
+                            <path d="M 226 420 C 264 398, 298 402, 322 422 C 292 440, 256 436, 226 420 Z" fill="url(#p2KalamansiLeafMidGrad)" />
+
+                            <!-- Tiny dark green Kalamansi fruits nestled along branches -->
+                            <circle cx="301" cy="569" r="9.5" fill="url(#p2TinyDarkKalamansiGrad)" />
+                            <circle cx="319" cy="572" r="8.5" fill="url(#p2TinyDarkKalamansiGrad)" />
+                            <circle cx="138" cy="485" r="9" fill="url(#p2TinyDarkKalamansiGrad)" />
+                            <circle cx="319" cy="457" r="9.5" fill="url(#p2TinyDarkKalamansiGrad)" />
+                            <circle cx="165" cy="347" r="8.5" fill="url(#p2TinyDarkKalamansiGrad)" />
+                            <circle cx="289" cy="325" r="8.5" fill="url(#p2TinyDarkKalamansiGrad)" />
                         </g>
 
-                        <g class="sprout-leaf d2">
-                            <path d="M 352 532 C 388 506, 418 528, 422 574 C 396 598, 354 582, 336 548 Z" fill="url(#oreganoLeafGrad)" />
-                            <path d="M 344 546 L 408 568 M 368 554 L 386 530 M 374 558 L 382 582" stroke="#3c6e5d" stroke-width="1.6" fill="none" />
+                        <g id="p2PlantOregano" class="p2-species-group" transform="translate(360, 75) scale(1.5)">
+                            <path d="M 232 724 C 228 635, 234 545, 226 455 C 220 385, 232 325, 228 265"
+                                  stroke="url(#p2OreganoStemGrad)" stroke-width="8.5" stroke-linecap="round" fill="none" />
+                            <path d="M 230 620 C 192 585, 152 562, 110 542"
+                                  stroke="url(#p2OreganoStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
+                            <path d="M 232 595 C 274 565, 318 545, 362 526"
+                                  stroke="url(#p2OreganoStemGrad)" stroke-width="6" stroke-linecap="round" fill="none" />
+                            <path d="M 118 548 C 82 522, 54 544, 48 588 C 72 612, 114 596, 134 564 Z" fill="url(#p2OreganoLeafGrad)" />
+                            <path d="M 352 532 C 388 506, 418 528, 422 574 C 396 598, 354 582, 336 548 Z" fill="url(#p2OreganoLeafGrad)" />
+                            <path d="M 226 530 C 186 496, 152 512, 148 558 C 176 584, 218 568, 234 542 Z" fill="url(#p2OreganoLeafGrad)" />
+                            <path d="M 110 404 C 72 376, 44 398, 42 444 C 68 468, 112 452, 128 420 Z" fill="url(#p2OreganoLeafGrad)" />
+                            <path d="M 354 386 C 392 358, 422 380, 424 426 C 398 450, 354 434, 338 402 Z" fill="url(#p2OreganoLeafGrad)" />
+                            <path d="M 226 392 C 184 358, 150 376, 148 422 C 176 446, 220 430, 234 402 Z" fill="url(#p2OreganoLeafGrad)" />
+                            <path d="M 234 382 C 276 348, 310 366, 312 412 C 284 436, 240 420, 228 392 Z" fill="url(#p2OreganoLeafGrad)" />
                         </g>
-
-                        <g class="sprout-leaf d2">
-                            <path d="M 226 530 C 186 496, 152 512, 148 558 C 176 584, 218 568, 234 542 Z" fill="url(#oreganoLeafGrad)" />
-                            <path d="M 228 538 L 162 554 M 202 544 L 184 520 M 196 548 L 188 572" stroke="#3c6e5d" stroke-width="1.6" fill="none" />
-                        </g>
-
-                        <g class="sprout-leaf d3">
-                            <path d="M 110 404 C 72 376, 44 398, 42 444 C 68 468, 112 452, 128 420 Z" fill="url(#oreganoLeafGrad)" />
-                            <path d="M 120 418 L 58 438 M 96 424 L 78 402 M 90 428 L 82 452" stroke="#3c6e5d" stroke-width="1.6" fill="none" />
-                        </g>
-
-                        <g class="sprout-leaf d3">
-                            <path d="M 354 386 C 392 358, 422 380, 424 426 C 398 450, 354 434, 338 402 Z" fill="url(#oreganoLeafGrad)" />
-                            <path d="M 346 400 L 408 420 M 370 406 L 388 384 M 376 410 L 384 434" stroke="#3c6e5d" stroke-width="1.6" fill="none" />
-                        </g>
-
-                        <g class="sprout-leaf d4">
-                            <path d="M 226 392 C 184 358, 150 376, 148 422 C 176 446, 220 430, 234 402 Z" fill="url(#oreganoLeafGrad)" />
-                            <path d="M 228 398 L 164 416 M 202 404 L 184 382 M 196 408 L 188 432" stroke="#3c6e5d" stroke-width="1.6" fill="none" />
-                        </g>
-
-                        <g class="sprout-leaf d4">
-                            <path d="M 234 382 C 276 348, 310 366, 312 412 C 284 436, 240 420, 228 392 Z" fill="url(#oreganoLeafGrad)" />
-                            <path d="M 234 388 L 298 406 M 258 394 L 276 372 M 264 398 L 272 422" stroke="#3c6e5d" stroke-width="1.6" fill="none" />
-                        </g>
-
-                        <g class="sprout-leaf d5">
-                            <path d="M 162 278 C 132 252, 108 270, 108 308 C 130 328, 166 314, 178 290 Z" fill="url(#oreganoLeafGrad)" />
-                            <path d="M 170 288 L 120 304" stroke="#3c6e5d" stroke-width="1.5" fill="none" />
-                        </g>
-
-                        <g class="sprout-leaf d5">
-                            <path d="M 304 268 C 334 242, 358 260, 358 298 C 336 318, 300 304, 288 280 Z" fill="url(#oreganoLeafGrad)" />
-                            <path d="M 296 278 L 346 294" stroke="#3c6e5d" stroke-width="1.5" fill="none" />
-                        </g>
-
-                        <g class="sprout-leaf d6">
-                            <path d="M 228 275 C 202 232, 214 196, 232 182 C 250 196, 256 232, 234 275 Z" fill="url(#oreganoLeafGrad)" />
-                            <path d="M 230 268 L 232 192" stroke="#3c6e5d" stroke-width="1.6" fill="none" />
-                        </g>
-                    </g>
-
-                    <g class="indoor-pot-group">
-                        <ellipse cx="230" cy="666" rx="54" ry="9" fill="#2b180e" />
-                        <path d="M 176 666 L 284 666 L 273 722 C 271 725, 267 727, 263 727 L 197 727 C 193 727, 189 725, 187 722 Z" fill="url(#indoorPotGrad)" />
-                        <rect x="171" y="661" width="118" height="10" rx="4" fill="#d47652" />
                     </g>
                 </g>
             </svg>
         </div>
 
-        <div class="config-card-column">
-            <section class="plant-config" aria-labelledby="configure-heading">
-                <h1 id="configure-heading">Configure Your Plant</h1>
-                <p>Select the plant and environment you want the irrigation system to operate.</p>
+        <svg class="scroll-roots-overlay" viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+            <path class="root-branch" d="M120 900 C150 760, 110 660, 180 540 C220 470, 260 410, 240 310" fill="none" stroke="rgba(212, 163, 106, 0.35)" stroke-width="3" />
+            <path class="root-branch" d="M180 540 C120 490, 80 440, 45 370" fill="none" stroke="rgba(212, 163, 106, 0.25)" stroke-width="2" />
+            <path class="root-branch" d="M1320 900 C1280 750, 1330 640, 1250 520 C1200 450, 1170 380, 1195 290" fill="none" stroke="rgba(212, 163, 106, 0.35)" stroke-width="3" />
+            <path class="root-branch" d="M1250 520 C1310 470, 1360 420, 1395 350" fill="none" stroke="rgba(212, 163, 106, 0.25)" stroke-width="2" />
+            <path class="root-branch" d="M720 900 C705 810, 740 740, 715 650" fill="none" stroke="rgba(55, 201, 130, 0.22)" stroke-width="2.5" />
+        </svg>
 
-                <label for="plantType">PLANT TYPE</label>
-                <select id="plantType" name="plantType">
-                    <option value="Kalamansi">Kalamansi</option>
-                    <option value="Oregano">Oregano</option>
-                </select>
+        <main class="dashboard">
+            <header class="dashboard-header">
+                <div>
+                    <div class="dashboard-kicker">SOLARIS IRRIGATION SYSTEM</div>
+                    <h1 id="activePlantTitle">Kalamansi Dashboard</h1>
+                </div>
+                <div class="header-actions">
+                    <div class="scenery-switcher" role="group" aria-label="Time of Day and Weather Scenery">
+                        <button type="button" class="scenery-opt-btn active" data-scenery="daylight">Daylight</button>
+                        <button type="button" class="scenery-opt-btn" data-scenery="sunset">Sunset</button>
+                        <button type="button" class="scenery-opt-btn" data-scenery="night">Night</button>
+                        <button type="button" class="scenery-opt-btn" data-scenery="rain">Rain</button>
+                    </div>
+                    <button type="button" id="audioToggleBtnP2" class="audio-pill-btn" aria-label="Toggle Ambient Sound">
+                        <span class="audio-dot"></span>
+                        <span class="audio-label">Ambient: Ready</span>
+                    </button>
+                    <a id="backToConfigLink" class="configure-link" href="#configure">Configure Plant</a>
+                </div>
+            </header>
 
-                <label id="environment-label">ENVIRONMENT</label>
-                <div class="environment-buttons" role="group" aria-labelledby="environment-label">
-                    <button type="button" id="indoor" class="active" aria-pressed="true">Indoor</button>
-                    <button type="button" id="outdoor" aria-pressed="false">Outdoor</button>
+            <p id="telemetryStatus" class="telemetry-status">Connecting to Firebase...</p>
+
+            <section class="sensor-grid">
+                <div class="sensor-card temperature-card">
+                    <div class="sensor-title"><span>🌡️</span> TEMPERATURE</div>
+                    <div class="sensor-value"><span id="temperatureValue">--</span> <span class="sensor-unit">°C</span></div>
+                    <div class="sensor-stats"><div class="stat">Waiting for sensor</div></div>
                 </div>
 
-                <a id="startMonitoring" href="monitoring.html">Start Monitoring</a>
-            </section>
-        </div>
-    </main>
+                <div class="sensor-card humidity-card">
+                    <div class="sensor-title"><span>💧</span> HUMIDITY</div>
+                    <div class="sensor-value"><span id="humidityValue">--</span> <span class="sensor-unit">%</span></div>
+                    <div class="sensor-stats"><div class="stat">Waiting for sensor</div></div>
+                </div>
 
-    <audio id="bgMusic" src="music2.mp3" controls autoplay loop muted></audio>
+                <div class="sensor-card water-card">
+                    <div class="sensor-title"><span>🚿</span> DRIPPER FLOW</div>
+                    <div class="sensor-value"><span id="waterFlowValue">0.064</span> <span class="sensor-unit">L/min</span></div>
+                    <div class="sensor-stats"><div class="stat" id="dripperRateDetail">~64.2 mL/min · ~1.07 mL/s (1 dripper)</div></div>
+                </div>
+
+                <div class="sensor-card water-card">
+                    <div class="sensor-title"><span>🌊</span> WATER LEVEL</div>
+                    <div class="sensor-value"><span id="waterLevelValue">--</span> <span class="sensor-unit">%</span></div>
+                    <div class="sensor-stats"><div class="stat">Waiting for sensor</div></div>
+                </div>
+
+                <div class="sensor-card soil-card">
+                    <div class="sensor-title"><span aria-hidden="true">🌱</span> SOIL MOISTURE</div>
+                    <div class="sensor-value rain-reading" id="soilMoistureReading" aria-live="polite">No data</div>
+                    <div class="sensor-stats"><div class="stat" id="soilMoistureStatus">Waiting for sensor</div></div>
+                </div>
+
+                <div class="sensor-card battery-voltage-card">
+                    <div class="sensor-title"><span aria-hidden="true">🔋</span> BATTERY VOLTAGE</div>
+                    <div class="sensor-value"><span id="batteryVoltageValue">--</span> <span class="sensor-unit">V</span></div>
+                    <div class="sensor-stats"><div class="stat">12V Lead-Acid System</div></div>
+                </div>
+
+                <div class="sensor-card solar-voltage-card">
+                    <div class="sensor-title"><span aria-hidden="true">☀️</span> SOLAR VOLTAGE</div>
+                    <div class="sensor-value"><span id="solarVoltageValue">--</span> <span class="sensor-unit">V</span></div>
+                    <div class="sensor-stats"><div class="stat">PV Panel Input</div></div>
+                </div>
+
+                <div class="sensor-card water-card rain-card">
+                    <div class="sensor-title"><span aria-hidden="true">🌧️</span> RAIN</div>
+                    <div class="sensor-value rain-reading" id="rainReading" aria-live="polite">No data</div>
+                    <div class="sensor-stats"><div class="stat" id="rainStatus">Waiting for sensor</div></div>
+                </div>
+            </section>
+
+            <section class="device-status-section" aria-labelledby="device-status-heading">
+                <h2 id="device-status-heading">Device Status</h2>
+                <div class="device-status-grid">
+                    <article class="device-status-card solar-card" aria-live="polite">
+                        <div class="sensor-title"><span aria-hidden="true">☀️</span> SOLAR PANEL</div>
+                        <p class="device-state" id="solarStatus" data-state="unknown">Unknown</p>
+                    </article>
+                    <article class="device-status-card battery-card" aria-live="polite">
+                        <div class="sensor-title"><span aria-hidden="true">🔋</span> BATTERY</div>
+                        <p class="device-state" id="batteryStatus" data-state="unknown">Unknown</p>
+                    </article>
+                    <article class="device-status-card pump-card" aria-live="polite">
+                        <div class="sensor-title"><span aria-hidden="true">🚰</span> PUMP</div>
+                        <p class="device-state" id="pumpStatus" data-state="unknown">Unknown</p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="irrigation-controls-grid" aria-label="Irrigation Controls">
+                <article class="control-mode-card">
+                    <div class="mode-card-header">
+                        <div class="section-kicker">AUTOMATED CONTROL</div>
+                        <h2>Smart Irrigate</h2>
+                        <p id="configuredPlantText">Kalamansi · Indoor</p>
+                    </div>
+
+                    <div class="mode-lines">
+                        <div class="mode-line-row">
+                            <span>Optimal Time</span>
+                            <strong id="smartOptimalTimeDisplay">6:00 AM</strong>
+                        </div>
+                        <div class="mode-line-row">
+                            <span>Optimal Volume</span>
+                            <strong id="smartOptimalLitersDisplay">0.35 L (350 mL)</strong>
+                        </div>
+                        <div class="mode-line-row">
+                            <span>Dripper Rate</span>
+                            <strong>0.064 L/min (64.2 mL/min)</strong>
+                        </div>
+                    </div>
+
+                    <p id="smartModeIndication" class="mode-indication">
+                        Optimal for Kalamansi (Indoor) · ~327s active pump time (pulsed 90s run / 120s rest).
+                    </p>
+
+                    <button type="button" id="smartIrrigateButton" class="action-btn smart-irrigate-button">
+                        Smart Irrigate
+                    </button>
+
+                    <div id="scheduleSheet" class="schedule-sheet" hidden>
+                        <span>Scheduled Irrigation</span>
+                        <strong id="scheduledTime">Not scheduled</strong>
+                        <small id="scheduleStatus">Waiting for schedule</small>
+                    </div>
+                </article>
+
+                <article class="control-mode-card">
+                    <div class="mode-card-header">
+                        <div class="section-kicker">DIRECT OVERRIDE</div>
+                        <h2>Manual Irrigate</h2>
+                        <p>Tap to open pump · Tap again to close</p>
+                    </div>
+
+                    <div class="mode-lines">
+                        <div class="mode-line-row">
+                            <span>Pump State</span>
+                            <strong id="manualPumpStateText">CLOSED</strong>
+                        </div>
+                        <div class="mode-line-row">
+                            <span>Open Duration</span>
+                            <strong id="manualElapsedFull">00:00:00</strong>
+                        </div>
+                        <div class="mode-line-row">
+                            <span>Dripper Output</span>
+                            <strong id="manualLiveFlowText">0.064 L/min · 64.2 mL/min</strong>
+                        </div>
+                    </div>
+
+                    <p id="manualModeIndication" class="mode-indication">
+                        Ready for instant on-the-spot pump control.
+                    </p>
+
+                    <button type="button" id="manualIrrigateButton" class="action-btn manual-irrigate-button">
+                        <span id="manualButtonLabel">Open Pump</span>
+                        <span id="manualButtonTimer" class="manual-timer-pill">00:00:00</span>
+                    </button>
+                </article>
+
+                <article class="control-mode-card">
+                    <div class="mode-card-header">
+                        <div class="section-kicker">CUSTOM TIMETABLE</div>
+                        <h2>Scheduled Irrigate</h2>
+                        <p>Custom date, time &amp; water volume</p>
+                    </div>
+
+                    <div class="mode-lines">
+                        <div class="mode-line-row">
+                            <span>Scheduled Date/Time</span>
+                            <strong id="customScheduleDateTimeDisplay">Not set</strong>
+                        </div>
+                        <div class="mode-line-row">
+                            <span>Target Water</span>
+                            <strong id="customScheduleLitersDisplay">0.35 L</strong>
+                        </div>
+                        <div class="mode-line-row">
+                            <span>Schedule Status</span>
+                            <strong id="customScheduleStatusBadge">READY</strong>
+                        </div>
+                    </div>
+
+                    <p id="customScheduleIndication" class="mode-indication">
+                        Set MM / DD / HR / MIN / YY and water volume in Liters (L).
+                    </p>
+
+                    <button type="button" id="scheduledIrrigateButton" class="action-btn scheduled-irrigate-button">
+                        Scheduled Irrigate
+                    </button>
+                </article>
+            </section>
+
+            <section class="irrigation-section" aria-label="Plant Status and Watering History">
+                <div class="plant-status-panel">
+                    <div class="plant-status-top">
+                        <div>
+                            <div class="section-kicker">PLANT RECORD &amp; STATUS</div>
+                            <h2 id="historyPlantName">Kalamansi Status &amp; History</h2>
+                            <p id="plantStatus">Irrigation not scheduled</p>
+                        </div>
+                        <div class="plant-optimal-lines">
+                            <div>Optimal Need: <strong id="lowerOptimalLiters">0.35 L (350 mL)</strong></div>
+                            <div>Next Optimal Schedule: <strong id="nextSchedule">Not scheduled</strong></div>
+                        </div>
+                    </div>
+
+                    <h3>Irrigation History</h3>
+                    <ul id="irrigationHistory" class="history-list">
+                        <li>No watering sessions recorded.</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Dialogs -->
+    <dialog id="irrigationDialog" class="irrigation-dialog">
+        <h2 id="dialogPlantName">Smart Irrigate</h2>
+        <p id="dialogScheduleText">Schedule Smart Irrigate for the configured plant?</p>
+        <div class="dialog-actions">
+            <button type="button" id="cancelIrrigation">Cancel</button>
+            <button type="button" id="operateIrrigation" class="operate-button">Operate</button>
+        </div>
+    </dialog>
+
+    <dialog id="customScheduleDialog" class="irrigation-dialog custom-schedule-dialog">
+        <h2>Scheduled Irrigate</h2>
+        <p id="customDialogSubtitle">Set date, time, and water volume in Liters (L).</p>
+
+        <form id="customScheduleForm">
+            <div class="datetime-inputs-grid">
+                <div class="dt-field">
+                    <label for="schedMM">MM</label>
+                    <input id="schedMM" type="number" min="1" max="12" placeholder="MM" required>
+                </div>
+                <div class="dt-field">
+                    <label for="schedDD">DD</label>
+                    <input id="schedDD" type="number" min="1" max="31" placeholder="DD" required>
+                </div>
+                <div class="dt-field">
+                    <label for="schedHR">HR</label>
+                    <input id="schedHR" type="number" min="0" max="23" placeholder="HH" required>
+                </div>
+                <div class="dt-field">
+                    <label for="schedMIN">MIN</label>
+                    <input id="schedMIN" type="number" min="0" max="59" placeholder="MM" required>
+                </div>
+                <div class="dt-field">
+                    <label for="schedYY">YY</label>
+                    <input id="schedYY" type="number" min="0" max="99" placeholder="YY" required>
+                </div>
+            </div>
+
+            <div class="liters-input-group">
+                <label for="schedLiters">WATER VOLUME (LITERS — L)</label>
+                <input id="schedLiters" type="number" step="0.01" min="0.01" max="10" placeholder="0.35" required>
+                <div class="liters-presets">
+                    <button type="button" class="liter-preset-btn" data-liters="0.18">0.18 L</button>
+                    <button type="button" class="liter-preset-btn" data-liters="0.25">0.25 L</button>
+                    <button type="button" class="liter-preset-btn" data-liters="0.35">0.35 L</button>
+                    <button type="button" class="liter-preset-btn" data-liters="0.50">0.50 L</button>
+                </div>
+            </div>
+
+            <p id="customModalIndication" class="custom-indication-text">
+                Select date, time, and volume in Liters.
+            </p>
+
+            <div class="dialog-actions">
+                <button type="button" id="cancelCustomSchedule">Cancel</button>
+                <button type="submit" id="saveCustomSchedule" class="operate-button">Set Schedule</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="noticeDialog" class="irrigation-dialog">
+        <h2 id="noticeTitle">Notice</h2>
+        <p id="noticeMessage"></p>
+        <div class="dialog-actions" style="grid-template-columns: 1fr;">
+            <button type="button" id="closeNoticeBtn" class="operate-button">OK</button>
+        </div>
+    </dialog>
 
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const plantSelect = document.querySelector("#plantType");
-            const kalamansiGroup = document.querySelector("#speciesKalamansi");
-            const oreganoGroup = document.querySelector("#speciesOregano");
-            const indoorScene = document.querySelector("#indoorScene");
-            const outdoorScene = document.querySelector("#outdoorScene");
-            const indoorBtn = document.querySelector("#indoor");
-            const outdoorBtn = document.querySelector("#outdoor");
-            const sceneryBtns = document.querySelectorAll(".scenery-opt-btn");
-            const indoorFxRain = document.querySelector("#indoorFxRain");
-            const outdoorFxRain = document.querySelector("#outdoorFxRain");
-            const bgMusic = document.querySelector("#bgMusic");
-            const startMonitoringLink = document.querySelector("#startMonitoring");
+        (function () {
+            const DB_URL = "https://solaris-1c-default-rtdb.firebaseio.com";
+            const SENSOR_REFRESH_INTERVAL_MS = 2000;
+            const REQUEST_TIMEOUT_MS = 5000;
 
-            function saveMusicState(forcePlaying = null) {
-                if (!bgMusic) return;
-                try {
-                    localStorage.setItem("solarisMusicTime", String(bgMusic.currentTime || 0));
-                    const isPlaying = forcePlaying !== null ? forcePlaying : !bgMusic.paused;
-                    localStorage.setItem("solarisMusicPlaying", isPlaying ? "true" : "false");
-                    localStorage.setItem("solarisMusicMuted", bgMusic.muted ? "true" : "false");
-                } catch (_) {}
+            const DRIPPER_ML_PER_SEC = 1.07;
+            const DRIPPER_ML_PER_MIN = DRIPPER_ML_PER_SEC * 60;
+            const DRIPPER_L_PER_MIN = DRIPPER_ML_PER_MIN / 1000;
+
+            const PLANT_PROFILES = {
+                Kalamansi: {
+                    Indoor: { optimalTime: "06:00", intervalHours: 36, optimalLiters: 0.35 },
+                    Outdoor: { optimalTime: "06:00", intervalHours: 24, optimalLiters: 0.50 }
+                },
+                Oregano: {
+                    Indoor: { optimalTime: "06:30", intervalHours: 72, optimalLiters: 0.18 },
+                    Outdoor: { optimalTime: "06:30", intervalHours: 48, optimalLiters: 0.25 }
+                }
+            };
+
+            // Environment + Scenery YouTube Video ID mapping
+            const AMBIENT_TRACKS = {
+                outdoor_daylight_sunset: { id: "xNN7iTA57jM", label: "Outdoor Sun" },
+                indoor_daylight_sunset:  { id: "DN4jSqNxTw8", label: "Indoor Sun" },
+                outdoor_rain:            { id: "d0Xi5yYIUo4", label: "Outdoor Rain" },
+                indoor_rain:             { id: "-bAL9TAZOmM", label: "Indoor Rain" },
+                outdoor_night:           { id: "0aay6rLcEdU", label: "Outdoor Night" },
+                indoor_night:            { id: "EsV_lcDr-jg", label: "Indoor Night" }
+            };
+
+            function showNotice(title, message) {
+                const dlg = document.querySelector("#noticeDialog");
+                const tEl = document.querySelector("#noticeTitle");
+                const mEl = document.querySelector("#noticeMessage");
+                if (tEl) tEl.textContent = title;
+                if (mEl) mEl.textContent = message;
+                if (dlg && typeof dlg.showModal === "function") dlg.showModal();
+                else if (dlg) dlg.setAttribute("open", "");
             }
 
-            async function tryAutoplayMusic() {
-                if (!bgMusic) return;
-                const savedTime = parseFloat(localStorage.getItem("solarisMusicTime") || "0");
-                const savedMuted = localStorage.getItem("solarisMusicMuted");
+            document.querySelector("#closeNoticeBtn")?.addEventListener("click", () => {
+                const dlg = document.querySelector("#noticeDialog");
+                if (dlg && typeof dlg.close === "function") dlg.close();
+                else if (dlg) dlg.removeAttribute("open");
+            });
 
-                const applySavedTime = () => {
-                    if (Number.isFinite(savedTime) && savedTime > 0) {
-                        const maxDur = Number.isFinite(bgMusic.duration) && bgMusic.duration > 0
-                            ? bgMusic.duration - 0.1
-                            : savedTime;
-                        try {
-                            bgMusic.currentTime = Math.max(0, Math.min(savedTime, maxDur));
-                        } catch (_) {}
-                    }
-                };
+            // ===================== VIEW ROUTER (PAGE 1 vs PAGE 2) =====================
+            function getActiveRouteView() {
+                const hash = (window.location.hash || "").toLowerCase();
+                if (hash === "#monitoring" || hash === "#/monitoring") return "monitoring";
+                return "config";
+            }
 
-                if (bgMusic.readyState >= 1) {
-                    applySavedTime();
+            function applyRouteView(routeName) {
+                const isMonitoring = routeName === "monitoring";
+                document.body.classList.toggle("view-monitoring", isMonitoring);
+                document.body.classList.toggle("view-config", !isMonitoring);
+                if (!isMonitoring) {
+                    window.scrollTo(0, 0);
+                    document.documentElement.style.setProperty("--scroll-progress", "0");
                 } else {
-                    bgMusic.addEventListener("loadedmetadata", applySavedTime, { once: true });
+                    updateScrollRootsProgress();
+                    updateDashboardFromFirebase();
                 }
-
-                if (savedMuted === "false") {
-                    bgMusic.muted = false;
-                    try {
-                        await bgMusic.play();
-                        saveMusicState(true);
-                        return;
-                    } catch (_) {}
-                }
-
-                bgMusic.muted = true;
-                try {
-                    await bgMusic.play();
-                    saveMusicState(true);
-                } catch (_) {}
             }
 
-            function unlockAudioOnGesture() {
-                if (!bgMusic) return;
-                bgMusic.muted = false;
-                bgMusic.play().then(() => {
-                    saveMusicState(true);
-                }).catch(() => {});
-                document.removeEventListener("pointerdown", unlockAudioOnGesture);
-                document.removeEventListener("keydown", unlockAudioOnGesture);
+            window.addEventListener("hashchange", () => applyRouteView(getActiveRouteView()));
+
+            // ===================== SCENERY & SPECIES STATE =====================
+            let currentScenery = localStorage.getItem("configuredScenery") || "daylight";
+            let currentEnvironment = localStorage.getItem("configuredEnvironment") || "Indoor";
+            let currentPlant = localStorage.getItem("configuredPlant") || "Kalamansi";
+            let latestSoilMoisturePct = null;
+            let manualOpenStartedAtMs = null;
+            let lastClearedExpiredId = "";
+
+            function resolveAmbientTrack() {
+                const isOutdoor = String(currentEnvironment).toLowerCase() === "outdoor";
+                const envKey = isOutdoor ? "outdoor" : "indoor";
+                if (currentScenery === "rain") {
+                    return AMBIENT_TRACKS[`${envKey}_rain`];
+                }
+                if (currentScenery === "night") {
+                    return AMBIENT_TRACKS[`${envKey}_night`];
+                }
+                return AMBIENT_TRACKS[`${envKey}_daylight_sunset`];
             }
 
-            if (bgMusic) {
-                tryAutoplayMusic();
-                document.addEventListener("pointerdown", unlockAudioOnGesture, { passive: true });
-                document.addEventListener("keydown", unlockAudioOnGesture, { passive: true });
+            // ===================== YOUTUBE IFRAME AUDIO CONTROLLER (HIDDEN) =====================
+            let ytPlayer = null;
+            let ytApiReady = false;
+            let userAudioUnlocked = false;
+            let desiredPlaying = true;
+            let activeVideoId = resolveAmbientTrack().id;
 
-                window.setInterval(() => {
-                    if (!bgMusic.paused) {
-                        saveMusicState(true);
+            function syncAudioButtonsUI(isPlaying) {
+                const track = resolveAmbientTrack();
+                const btns = document.querySelectorAll(".audio-pill-btn");
+                btns.forEach((btn) => {
+                    btn.classList.toggle("is-playing", Boolean(isPlaying));
+                    const labelEl = btn.querySelector(".audio-label");
+                    if (labelEl) {
+                        labelEl.textContent = isPlaying
+                            ? `${track.label} · Playing`
+                            : `${track.label} · Tap Audio`;
                     }
-                }, 250);
-
-                bgMusic.addEventListener("play", () => saveMusicState(true));
-                bgMusic.addEventListener("pause", () => saveMusicState(false));
-                bgMusic.addEventListener("volumechange", () => saveMusicState());
-                window.addEventListener("pagehide", () => saveMusicState());
-                window.addEventListener("beforeunload", () => saveMusicState());
-                startMonitoringLink?.addEventListener("click", () => saveMusicState());
-            }
-
-            function replayGrowth() {
-                if (!plantSelect || !kalamansiGroup || !oreganoGroup) return;
-                const isOregano = plantSelect.value.toLowerCase() === "oregano";
-
-                kalamansiGroup.classList.toggle("is-active", !isOregano);
-                oreganoGroup.classList.toggle("is-active", isOregano);
-
-                const activeGroup = isOregano ? oreganoGroup : kalamansiGroup;
-                const animatedEls = activeGroup.querySelectorAll(".grow-stem, .grow-branch-1, .grow-branch-2, .grow-branch-3, .sprout-leaf");
-                animatedEls.forEach((el) => {
-                    el.style.animation = "none";
-                    void el.offsetWidth;
-                    el.style.animation = "";
                 });
             }
 
-            function syncEnvironmentScene(envValue = null) {
-                const isOutdoor = envValue
-                    ? String(envValue).toLowerCase() === "outdoor"
-                    : Boolean(outdoorBtn?.classList.contains("active"));
-                document.body.classList.toggle("env-outdoor", isOutdoor);
-                document.body.classList.toggle("env-indoor", !isOutdoor);
-                indoorScene?.classList.toggle("is-active", !isOutdoor);
-                outdoorScene?.classList.toggle("is-active", isOutdoor);
+            function applyTrackToPlayer(forcePlay = false) {
+                const track = resolveAmbientTrack();
+                const nextId = track.id;
+                const videoChanged = nextId !== activeVideoId;
+                activeVideoId = nextId;
+
+                if (forcePlay) {
+                    desiredPlaying = true;
+                    userAudioUnlocked = true;
+                }
+
+                if (!ytPlayer || typeof ytPlayer.loadVideoById !== "function") {
+                    syncAudioButtonsUI(false);
+                    return;
+                }
+
+                try {
+                    if (videoChanged) {
+                        if (desiredPlaying && userAudioUnlocked) {
+                            ytPlayer.unMute();
+                            ytPlayer.setVolume(70);
+                            ytPlayer.loadVideoById({ videoId: nextId, startSeconds: 0 });
+                            ytPlayer.playVideo();
+                        } else {
+                            ytPlayer.cueVideoById({ videoId: nextId, startSeconds: 0 });
+                        }
+                    } else if (desiredPlaying && userAudioUnlocked) {
+                        ytPlayer.unMute();
+                        ytPlayer.setVolume(70);
+                        ytPlayer.playVideo();
+                    }
+                } catch (_) {}
+
+                syncAudioButtonsUI(desiredPlaying && userAudioUnlocked);
             }
 
+            window.onYouTubeIframeAPIReady = function () {
+                ytApiReady = true;
+                const initialTrack = resolveAmbientTrack();
+                activeVideoId = initialTrack.id;
+
+                ytPlayer = new YT.Player("ytAudioHost", {
+                    height: "1",
+                    width: "1",
+                    videoId: initialTrack.id,
+                    playerVars: {
+                        autoplay: 1,
+                        loop: 1,
+                        playlist: initialTrack.id,
+                        controls: 0,
+                        disablekb: 1,
+                        fs: 0,
+                        modestbranding: 1,
+                        rel: 0
+                    },
+                    events: {
+                        onReady: function (event) {
+                            try {
+                                event.target.setVolume(70);
+                                if (userAudioUnlocked && desiredPlaying) {
+                                    event.target.unMute();
+                                    event.target.playVideo();
+                                    syncAudioButtonsUI(true);
+                                } else {
+                                    event.target.mute();
+                                    event.target.playVideo();
+                                    syncAudioButtonsUI(false);
+                                }
+                            } catch (_) {}
+                        },
+                        onStateChange: function (event) {
+                            if (event.data === YT.PlayerState.PLAYING) {
+                                const muted = typeof ytPlayer.isMuted === "function" ? ytPlayer.isMuted() : true;
+                                syncAudioButtonsUI(!muted);
+                            } else if (event.data === YT.PlayerState.ENDED) {
+                                try {
+                                    ytPlayer.seekTo(0);
+                                    ytPlayer.playVideo();
+                                } catch (_) {}
+                            }
+                        }
+                    }
+                });
+            };
+
+            (function loadYouTubeApi() {
+                const tag = document.createElement("script");
+                tag.src = "https://www.youtube.com/iframe_api";
+                document.head.appendChild(tag);
+            })();
+
+            function unlockOrToggleAmbientAudio(forceUnmuteOnly = false) {
+                userAudioUnlocked = true;
+                if (!forceUnmuteOnly && ytPlayer && typeof ytPlayer.getPlayerState === "function") {
+                    const state = ytPlayer.getPlayerState();
+                    const isMuted = typeof ytPlayer.isMuted === "function" ? ytPlayer.isMuted() : false;
+                    if (state === YT.PlayerState.PLAYING && !isMuted) {
+                        desiredPlaying = false;
+                        try { ytPlayer.pauseVideo(); } catch (_) {}
+                        syncAudioButtonsUI(false);
+                        return;
+                    }
+                }
+
+                desiredPlaying = true;
+                applyTrackToPlayer(true);
+                syncAudioButtonsUI(true);
+            }
+
+            document.querySelectorAll(".audio-pill-btn").forEach((btn) => {
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    unlockOrToggleAmbientAudio(false);
+                });
+            });
+
+            // Unlock playback seamlessly on first user click/tap anywhere
+            document.addEventListener("pointerdown", () => {
+                if (!userAudioUnlocked) {
+                    unlockOrToggleAmbientAudio(true);
+                }
+            }, { passive: true });
+
+            // ===================== SCENERY & PLANT VISUAL SYNC =====================
             function applySceneryMode(mode) {
                 const chosen = ["daylight", "sunset", "night", "rain"].includes(mode) ? mode : "daylight";
+                currentScenery = chosen;
+                try { localStorage.setItem("configuredScenery", chosen); } catch (_) {}
+
                 document.body.classList.remove("mood-daylight", "mood-sunset", "mood-night", "mood-rain");
                 document.body.classList.add(`mood-${chosen}`);
 
-                sceneryBtns.forEach((btn) => {
+                document.querySelectorAll(".scenery-opt-btn").forEach((btn) => {
                     btn.classList.toggle("active", btn.getAttribute("data-scenery") === chosen);
                 });
 
-                indoorFxRain?.classList.toggle("is-active", chosen === "rain");
-                outdoorFxRain?.classList.toggle("is-active", chosen === "rain");
-                try {
-                    localStorage.setItem("configuredScenery", chosen);
-                } catch (_) {}
+                const isRain = chosen === "rain";
+                document.querySelector("#indoorFxRain")?.classList.toggle("is-active", isRain);
+                document.querySelector("#outdoorFxRain")?.classList.toggle("is-active", isRain);
+                document.querySelector("#p2RainGroup")?.classList.toggle("is-active", isRain);
+
+                applyTrackToPlayer(false);
             }
 
-            sceneryBtns.forEach((btn) => {
+            function syncEnvironmentScene(envValue) {
+                const chosenEnv = String(envValue).toLowerCase() === "outdoor" ? "Outdoor" : "Indoor";
+                currentEnvironment = chosenEnv;
+                try { localStorage.setItem("configuredEnvironment", chosenEnv); } catch (_) {}
+
+                const isOutdoor = chosenEnv === "Outdoor";
+                document.body.classList.toggle("env-outdoor", isOutdoor);
+                document.body.classList.toggle("env-indoor", !isOutdoor);
+                document.querySelector("#indoorScene")?.classList.toggle("is-active", !isOutdoor);
+                document.querySelector("#outdoorScene")?.classList.toggle("is-active", isOutdoor);
+
+                document.querySelectorAll(".environment-buttons button").forEach((btn) => {
+                    const match = btn.id === chosenEnv.toLowerCase();
+                    btn.classList.toggle("active", match);
+                    btn.setAttribute("aria-pressed", String(match));
+                });
+
+                applyTrackToPlayer(false);
+            }
+
+            function syncPlantSpeciesVisual(plantValue, animateGrow = true) {
+                currentPlant = plantValue === "Oregano" ? "Oregano" : "Kalamansi";
+                try { localStorage.setItem("configuredPlant", currentPlant); } catch (_) {}
+
+                const isOregano = currentPlant.toLowerCase() === "oregano";
+                const kalamansiGroup = document.querySelector("#speciesKalamansi");
+                const oreganoGroup = document.querySelector("#speciesOregano");
+
+                kalamansiGroup?.classList.toggle("is-active", !isOregano);
+                oreganoGroup?.classList.toggle("is-active", isOregano);
+
+                document.querySelector("#p2PlantKalamansi")?.classList.toggle("is-active", !isOregano);
+                document.querySelector("#p2PlantOregano")?.classList.toggle("is-active", isOregano);
+
+                if (animateGrow) {
+                    const activeGroup = isOregano ? oreganoGroup : kalamansiGroup;
+                    activeGroup?.querySelectorAll(".grow-stem, .grow-branch-1, .grow-branch-2, .grow-branch-3, .sprout-leaf")
+                        .forEach((el) => {
+                            el.style.animation = "none";
+                            void el.offsetWidth;
+                            el.style.animation = "";
+                        });
+                }
+            }
+
+            document.querySelectorAll(".scenery-opt-btn").forEach((btn) => {
                 btn.addEventListener("click", () => {
                     applySceneryMode(btn.getAttribute("data-scenery"));
                 });
             });
 
-            plantSelect?.addEventListener("change", replayGrowth);
-            indoorBtn?.addEventListener("click", () => {
-                try {
-                    localStorage.setItem("configuredEnvironment", "Indoor");
-                } catch (_) {}
-                syncEnvironmentScene("Indoor");
-            });
-            outdoorBtn?.addEventListener("click", () => {
-                try {
-                    localStorage.setItem("configuredEnvironment", "Outdoor");
-                } catch (_) {}
-                syncEnvironmentScene("Outdoor");
+            document.querySelectorAll(".environment-buttons button").forEach((button) => {
+                button.addEventListener("click", () => {
+                    const envName = button.textContent.trim() || "Indoor";
+                    syncEnvironmentScene(envName);
+                });
             });
 
-            let savedScenery = "daylight";
-            let savedEnv = null;
-            try {
-                savedScenery = localStorage.getItem("configuredScenery") || "daylight";
-                savedEnv = localStorage.getItem("configuredEnvironment");
-            } catch (_) {}
+            const plantSelect = document.querySelector("#plantType");
+            plantSelect?.addEventListener("change", () => {
+                syncPlantSpeciesVisual(plantSelect.value, true);
+            });
 
-            replayGrowth();
-            syncEnvironmentScene(savedEnv);
-            applySceneryMode(savedScenery);
-        });
+            document.querySelector("#startMonitoring")?.addEventListener("click", async (e) => {
+                e.preventDefault();
+                const plantToSave = plantSelect ? plantSelect.value : currentPlant;
+                const envToSave = currentEnvironment;
+                syncPlantSpeciesVisual(plantToSave, false);
+                syncEnvironmentScene(envToSave);
+
+                try {
+                    await fetch(`${DB_URL}/irrigation.json`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            plantType: plantToSave,
+                            environment: envToSave
+                        })
+                    });
+                } catch (_) {}
+
+                window.location.hash = "#monitoring";
+                applyRouteView("monitoring");
+            });
+
+            document.querySelector("#backToConfigLink")?.addEventListener("click", (e) => {
+                e.preventDefault();
+                window.location.hash = "#configure";
+                applyRouteView("config");
+            });
+
+            // ===================== PAGE 2 TELEMETRY & IRRIGATION LOGIC =====================
+            function updateScrollRootsProgress() {
+                if (!document.body.classList.contains("view-monitoring")) return;
+                const scrollTop = window.scrollY || window.pageYOffset || 0;
+                const docHeight = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+                const progress = Math.min(1, Math.max(0, scrollTop / docHeight));
+                document.documentElement.style.setProperty("--scroll-progress", progress.toFixed(4));
+            }
+
+            window.addEventListener("scroll", updateScrollRootsProgress, { passive: true });
+            window.addEventListener("resize", updateScrollRootsProgress, { passive: true });
+
+            function readNumber(data, ...keys) {
+                for (const key of keys) {
+                    if (data && data[key] !== undefined && data[key] !== null) {
+                        const num = Number(data[key]);
+                        if (Number.isFinite(num)) return num;
+                    }
+                }
+                return null;
+            }
+
+            function setReading(id, value, fractionDigits = 1) {
+                const element = document.querySelector(id);
+                if (element) element.textContent = value === null ? "--" : value.toFixed(fractionDigits);
+            }
+
+            function setCardBadge(cardSelector, text) {
+                const statEl = document.querySelector(`${cardSelector} .sensor-stats .stat`);
+                if (statEl) statEl.textContent = text;
+            }
+
+            function setDeviceState(id, state) {
+                const element = document.querySelector(id);
+                if (!element) return;
+                element.dataset.state = state;
+                element.textContent = state === "on" ? "Online" : state === "off" ? "Offline" : "Unknown";
+            }
+
+            function formatTime(time) {
+                if (!time || typeof time !== "string" || !time.includes(":")) return "Not scheduled";
+                const [hours, minutes] = time.split(":").map(Number);
+                if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return "Not scheduled";
+                const date = new Date();
+                date.setHours(hours, minutes, 0, 0);
+                return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+            }
+
+            function formatDateYYYYMMDDToDisplay(dateStr, timeStr) {
+                if (!dateStr || !dateStr.includes("-")) return formatTime(timeStr);
+                const [yyyy, mm, dd] = dateStr.split("-");
+                const yy = yyyy.slice(-2);
+                return `${mm}/${dd}/${yy} · ${formatTime(timeStr)}`;
+            }
+
+            function formatDurationHMS(totalSeconds) {
+                const safe = Math.max(0, Math.floor(totalSeconds));
+                const hrs = String(Math.floor(safe / 3600)).padStart(2, "0");
+                const mins = String(Math.floor((safe % 3600) / 60)).padStart(2, "0");
+                const secs = String(safe % 60).padStart(2, "0");
+                return `${hrs}:${mins}:${secs}`;
+            }
+
+            function computeTargetDurationMsFromVolumeMl(volumeMl) {
+                if (!Number.isFinite(volumeMl) || volumeMl <= 0) return 0;
+                const msNeeded = Math.round((volumeMl / DRIPPER_ML_PER_SEC) * 1000);
+                return Math.max(2000, msNeeded);
+            }
+
+            function estimateActiveSecondsFromLiters(liters) {
+                const ml = liters * 1000;
+                return Math.max(2, Math.round(computeTargetDurationMsFromVolumeMl(ml) / 1000));
+            }
+
+            function getPlantConfig() {
+                return {
+                    plant: localStorage.getItem("configuredPlant") || currentPlant || "Kalamansi",
+                    environment: localStorage.getItem("configuredEnvironment") || currentEnvironment || "Indoor"
+                };
+            }
+
+            function getRecordedPlantOptimal(plant, environment, soilPct = null) {
+                const plantObj = PLANT_PROFILES[plant] || PLANT_PROFILES.Kalamansi;
+                const base = plantObj[environment] || plantObj.Indoor;
+                let liters = base.optimalLiters;
+
+                if (typeof soilPct === "number" && Number.isFinite(soilPct)) {
+                    if (soilPct < 35) liters *= 1.15;
+                    else if (soilPct > 70) liters *= 0.75;
+                }
+
+                liters = Number(Math.min(2.0, Math.max(0.10, liters)).toFixed(2));
+                const targetVolumeMl = Math.round(liters * 1000);
+                const targetDurationMs = computeTargetDurationMsFromVolumeMl(targetVolumeMl);
+                const estActiveSeconds = Math.max(2, Math.round(targetDurationMs / 1000));
+
+                return {
+                    optimalTime: base.optimalTime,
+                    intervalHours: base.intervalHours,
+                    optimalLiters: liters,
+                    targetVolumeMl,
+                    targetDurationMs,
+                    estActiveSeconds
+                };
+            }
+
+            function getNextOptimalDateYYYYMMDD(optimalTimeHHMM) {
+                const now = new Date();
+                const [h, m] = (optimalTimeHHMM || "06:00").split(":").map(Number);
+                const candidate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h || 6, m || 0, 0);
+                if (candidate.getTime() <= now.getTime()) {
+                    candidate.setDate(candidate.getDate() + 1);
+                }
+                const yyyy = candidate.getFullYear();
+                const mm = String(candidate.getMonth() + 1).padStart(2, "0");
+                const dd = String(candidate.getDate()).padStart(2, "0");
+                return `${yyyy}-${mm}-${dd}`;
+            }
+
+            function isScheduleExpired(irrigation) {
+                if (!irrigation || !irrigation.optimalTime || !irrigation.optimalTime.includes(":")) {
+                    return false;
+                }
+                const dbStatus = String(irrigation.status || "").toUpperCase();
+                if (dbStatus === "RUNNING") return false;
+
+                const now = new Date();
+                if (irrigation.optimalDate && irrigation.optimalDate.includes("-")) {
+                    const [y, mo, d] = irrigation.optimalDate.split("-").map(Number);
+                    const [h, mi] = irrigation.optimalTime.split(":").map(Number);
+                    const targetMs = new Date(y, mo - 1, d, h, mi, 0).getTime();
+                    return (now.getTime() - targetMs) >= 2 * 60000;
+                }
+
+                const [schedH, schedM] = irrigation.optimalTime.split(":").map(Number);
+                const nowTotalMin = now.getHours() * 60 + now.getMinutes();
+                const schedTotalMin = schedH * 60 + schedM;
+                let diff = nowTotalMin - schedTotalMin;
+                if (diff < -720) diff += 1440;
+                return diff >= 2;
+            }
+
+            function isIrrigationBusy(irrigation) {
+                const dbStatus = String((irrigation && irrigation.status) || "IDLE").toUpperCase();
+                const mode = String((irrigation && irrigation.mode) || "SMART").toUpperCase();
+                if (Boolean(irrigation && irrigation.manualPump) || mode === "MANUAL") return false;
+                if (dbStatus === "RUNNING") return true;
+
+                const armed = Boolean(irrigation && irrigation.armed);
+                if ((armed || dbStatus === "SCHEDULED") && !isScheduleExpired(irrigation)) {
+                    return true;
+                }
+                return false;
+            }
+
+            function updateManualTimerUI() {
+                const btn = document.querySelector("#manualIrrigateButton");
+                const labelEl = document.querySelector("#manualButtonLabel");
+                const pillEl = document.querySelector("#manualButtonTimer");
+                const fullTimerEl = document.querySelector("#manualElapsedFull");
+                const stateEl = document.querySelector("#manualPumpStateText");
+                const indEl = document.querySelector("#manualModeIndication");
+                const flowEl = document.querySelector("#manualLiveFlowText");
+
+                if (flowEl) {
+                    flowEl.textContent = `${DRIPPER_L_PER_MIN.toFixed(3)} L/min · ${DRIPPER_ML_PER_MIN.toFixed(1)} mL/min`;
+                }
+
+                if (manualOpenStartedAtMs !== null) {
+                    const elapsedSec = (Date.now() - manualOpenStartedAtMs) / 1000;
+                    const formatted = formatDurationHMS(elapsedSec);
+                    const estMl = (elapsedSec * DRIPPER_ML_PER_SEC).toFixed(1);
+                    if (btn) btn.classList.add("is-open");
+                    if (labelEl) labelEl.textContent = "Close Pump";
+                    if (pillEl) pillEl.textContent = formatted;
+                    if (fullTimerEl) fullTimerEl.textContent = formatted;
+                    if (stateEl) stateEl.textContent = "OPEN (WATERING)";
+                    if (indEl) indEl.textContent = `Open for ${formatted} (~${estMl} mL) — tap again to close.`;
+                } else {
+                    if (btn) btn.classList.remove("is-open");
+                    if (labelEl) labelEl.textContent = "Open Pump";
+                    if (pillEl) pillEl.textContent = "00:00:00";
+                    if (fullTimerEl) fullTimerEl.textContent = "00:00:00";
+                    if (stateEl) stateEl.textContent = "CLOSED";
+                    if (indEl) indEl.textContent = "Ready for instant on-the-spot pump control.";
+                }
+            }
+
+            window.setInterval(updateManualTimerUI, 500);
+
+            function setDisconnectedState() {
+                setReading("#temperatureValue", null);
+                setReading("#humidityValue", null);
+                setReading("#waterFlowValue", DRIPPER_L_PER_MIN, 3);
+                setReading("#waterLevelValue", null);
+                setReading("#batteryVoltageValue", null);
+                setReading("#solarVoltageValue", null);
+
+                setCardBadge(".temperature-card", "Waiting for sensor");
+                setCardBadge(".humidity-card", "Waiting for sensor");
+                setCardBadge(".water-card:not(.rain-card)", "Waiting for sensor");
+
+                const soilEl = document.querySelector("#soilMoistureReading");
+                const soilStat = document.querySelector("#soilMoistureStatus");
+                if (soilEl) soilEl.textContent = "No data";
+                if (soilStat) soilStat.textContent = "Waiting for sensor";
+
+                const rainEl = document.querySelector("#rainReading");
+                const rainStat = document.querySelector("#rainStatus");
+                if (rainEl) rainEl.textContent = "No data";
+                if (rainStat) rainStat.textContent = "Waiting for sensor";
+
+                setDeviceState("#solarStatus", "unknown");
+                setDeviceState("#batteryStatus", "unknown");
+                setDeviceState("#pumpStatus", "unknown");
+            }
+
+            async function updateDashboardFromFirebase() {
+                const telemetryStatus = document.querySelector("#telemetryStatus");
+                if (!telemetryStatus || !document.body.classList.contains("view-monitoring")) return;
+
+                const controller = new AbortController();
+                const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+                try {
+                    const [sensorRes, irrigationRes] = await Promise.all([
+                        fetch(`${DB_URL}/sensors.json`, { cache: "no-store", signal: controller.signal }),
+                        fetch(`${DB_URL}/irrigation.json`, { cache: "no-store", signal: controller.signal })
+                    ]);
+
+                    if (!sensorRes.ok || !irrigationRes.ok) {
+                        throw new Error(`Firebase HTTP error: ${sensorRes.status} / ${irrigationRes.status}`);
+                    }
+
+                    const sensors = (await sensorRes.json()) || {};
+                    const irrigation = (await irrigationRes.json()) || {};
+
+                    const dbStatus = String(irrigation.status || "IDLE").toUpperCase();
+                    if ((irrigation.armed || dbStatus === "SCHEDULED") && isScheduleExpired(irrigation)) {
+                        const expKey = irrigation.triggerId || irrigation.optimalTime || "expired";
+                        if (lastClearedExpiredId !== expKey) {
+                            lastClearedExpiredId = expKey;
+                            fetch(`${DB_URL}/irrigation.json`, {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ armed: false, status: "EXPIRED" })
+                            }).catch(() => {});
+                        }
+                        irrigation.armed = false;
+                        irrigation.status = "EXPIRED";
+                    }
+
+                    const tempVal = readNumber(sensors, "temperature", "temperatureC");
+                    const humVal = readNumber(sensors, "humidity", "humidityPercent");
+                    const waterLvlVal = readNumber(sensors, "waterLevelPct", "waterLevelPercent");
+                    const waterLvlCm = readNumber(sensors, "waterLevelCm");
+
+                    setReading("#temperatureValue", tempVal, 1);
+                    setReading("#humidityValue", humVal, 1);
+                    setReading("#waterFlowValue", DRIPPER_L_PER_MIN, 3);
+                    setReading("#waterLevelValue", waterLvlVal, 0);
+
+                    setCardBadge(
+                        ".temperature-card",
+                        tempVal !== null ? (tempVal >= 35 ? "Warm ambient" : "Live sensor") : "Waiting for sensor"
+                    );
+                    setCardBadge(".humidity-card", humVal !== null ? "Live sensor" : "Waiting for sensor");
+                    setCardBadge(
+                        ".water-card:not(.rain-card)",
+                        waterLvlVal !== null
+                            ? (waterLvlCm !== null ? `Tank depth: ${waterLvlCm.toFixed(1)} cm` : "Live tank sensor")
+                            : "Waiting for sensor"
+                    );
+
+                    const dripDetailEl = document.querySelector("#dripperRateDetail");
+                    if (dripDetailEl) {
+                        dripDetailEl.textContent = `~${DRIPPER_ML_PER_MIN.toFixed(1)} mL/min · ~${DRIPPER_ML_PER_SEC.toFixed(2)} mL/s (1 dripper)`;
+                    }
+
+                    const batV = readNumber(sensors, "batteryVoltage");
+                    const solV = readNumber(sensors, "solarVoltage");
+                    setReading("#batteryVoltageValue", batV, 2);
+                    setReading("#solarVoltageValue", solV, 2);
+
+                    const soilPct = readNumber(sensors, "soilMoisturePct");
+                    latestSoilMoisturePct = soilPct;
+                    const soilEl = document.querySelector("#soilMoistureReading");
+                    const soilStat = document.querySelector("#soilMoistureStatus");
+                    if (soilEl && soilStat) {
+                        if (soilPct !== null) {
+                            soilEl.textContent = `${soilPct}%`;
+                            soilStat.textContent = soilPct >= 40 ? "Moist / Optimal" : "Dry · Needs water";
+                        } else {
+                            soilEl.textContent = "No data";
+                            soilStat.textContent = "Waiting for sensor";
+                        }
+                    }
+
+                    const rainRawText = String(sensors.rainStatus || "").trim();
+                    const rainEl = document.querySelector("#rainReading");
+                    const rainStat = document.querySelector("#rainStatus");
+                    if (rainEl && rainStat) {
+                        if (rainRawText) {
+                            const isRaining = rainRawText.toLowerCase() === "raining";
+                            rainEl.textContent = isRaining ? "Raining" : "Dry";
+                            rainStat.textContent = isRaining ? "Rain detected" : "No rain";
+                        } else {
+                            rainEl.textContent = "No data";
+                            rainStat.textContent = "Waiting for sensor";
+                        }
+                    }
+
+                    setDeviceState("#batteryStatus", batV !== null && batV > 9.0 ? "on" : "off");
+                    setDeviceState("#solarStatus", solV !== null && solV > 5.0 ? "on" : "off");
+                    const isPumpRunning =
+                        String(irrigation.status || "").toUpperCase() === "RUNNING" || Boolean(irrigation.manualPump);
+                    setDeviceState("#pumpStatus", isPumpRunning ? "on" : "off");
+
+                    if (irrigation.manualPump) {
+                        if (manualOpenStartedAtMs === null) {
+                            const startNum = Number(irrigation.manualStartedAt);
+                            const parsedStart = Number.isFinite(startNum) && startNum > 0
+                                ? startNum
+                                : (irrigation.manualStartedAt ? Date.parse(irrigation.manualStartedAt) : NaN);
+                            manualOpenStartedAtMs = Number.isFinite(parsedStart) ? parsedStart : Date.now();
+                        }
+                    } else if (manualOpenStartedAtMs !== null) {
+                        manualOpenStartedAtMs = null;
+                    }
+                    updateManualTimerUI();
+
+                    renderIrrigationFromFirebase(irrigation);
+                    updateScrollRootsProgress();
+
+                    telemetryStatus.textContent = `Live data from Firebase · updated ${new Date().toLocaleTimeString()}`;
+                } catch (_) {
+                    setDisconnectedState();
+                    telemetryStatus.textContent = "Cannot connect to Firebase. Check internet connection.";
+                } finally {
+                    window.clearTimeout(timeoutId);
+                }
+            }
+
+            function renderIrrigationFromFirebase(irrigation) {
+                const localCfg = getPlantConfig();
+                const activePlant = irrigation.plantType || localCfg.plant;
+                const activeEnv = irrigation.environment || localCfg.environment;
+                syncPlantSpeciesVisual(activePlant, false);
+                syncEnvironmentScene(activeEnv);
+
+                const profile = getRecordedPlantOptimal(activePlant, activeEnv, latestSoilMoisturePct);
+
+                const title = document.querySelector("#activePlantTitle");
+                const configuredText = document.querySelector("#configuredPlantText");
+                const historyName = document.querySelector("#historyPlantName");
+                const statusEl = document.querySelector("#plantStatus");
+                const nextSchedule = document.querySelector("#nextSchedule");
+                const lowerOptimalLiters = document.querySelector("#lowerOptimalLiters");
+                const scheduleSheet = document.querySelector("#scheduleSheet");
+                const scheduledTime = document.querySelector("#scheduledTime");
+                const scheduleStatus = document.querySelector("#scheduleStatus");
+                const historyList = document.querySelector("#irrigationHistory");
+                const irrigateBtn = document.querySelector("#smartIrrigateButton");
+                const customSchedBtn = document.querySelector("#scheduledIrrigateButton");
+
+                const smartTimeEl = document.querySelector("#smartOptimalTimeDisplay");
+                const smartLitersEl = document.querySelector("#smartOptimalLitersDisplay");
+                const smartIndEl = document.querySelector("#smartModeIndication");
+
+                if (smartTimeEl) smartTimeEl.textContent = formatTime(profile.optimalTime);
+                if (smartLitersEl) {
+                    smartLitersEl.textContent = `${profile.optimalLiters.toFixed(2)} L (${profile.targetVolumeMl} mL)`;
+                }
+                if (smartIndEl) {
+                    smartIndEl.textContent =
+                        `Optimal for ${activePlant} (${activeEnv}) · ~${profile.estActiveSeconds}s active pump time (pulsed 90s run / 120s rest).`;
+                }
+
+                if (title) title.textContent = `${activePlant} Dashboard`;
+                if (configuredText) configuredText.textContent = `${activePlant} · ${activeEnv}`;
+                if (historyName) historyName.textContent = `${activePlant} Status & History`;
+                if (lowerOptimalLiters) {
+                    lowerOptimalLiters.textContent = `${profile.optimalLiters.toFixed(2)} L (${profile.targetVolumeMl} mL)`;
+                }
+
+                const dbStatus = String(irrigation.status || "IDLE").toUpperCase();
+                const mode = String(irrigation.mode || "SMART").toUpperCase();
+                const optTime = irrigation.optimalTime || profile.optimalTime;
+                const busy = isIrrigationBusy(irrigation);
+
+                if (irrigateBtn) {
+                    irrigateBtn.disabled = busy || Boolean(irrigation.manualPump);
+                    if (dbStatus === "RUNNING" && mode !== "MANUAL") {
+                        irrigateBtn.textContent = "Operating...";
+                    } else if (busy && mode !== "CUSTOM_SCHEDULE") {
+                        irrigateBtn.textContent = "Smart Scheduled";
+                    } else {
+                        irrigateBtn.textContent = "Smart Irrigate";
+                    }
+                }
+
+                if (customSchedBtn) {
+                    customSchedBtn.disabled = dbStatus === "RUNNING" || Boolean(irrigation.manualPump);
+                }
+
+                const customDtEl = document.querySelector("#customScheduleDateTimeDisplay");
+                const customLitersEl = document.querySelector("#customScheduleLitersDisplay");
+                const customBadgeEl = document.querySelector("#customScheduleStatusBadge");
+                const customIndEl = document.querySelector("#customScheduleIndication");
+
+                if (mode === "CUSTOM_SCHEDULE" && (busy || dbStatus === "COMPLETED")) {
+                    const customL = readNumber(irrigation, "targetLiters") ?? profile.optimalLiters;
+                    if (customDtEl) customDtEl.textContent = formatDateYYYYMMDDToDisplay(irrigation.optimalDate, irrigation.optimalTime);
+                    if (customLitersEl) customLitersEl.textContent = `${customL.toFixed(2)} L (${Math.round(customL * 1000)} mL)`;
+                    if (customBadgeEl) customBadgeEl.textContent = dbStatus;
+                    if (customIndEl) {
+                        customIndEl.textContent = busy
+                            ? `Scheduled to deliver ${customL.toFixed(2)} L on ${irrigation.optimalDate} at ${formatTime(irrigation.optimalTime)}.`
+                            : `Last custom schedule (${customL.toFixed(2)} L) completed.`;
+                    }
+                } else {
+                    if (customDtEl) customDtEl.textContent = "Not set";
+                    if (customLitersEl) customLitersEl.textContent = `${profile.optimalLiters.toFixed(2)} L`;
+                    if (customBadgeEl) customBadgeEl.textContent = "READY";
+                    if (customIndEl) customIndEl.textContent = "Set MM / DD / HR / MIN / YY and water volume in Liters (L).";
+                }
+
+                if (statusEl) {
+                    if (irrigation.manualPump) statusEl.textContent = "Manual irrigation active (pump open)";
+                    else if (dbStatus === "RUNNING") statusEl.textContent = "Pump currently watering (pulsed mode)...";
+                    else if (busy) statusEl.textContent = `Irrigation scheduled (${mode === "CUSTOM_SCHEDULE" ? "Custom" : "Smart"})`;
+                    else if (dbStatus === "COMPLETED") statusEl.textContent = `Completed (${irrigation.lastWateredAt || "Recent"})`;
+                    else if (dbStatus === "SKIPPED_RAIN") statusEl.textContent = "Full stop: Raining during trigger (records active)";
+                    else if (dbStatus === "SKIPPED_MOIST") statusEl.textContent = "Skipped: Soil already moist for this plant";
+                    else if (dbStatus === "EXPIRED") statusEl.textContent = "Previous schedule expired · Ready";
+                    else statusEl.textContent = "Irrigation not scheduled";
+                }
+
+                if (nextSchedule) {
+                    nextSchedule.textContent = busy
+                        ? formatDateYYYYMMDDToDisplay(irrigation.optimalDate, optTime)
+                        : formatTime(profile.optimalTime);
+                }
+
+                if (scheduleSheet) {
+                    scheduleSheet.hidden = !busy;
+                    if (busy) {
+                        const activeLiters = readNumber(irrigation, "targetLiters") ?? profile.optimalLiters;
+                        if (scheduledTime) {
+                            scheduledTime.textContent = `${formatDateYYYYMMDDToDisplay(irrigation.optimalDate, optTime)} (${activeLiters.toFixed(2)} L)`;
+                        }
+                        if (scheduleStatus) {
+                            scheduleStatus.textContent = dbStatus === "RUNNING"
+                                ? "Pump is active right now"
+                                : "Automatic pump schedule active";
+                        }
+                    }
+                }
+
+                if (historyList) {
+                    historyList.replaceChildren();
+                    const historyObj = irrigation.history;
+                    if (!historyObj || typeof historyObj !== "object") {
+                        const item = document.createElement("li");
+                        item.textContent = "No watering sessions recorded.";
+                        historyList.appendChild(item);
+                    } else {
+                        const entries = Object.values(historyObj).reverse();
+                        entries.forEach((entry) => {
+                            const item = document.createElement("li");
+                            const stamp = entry.timestampText || "Unknown time";
+                            const pName = entry.plantType || activePlant;
+                            const envName = entry.environment || activeEnv;
+                            const ml = readNumber(entry, "dispensedMl");
+                            const volText = ml !== null ? ` · ${(ml / 1000).toFixed(2)} L (${ml.toFixed(0)} mL)` : "";
+                            const noteText = entry.note ? ` [${entry.note}]` : "";
+                            item.textContent = `${stamp} — ${pName} (${envName})${volText}${noteText}`;
+                            historyList.appendChild(item);
+                        });
+                    }
+                }
+            }
+
+            // Smart Irrigate Dialog
+            const irrigationDialog = document.querySelector("#irrigationDialog");
+            const smartIrrigateButton = document.querySelector("#smartIrrigateButton");
+            const cancelIrrigation = document.querySelector("#cancelIrrigation");
+            const operateIrrigation = document.querySelector("#operateIrrigation");
+
+            if (smartIrrigateButton && irrigationDialog) {
+                smartIrrigateButton.addEventListener("click", () => {
+                    if (smartIrrigateButton.disabled) return;
+                    const { plant, environment } = getPlantConfig();
+                    const profile = getRecordedPlantOptimal(plant, environment, latestSoilMoisturePct);
+                    const targetDate = getNextOptimalDateYYYYMMDD(profile.optimalTime);
+
+                    const dialogPlantEl = document.querySelector("#dialogPlantName");
+                    const dialogScheduleEl = document.querySelector("#dialogScheduleText");
+
+                    if (dialogPlantEl) dialogPlantEl.textContent = `Smart Irrigate: ${plant} (${environment})`;
+                    if (dialogScheduleEl) {
+                        dialogScheduleEl.textContent =
+                            `Scheduled at ${formatDateYYYYMMDDToDisplay(targetDate, profile.optimalTime)} for ${profile.optimalLiters.toFixed(2)} L (${profile.targetVolumeMl} mL, ~${profile.estActiveSeconds}s active run at ${DRIPPER_ML_PER_MIN.toFixed(1)} mL/min).`;
+                    }
+
+                    if (typeof irrigationDialog.showModal === "function") irrigationDialog.showModal();
+                    else irrigationDialog.setAttribute("open", "");
+                });
+
+                cancelIrrigation?.addEventListener("click", () => {
+                    if (typeof irrigationDialog.close === "function") irrigationDialog.close();
+                    else irrigationDialog.removeAttribute("open");
+                });
+
+                operateIrrigation?.addEventListener("click", async () => {
+                    const { plant, environment } = getPlantConfig();
+                    const profile = getRecordedPlantOptimal(plant, environment, latestSoilMoisturePct);
+                    const targetDate = getNextOptimalDateYYYYMMDD(profile.optimalTime);
+                    const triggerId = `SMART_${plant}_${targetDate}_${profile.optimalTime}_${Date.now()}`;
+
+                    operateIrrigation.disabled = true;
+                    operateIrrigation.textContent = "Scheduling...";
+
+                    try {
+                        const response = await fetch(`${DB_URL}/irrigation.json`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                armed: true,
+                                manualPump: false,
+                                status: "SCHEDULED",
+                                mode: "SMART",
+                                optimalDate: targetDate,
+                                optimalTime: profile.optimalTime,
+                                targetLiters: profile.optimalLiters,
+                                targetVolumeMl: profile.targetVolumeMl,
+                                targetDurationMs: profile.targetDurationMs,
+                                triggerId: triggerId,
+                                plantType: plant,
+                                environment: environment
+                            })
+                        });
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        await updateDashboardFromFirebase();
+                    } catch (error) {
+                        showNotice("Smart Irrigate Error", `Failed to send Smart Irrigate command: ${error.message}`);
+                    } finally {
+                        operateIrrigation.disabled = false;
+                        operateIrrigation.textContent = "Operate";
+                        if (typeof irrigationDialog.close === "function") irrigationDialog.close();
+                        else irrigationDialog.removeAttribute("open");
+                    }
+                });
+            }
+
+            // Manual Irrigate Button
+            const manualIrrigateButton = document.querySelector("#manualIrrigateButton");
+            if (manualIrrigateButton) {
+                manualIrrigateButton.addEventListener("click", async () => {
+                    const { plant, environment } = getPlantConfig();
+                    const isCurrentlyOpen = manualOpenStartedAtMs !== null;
+                    const willOpen = !isCurrentlyOpen;
+
+                    manualIrrigateButton.disabled = true;
+                    try {
+                        const nowMs = Date.now();
+                        const payload = willOpen
+                            ? {
+                                armed: false,
+                                manualPump: true,
+                                status: "RUNNING",
+                                mode: "MANUAL",
+                                plantType: plant,
+                                environment: environment,
+                                manualStartedAt: nowMs
+                            }
+                            : {
+                                armed: false,
+                                manualPump: false,
+                                status: "IDLE",
+                                mode: "IDLE",
+                                plantType: plant,
+                                environment: environment,
+                                manualStoppedAt: nowMs
+                            };
+
+                        const res = await fetch(`${DB_URL}/irrigation.json`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload)
+                        });
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                        if (willOpen) {
+                            manualOpenStartedAtMs = nowMs;
+                        } else {
+                            const durationSec = manualOpenStartedAtMs
+                                ? Math.max(1, Math.round((nowMs - manualOpenStartedAtMs) / 1000))
+                                : 0;
+                            const estMl = Number((durationSec * DRIPPER_ML_PER_SEC).toFixed(1));
+                            manualOpenStartedAtMs = null;
+
+                            if (durationSec > 0) {
+                                const stamp = new Date().toLocaleString([], {
+                                    year: "numeric",
+                                    month: "2-digit",
+                                    day: "2-digit",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    hour12: false
+                                });
+                                await fetch(`${DB_URL}/irrigation/history.json`, {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        plantType: plant,
+                                        environment: environment,
+                                        timestampText: `${stamp} (Manual ${formatDurationHMS(durationSec)})`,
+                                        dispensedMl: estMl,
+                                        mode: "MANUAL",
+                                        durationSeconds: durationSec
+                                    })
+                                });
+                            }
+                        }
+
+                        updateManualTimerUI();
+                        await updateDashboardFromFirebase();
+                    } catch (err) {
+                        showNotice("Manual Pump Error", `Failed to toggle manual pump: ${err.message}`);
+                    } finally {
+                        manualIrrigateButton.disabled = false;
+                    }
+                });
+            }
+
+            // Custom Schedule Dialog
+            const scheduledIrrigateButton = document.querySelector("#scheduledIrrigateButton");
+            const customScheduleDialog = document.querySelector("#customScheduleDialog");
+            const cancelCustomSchedule = document.querySelector("#cancelCustomSchedule");
+            const customScheduleForm = document.querySelector("#customScheduleForm");
+
+            function refreshCustomModalIndication() {
+                const mm = String(document.querySelector("#schedMM")?.value || "").padStart(2, "0");
+                const dd = String(document.querySelector("#schedDD")?.value || "").padStart(2, "0");
+                const hr = String(document.querySelector("#schedHR")?.value || "").padStart(2, "0");
+                const min = String(document.querySelector("#schedMIN")?.value || "").padStart(2, "0");
+                const yy = String(document.querySelector("#schedYY")?.value || "").padStart(2, "0");
+                const liters = parseFloat(document.querySelector("#schedLiters")?.value || "0");
+
+                const { plant, environment } = getPlantConfig();
+                const rec = getRecordedPlantOptimal(plant, environment, latestSoilMoisturePct);
+                const indBox = document.querySelector("#customModalIndication");
+                if (!indBox) return;
+
+                const validLiters = Number.isFinite(liters) && liters > 0 ? liters : 0;
+                const estActiveSec = estimateActiveSecondsFromLiters(validLiters);
+
+                let msg = `Schedule: ${mm}/${dd}/20${yy} at ${hr}:${min} · ${validLiters.toFixed(2)} L (${Math.round(validLiters * 1000)} mL) · ~${estActiveSec}s active at ${DRIPPER_ML_PER_MIN.toFixed(1)} mL/min. `;
+                if (validLiters > rec.optimalLiters * 1.4) {
+                    msg += `Warning: Above ${plant} optimal (${rec.optimalLiters.toFixed(2)} L).`;
+                } else if (validLiters > 0 && validLiters < rec.optimalLiters * 0.5) {
+                    msg += `Note: Below ${plant} optimal (${rec.optimalLiters.toFixed(2)} L).`;
+                } else {
+                    msg += `Matches ${plant} (${environment}) range.`;
+                }
+                indBox.textContent = msg;
+            }
+
+            if (scheduledIrrigateButton && customScheduleDialog) {
+                scheduledIrrigateButton.addEventListener("click", () => {
+                    const now = new Date(Date.now() + 60000);
+                    const { plant, environment } = getPlantConfig();
+                    const rec = getRecordedPlantOptimal(plant, environment, latestSoilMoisturePct);
+
+                    const mmEl = document.querySelector("#schedMM");
+                    const ddEl = document.querySelector("#schedDD");
+                    const hrEl = document.querySelector("#schedHR");
+                    const minEl = document.querySelector("#schedMIN");
+                    const yyEl = document.querySelector("#schedYY");
+                    const litEl = document.querySelector("#schedLiters");
+
+                    if (mmEl) mmEl.value = String(now.getMonth() + 1).padStart(2, "0");
+                    if (ddEl) ddEl.value = String(now.getDate()).padStart(2, "0");
+                    if (hrEl) hrEl.value = String(now.getHours()).padStart(2, "0");
+                    if (minEl) minEl.value = String(now.getMinutes()).padStart(2, "0");
+                    if (yyEl) yyEl.value = String(now.getFullYear()).slice(-2);
+                    if (litEl) litEl.value = rec.optimalLiters.toFixed(2);
+
+                    const sub = document.querySelector("#customDialogSubtitle");
+                    if (sub) {
+                        sub.textContent = `${plant} (${environment}) — Optimal need: ${rec.optimalLiters.toFixed(2)} L at ${formatTime(rec.optimalTime)}.`;
+                    }
+
+                    refreshCustomModalIndication();
+                    if (typeof customScheduleDialog.showModal === "function") customScheduleDialog.showModal();
+                    else customScheduleDialog.setAttribute("open", "");
+                });
+
+                ["#schedMM", "#schedDD", "#schedHR", "#schedMIN", "#schedYY", "#schedLiters"].forEach((id) => {
+                    document.querySelector(id)?.addEventListener("input", refreshCustomModalIndication);
+                });
+
+                document.querySelectorAll(".liter-preset-btn").forEach((btn) => {
+                    btn.addEventListener("click", () => {
+                        const val = Number(btn.getAttribute("data-liters"));
+                        const input = document.querySelector("#schedLiters");
+                        if (input && Number.isFinite(val)) {
+                            input.value = val.toFixed(2);
+                            refreshCustomModalIndication();
+                        }
+                    });
+                });
+
+                cancelCustomSchedule?.addEventListener("click", () => {
+                    if (typeof customScheduleDialog.close === "function") customScheduleDialog.close();
+                    else customScheduleDialog.removeAttribute("open");
+                });
+
+                customScheduleForm?.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const mmNum = parseInt(document.querySelector("#schedMM")?.value ?? "", 10);
+                    const ddNum = parseInt(document.querySelector("#schedDD")?.value ?? "", 10);
+                    const hrNum = parseInt(document.querySelector("#schedHR")?.value ?? "", 10);
+                    const minNum = parseInt(document.querySelector("#schedMIN")?.value ?? "", 10);
+                    const yyNum = parseInt(document.querySelector("#schedYY")?.value ?? "", 10);
+                    const liters = parseFloat(document.querySelector("#schedLiters")?.value ?? "");
+
+                    if (
+                        mmNum < 1 || mmNum > 12 ||
+                        ddNum < 1 || ddNum > 31 ||
+                        hrNum < 0 || hrNum > 23 ||
+                        minNum < 0 || minNum > 59 ||
+                        yyNum < 0 || yyNum > 99 ||
+                        !Number.isFinite(liters) || liters <= 0
+                    ) {
+                        showNotice("Invalid Schedule", "Please enter valid MM, DD, HR, MIN, YY, and Water Volume (L).");
+                        return;
+                    }
+
+                    const mm = String(mmNum).padStart(2, "0");
+                    const dd = String(ddNum).padStart(2, "0");
+                    const hr = String(hrNum).padStart(2, "0");
+                    const min = String(minNum).padStart(2, "0");
+                    const yyyy = `20${String(yyNum).padStart(2, "0")}`;
+
+                    const optimalDate = `${yyyy}-${mm}-${dd}`;
+                    const optimalTime = `${hr}:${min}`;
+                    const targetVolumeMl = Math.round(liters * 1000);
+                    const targetDurationMs = computeTargetDurationMsFromVolumeMl(targetVolumeMl);
+                    const { plant, environment } = getPlantConfig();
+                    const triggerId = `CUSTOM_${optimalDate}_${optimalTime}_${Date.now()}`;
+
+                    const saveBtn = document.querySelector("#saveCustomSchedule");
+                    if (saveBtn) {
+                        saveBtn.disabled = true;
+                        saveBtn.textContent = "Saving...";
+                    }
+
+                    try {
+                        const response = await fetch(`${DB_URL}/irrigation.json`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                armed: true,
+                                manualPump: false,
+                                status: "SCHEDULED",
+                                mode: "CUSTOM_SCHEDULE",
+                                optimalDate,
+                                optimalTime,
+                                targetLiters: Number(liters.toFixed(2)),
+                                targetVolumeMl,
+                                targetDurationMs,
+                                triggerId,
+                                plantType: plant,
+                                environment
+                            })
+                        });
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                        if (typeof customScheduleDialog.close === "function") customScheduleDialog.close();
+                        else customScheduleDialog.removeAttribute("open");
+                        await updateDashboardFromFirebase();
+                    } catch (err) {
+                        showNotice("Schedule Error", `Failed to save schedule: ${err.message}`);
+                    } finally {
+                        if (saveBtn) {
+                            saveBtn.disabled = false;
+                            saveBtn.textContent = "Set Schedule";
+                        }
+                    }
+                });
+            }
+
+            // ===================== INITIAL BOOT =====================
+            if (plantSelect) {
+                plantSelect.value = currentPlant;
+            }
+            syncPlantSpeciesVisual(currentPlant, false);
+            syncEnvironmentScene(currentEnvironment);
+            applySceneryMode(currentScenery);
+            syncAudioButtonsUI(false);
+            applyRouteView(getActiveRouteView());
+
+            window.setInterval(() => {
+                if (document.body.classList.contains("view-monitoring")) {
+                    updateDashboardFromFirebase();
+                }
+            }, SENSOR_REFRESH_INTERVAL_MS);
+        })();
     </script>
 </body>
 </html>

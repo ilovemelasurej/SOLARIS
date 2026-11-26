@@ -177,9 +177,15 @@ function formatDurationHMS(totalSeconds) {
     return `${hrs}:${mins}:${secs}`;
 }
 
+function computeTargetDurationMsFromVolumeMl(volumeMl) {
+    if (!Number.isFinite(volumeMl) || volumeMl <= 0) return 0;
+    const msNeeded = Math.round((volumeMl / DRIPPER_ML_PER_SEC) * 1000);
+    return Math.max(2000, msNeeded);
+}
+
 function estimateActiveSecondsFromLiters(liters) {
     const ml = liters * 1000;
-    return Math.max(2, Math.round(ml / DRIPPER_ML_PER_SEC));
+    return Math.max(2, Math.round(computeTargetDurationMsFromVolumeMl(ml) / 1000));
 }
 
 function getPlantConfig() {
@@ -200,13 +206,16 @@ function getRecordedPlantOptimal(plant, environment, soilPct = null) {
     }
 
     liters = Number(Math.min(2.0, Math.max(0.10, liters)).toFixed(2));
-    const estActiveSeconds = estimateActiveSecondsFromLiters(liters);
+    const targetVolumeMl = Math.round(liters * 1000);
+    const targetDurationMs = computeTargetDurationMsFromVolumeMl(targetVolumeMl);
+    const estActiveSeconds = Math.max(2, Math.round(targetDurationMs / 1000));
 
     return {
         optimalTime: base.optimalTime,
         intervalHours: base.intervalHours,
         optimalLiters: liters,
-        targetVolumeMl: Math.round(liters * 1000),
+        targetVolumeMl,
+        targetDurationMs,
         estActiveSeconds
     };
 }
@@ -249,6 +258,8 @@ function isScheduleExpired(irrigation) {
 
 function isIrrigationBusy(irrigation) {
     const dbStatus = String((irrigation && irrigation.status) || "IDLE").toUpperCase();
+    const mode = String((irrigation && irrigation.mode) || "SMART").toUpperCase();
+    if (Boolean(irrigation && irrigation.manualPump) || mode === "MANUAL") return false;
     if (dbStatus === "RUNNING") return true;
 
     const armed = Boolean(irrigation && irrigation.armed);
@@ -431,7 +442,10 @@ async function updateDashboardFromFirebase() {
 
         if (irrigation.manualPump) {
             if (manualOpenStartedAtMs === null) {
-                const parsedStart = irrigation.manualStartedAt ? Date.parse(irrigation.manualStartedAt) : NaN;
+                const startNum = Number(irrigation.manualStartedAt);
+                const parsedStart = Number.isFinite(startNum) && startNum > 0
+                    ? startNum
+                    : (irrigation.manualStartedAt ? Date.parse(irrigation.manualStartedAt) : NaN);
                 manualOpenStartedAtMs = Number.isFinite(parsedStart) ? parsedStart : Date.now();
             }
         } else if (manualOpenStartedAtMs !== null) {
@@ -642,7 +656,7 @@ if (smartIrrigateButton && irrigationDialog) {
                     optimalTime: profile.optimalTime,
                     targetLiters: profile.optimalLiters,
                     targetVolumeMl: profile.targetVolumeMl,
-                    targetDurationMs: profile.estActiveSeconds * 1000,
+                    targetDurationMs: profile.targetDurationMs,
                     triggerId: triggerId,
                     plantType: plant,
                     environment: environment
@@ -673,7 +687,7 @@ if (manualIrrigateButton) {
 
         manualIrrigateButton.disabled = true;
         try {
-            const nowIso = new Date().toISOString();
+            const nowMs = Date.now();
             const payload = willOpen
                 ? {
                     armed: false,
@@ -682,7 +696,7 @@ if (manualIrrigateButton) {
                     mode: "MANUAL",
                     plantType: plant,
                     environment: environment,
-                    manualStartedAt: nowIso
+                    manualStartedAt: nowMs
                 }
                 : {
                     armed: false,
@@ -691,7 +705,7 @@ if (manualIrrigateButton) {
                     mode: "IDLE",
                     plantType: plant,
                     environment: environment,
-                    manualStoppedAt: nowIso
+                    manualStoppedAt: nowMs
                 };
 
             const res = await fetch(`${DB_URL}/irrigation.json`, {
@@ -703,10 +717,10 @@ if (manualIrrigateButton) {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
             if (willOpen) {
-                manualOpenStartedAtMs = Date.now();
+                manualOpenStartedAtMs = nowMs;
             } else {
                 const durationSec = manualOpenStartedAtMs
-                    ? Math.max(1, Math.round((Date.now() - manualOpenStartedAtMs) / 1000))
+                    ? Math.max(1, Math.round((nowMs - manualOpenStartedAtMs) / 1000))
                     : 0;
                 const estMl = Number((durationSec * DRIPPER_ML_PER_SEC).toFixed(1));
                 manualOpenStartedAtMs = null;
@@ -858,7 +872,7 @@ if (scheduledIrrigateButton && customScheduleDialog) {
         const optimalDate = `${yyyy}-${mm}-${dd}`;
         const optimalTime = `${hr}:${min}`;
         const targetVolumeMl = Math.round(liters * 1000);
-        const targetDurationMs = estimateActiveSecondsFromLiters(liters) * 1000;
+        const targetDurationMs = computeTargetDurationMsFromVolumeMl(targetVolumeMl);
         const { plant, environment } = getPlantConfig();
         const triggerId = `CUSTOM_${optimalDate}_${optimalTime}_${Date.now()}`;
 

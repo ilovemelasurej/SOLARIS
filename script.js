@@ -5,15 +5,15 @@ const REQUEST_TIMEOUT_MS = 5000;
 // Measured 1-dripper rate from 20s test (~20.5-22.3 mL => ~1.07 mL/s => ~64.2 mL/min => ~0.0642 L/min)
 const DRIPPER_ML_PER_SEC = 1.07;
 const DRIPPER_ML_PER_MIN = DRIPPER_ML_PER_SEC * 60;
-const DRIPPER_L_PER_MIN  = DRIPPER_ML_PER_MIN / 1000;
+const DRIPPER_L_PER_MIN = DRIPPER_ML_PER_MIN / 1000;
 
 const PLANT_PROFILES = {
     Kalamansi: {
-        Indoor:  { optimalTime: "06:00", intervalHours: 36, optimalLiters: 0.35 },
+        Indoor: { optimalTime: "06:00", intervalHours: 36, optimalLiters: 0.35 },
         Outdoor: { optimalTime: "06:00", intervalHours: 24, optimalLiters: 0.50 }
     },
     Oregano: {
-        Indoor:  { optimalTime: "06:30", intervalHours: 72, optimalLiters: 0.18 },
+        Indoor: { optimalTime: "06:30", intervalHours: 72, optimalLiters: 0.18 },
         Outdoor: { optimalTime: "06:30", intervalHours: 48, optimalLiters: 0.25 }
     }
 };
@@ -62,7 +62,7 @@ function sync2dPlantVisual(selectedPlantName, envName, animateSwap = false) {
 const environmentButtons = document.querySelectorAll(".environment-buttons button");
 const plantType = document.querySelector("#plantType");
 const startMonitoring = document.querySelector("#startMonitoring");
-let selectedEnvironment = "Indoor";
+let selectedEnvironment = localStorage.getItem("configuredEnvironment") || "Indoor";
 
 environmentButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -71,7 +71,8 @@ environmentButtons.forEach((button) => {
             option.classList.toggle("active", isSelected);
             option.setAttribute("aria-pressed", String(isSelected));
         });
-        selectedEnvironment = button.textContent.trim();
+        selectedEnvironment = button.textContent.trim() || "Indoor";
+        localStorage.setItem("configuredEnvironment", selectedEnvironment);
         sync2dPlantVisual(plantType ? plantType.value : "Kalamansi", selectedEnvironment, true);
     });
 });
@@ -96,21 +97,24 @@ if (plantType && startMonitoring) {
     }, 60);
 
     plantType.addEventListener("change", () => {
+        localStorage.setItem("configuredPlant", plantType.value);
         sync2dPlantVisual(plantType.value, selectedEnvironment, true);
     });
 
     startMonitoring.addEventListener("click", async (e) => {
         e.preventDefault();
-        localStorage.setItem("configuredPlant", plantType.value);
-        localStorage.setItem("configuredEnvironment", selectedEnvironment);
+        const envToSave = localStorage.getItem("configuredEnvironment") || selectedEnvironment || "Indoor";
+        const plantToSave = plantType.value || "Kalamansi";
+        localStorage.setItem("configuredPlant", plantToSave);
+        localStorage.setItem("configuredEnvironment", envToSave);
 
         try {
             await fetch(`${DB_URL}/irrigation.json`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    plantType: plantType.value,
-                    environment: selectedEnvironment
+                    plantType: plantToSave,
+                    environment: envToSave
                 })
             });
         } catch (err) {
@@ -134,6 +138,11 @@ function readNumber(data, ...keys) {
 function setReading(id, value, fractionDigits = 1) {
     const element = document.querySelector(id);
     if (element) element.textContent = value === null ? "--" : value.toFixed(fractionDigits);
+}
+
+function setCardBadge(cardSelector, text) {
+    const statEl = document.querySelector(`${cardSelector} .sensor-stats .stat`);
+    if (statEl) statEl.textContent = text;
 }
 
 function setDeviceState(id, state) {
@@ -295,6 +304,10 @@ function setDisconnectedState() {
     setReading("#batteryVoltageValue", null);
     setReading("#solarVoltageValue", null);
 
+    setCardBadge(".temperature-card", "Waiting for sensor");
+    setCardBadge(".humidity-card", "Waiting for sensor");
+    setCardBadge(".water-card:not(.rain-card)", "Waiting for sensor");
+
     const soilEl = document.querySelector("#soilMoistureReading");
     const soilStat = document.querySelector("#soilMoistureStatus");
     if (soilEl) soilEl.textContent = "No data";
@@ -347,10 +360,30 @@ async function updateDashboardFromFirebase() {
             irrigation.status = "EXPIRED";
         }
 
-        setReading("#temperatureValue", readNumber(sensors, "temperature", "temperatureC"), 1);
-        setReading("#humidityValue", readNumber(sensors, "humidity", "humidityPercent"), 1);
+        const tempVal = readNumber(sensors, "temperature", "temperatureC");
+        const humVal = readNumber(sensors, "humidity", "humidityPercent");
+        const waterLvlVal = readNumber(sensors, "waterLevelPct", "waterLevelPercent");
+        const waterLvlCm = readNumber(sensors, "waterLevelCm");
+
+        setReading("#temperatureValue", tempVal, 1);
+        setReading("#humidityValue", humVal, 1);
         setReading("#waterFlowValue", DRIPPER_L_PER_MIN, 3);
-        setReading("#waterLevelValue", readNumber(sensors, "waterLevelPct", "waterLevelPercent"), 0);
+        setReading("#waterLevelValue", waterLvlVal, 0);
+
+        setCardBadge(
+            ".temperature-card",
+            tempVal !== null ? (tempVal >= 35 ? "Warm ambient" : "Live sensor") : "Waiting for sensor"
+        );
+        setCardBadge(
+            ".humidity-card",
+            humVal !== null ? "Live sensor" : "Waiting for sensor"
+        );
+        setCardBadge(
+            ".water-card:not(.rain-card)",
+            waterLvlVal !== null
+                ? (waterLvlCm !== null ? `Tank depth: ${waterLvlCm.toFixed(1)} cm` : "Live tank sensor")
+                : "Waiting for sensor"
+        );
 
         const dripDetailEl = document.querySelector("#dripperRateDetail");
         if (dripDetailEl) {

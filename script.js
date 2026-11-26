@@ -19,16 +19,16 @@
         }
     };
 
-    const AMBIENT_TRACKS = {
-        outdoor_daylight: { file: "outdoor daylight and sunset.mp3", label: "Outdoor Daylight" },
-        outdoor_sunset:   { file: "outdoor daylight and sunset.mp3", label: "Outdoor Sunset" },
-        outdoor_rain:     { file: "outdoor raining.mp3",              label: "Outdoor Rain" },
+const AMBIENT_TRACKS = {
+        outdoor_daylight: { file: "Outdoor daylight and sunset.mp3", label: "Outdoor Daylight" },
+        outdoor_sunset:   { file: "Outdoor daylight and sunset.mp3", label: "Outdoor Sunset" },
+        outdoor_rain:     { file: "Outdoor raining.mp3",              label: "Outdoor Rain" },
         outdoor_night:    { file: "outdoor night.mp3",                label: "Outdoor Night" },
 
-        indoor_daylight:  { file: "indoor sunset and daylight.mp3",  label: "Indoor Daylight" },
-        indoor_sunset:    { file: "indoor sunset and daylight.mp3",  label: "Indoor Sunset" },
-        indoor_rain:      { file: "indoor raining.mp3",               label: "Indoor Rain" },
-        indoor_night:     { file: "indoor night.mp3",                 label: "Indoor Night" }
+        indoor_daylight:  { file: "Indoor daylight and sunset.mp3",  label: "Indoor Daylight" },
+        indoor_sunset:    { file: "Indoor daylight and sunset.mp3",  label: "Indoor Sunset" },
+        indoor_rain:      { file: "Indoor raining.mp3",               label: "Indoor Rain" },
+        indoor_night:     { file: "Indoor night.mp3",                 label: "Indoor Night" }
     };
 
     function showNotice(title, message) {

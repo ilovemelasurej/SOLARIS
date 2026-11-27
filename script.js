@@ -595,6 +595,7 @@
         return `${yyyy}-${mm}-${dd}`;
     }
 
+    // Give a generous 15-minute window so newly created schedules are never prematurely marked EXPIRED
     function isScheduleExpired(irrigation) {
         if (!irrigation || !irrigation.optimalTime || !irrigation.optimalTime.includes(":")) {
             return false;
@@ -606,8 +607,8 @@
         if (irrigation.optimalDate && irrigation.optimalDate.includes("-")) {
             const [y, mo, d] = irrigation.optimalDate.split("-").map(Number);
             const [h, mi] = irrigation.optimalTime.split(":").map(Number);
-            const targetMs = new Date(y, mo - 1, d, h, mi, 0).getTime();
-            return (now.getTime() - targetMs) >= 2 * 60000;
+            const targetMs = new Date(y, mo - 1, d, h, mi, 59).getTime();
+            return (now.getTime() - targetMs) >= 15 * 60000;
         }
 
         const [schedH, schedM] = irrigation.optimalTime.split(":").map(Number);
@@ -615,7 +616,7 @@
         const schedTotalMin = schedH * 60 + schedM;
         let diff = nowTotalMin - schedTotalMin;
         if (diff < -720) diff += 1440;
-        return diff >= 2;
+        return diff >= 15;
     }
 
     function isIrrigationBusy(irrigation) {
@@ -805,10 +806,12 @@
             setDeviceState("#batteryStatus", batV !== null && batV > 9.0 ? "on" : "off");
             setDeviceState("#solarStatus", solV !== null && solV > 5.0 ? "on" : "off");
             const isPumpRunning =
-                String(irrigation.status || "").toUpperCase() === "RUNNING" || Boolean(irrigation.manualPump);
+                String(irrigation.status || "").toUpperCase() === "RUNNING" ||
+                Boolean(irrigation.manualPump) ||
+                Boolean(irrigation.pumpOn);
             setDeviceState("#pumpStatus", isPumpRunning ? "on" : "off");
 
-            if (irrigation.manualPump) {
+            if (irrigation.manualPump || irrigation.pumpOn) {
                 if (manualOpenStartedAtMs === null) {
                     const startNum = Number(irrigation.manualStartedAt);
                     const parsedStart = Number.isFinite(startNum) && startNum > 0
@@ -1022,10 +1025,12 @@
                     body: JSON.stringify({
                         armed: !profile.isRaining && profile.targetVolumeMl > 0,
                         manualPump: false,
+                        pumpOn: false,
                         status: profile.isRaining ? "SKIPPED_RAIN" : "SCHEDULED",
                         mode: "SMART",
                         optimalDate: targetDate,
                         optimalTime: profile.optimalTime,
+                        scheduledTime: profile.optimalTime,
                         targetLiters: profile.optimalLiters,
                         targetVolumeMl: profile.targetVolumeMl,
                         targetDurationMs: profile.targetDurationMs,
@@ -1061,6 +1066,7 @@
                     ? {
                         armed: false,
                         manualPump: true,
+                        pumpOn: true,
                         status: "RUNNING",
                         mode: "MANUAL",
                         plantType: plant,
@@ -1070,6 +1076,7 @@
                     : {
                         armed: false,
                         manualPump: false,
+                        pumpOn: false,
                         status: "IDLE",
                         mode: "IDLE",
                         plantType: plant,
@@ -1256,10 +1263,12 @@
                     body: JSON.stringify({
                         armed: true,
                         manualPump: false,
+                        pumpOn: false,
                         status: "SCHEDULED",
                         mode: "CUSTOM_SCHEDULE",
                         optimalDate,
                         optimalTime,
+                        scheduledTime: optimalTime,
                         targetLiters: Number(liters.toFixed(2)),
                         targetVolumeMl,
                         targetDurationMs,

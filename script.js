@@ -94,6 +94,7 @@
         rainStatus: ""
     };
     let manualOpenStartedAtMs = null;
+    let lastManualToggleMs = 0;
     let lastClearedExpiredId = "";
 
     function resolveAmbientTrack() {
@@ -595,7 +596,6 @@
         return `${yyyy}-${mm}-${dd}`;
     }
 
-    // Give a generous 15-minute window so newly created schedules are never prematurely marked EXPIRED
     function isScheduleExpired(irrigation) {
         if (!irrigation || !irrigation.optimalTime || !irrigation.optimalTime.includes(":")) {
             return false;
@@ -811,16 +811,18 @@
                 Boolean(irrigation.pumpOn);
             setDeviceState("#pumpStatus", isPumpRunning ? "on" : "off");
 
-            if (irrigation.manualPump || irrigation.pumpOn) {
-                if (manualOpenStartedAtMs === null) {
-                    const startNum = Number(irrigation.manualStartedAt);
-                    const parsedStart = Number.isFinite(startNum) && startNum > 0
-                        ? startNum
-                        : (irrigation.manualStartedAt ? Date.parse(irrigation.manualStartedAt) : NaN);
-                    manualOpenStartedAtMs = Number.isFinite(parsedStart) ? parsedStart : Date.now();
+            if (Date.now() - lastManualToggleMs >= 3500) {
+                if (irrigation.manualPump || irrigation.pumpOn) {
+                    if (manualOpenStartedAtMs === null) {
+                        const startNum = Number(irrigation.manualStartedAt);
+                        const parsedStart = Number.isFinite(startNum) && startNum > 0
+                            ? startNum
+                            : (irrigation.manualStartedAt ? Date.parse(irrigation.manualStartedAt) : NaN);
+                        manualOpenStartedAtMs = Number.isFinite(parsedStart) ? parsedStart : Date.now();
+                    }
+                } else if (manualOpenStartedAtMs !== null) {
+                    manualOpenStartedAtMs = null;
                 }
-            } else if (manualOpenStartedAtMs !== null) {
-                manualOpenStartedAtMs = null;
             }
             updateManualTimerUI();
 
@@ -1058,10 +1060,11 @@
             const { plant, environment } = getPlantConfig();
             const isCurrentlyOpen = manualOpenStartedAtMs !== null;
             const willOpen = !isCurrentlyOpen;
+            const nowMs = Date.now();
+            lastManualToggleMs = nowMs;
 
             manualIrrigateButton.disabled = true;
             try {
-                const nowMs = Date.now();
                 const payload = willOpen
                     ? {
                         armed: false,
@@ -1125,7 +1128,6 @@
                 }
 
                 updateManualTimerUI();
-                await updateDashboardFromFirebase();
             } catch (err) {
                 showNotice("Manual Pump Error", `Failed to toggle manual pump: ${err.message}`);
             } finally {

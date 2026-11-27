@@ -65,6 +65,7 @@
             document.body.classList.remove("view-config");
             updateScrollRootsProgress();
             updateDashboardFromFirebase();
+            applyTrackToPlayer(false);
             return;
         }
 
@@ -469,6 +470,7 @@
     function formatDateYYYYMMDDToDisplay(dateStr, timeStr) {
         if (!dateStr || !dateStr.includes("-")) return formatTime(timeStr);
         const [yyyy, mm, dd] = dateStr.split("-");
+        if (!yyyy || !mm || !dd) return formatTime(timeStr);
         const yy = yyyy.slice(-2);
         return `${mm}/${dd}/${yy} · ${formatTime(timeStr)}`;
     }
@@ -607,11 +609,14 @@
         if (irrigation.optimalDate && irrigation.optimalDate.includes("-")) {
             const [y, mo, d] = irrigation.optimalDate.split("-").map(Number);
             const [h, mi] = irrigation.optimalTime.split(":").map(Number);
-            const targetMs = new Date(y, mo - 1, d, h, mi, 59).getTime();
-            return (now.getTime() - targetMs) >= 15 * 60000;
+            if ([y, mo, d, h, mi].every(Number.isFinite)) {
+                const targetMs = new Date(y, mo - 1, d, h, mi, 59).getTime();
+                return (now.getTime() - targetMs) >= 15 * 60000;
+            }
         }
 
         const [schedH, schedM] = irrigation.optimalTime.split(":").map(Number);
+        if (!Number.isFinite(schedH) || !Number.isFinite(schedM)) return false;
         const nowTotalMin = now.getHours() * 60 + now.getMinutes();
         const schedTotalMin = schedH * 60 + schedM;
         let diff = nowTotalMin - schedTotalMin;
@@ -1058,7 +1063,8 @@
     if (manualIrrigateButton) {
         manualIrrigateButton.addEventListener("click", async () => {
             const { plant, environment } = getPlantConfig();
-            const isCurrentlyOpen = manualOpenStartedAtMs !== null;
+            const prevStartMs = manualOpenStartedAtMs;
+            const isCurrentlyOpen = prevStartMs !== null;
             const willOpen = !isCurrentlyOpen;
             const nowMs = Date.now();
             lastManualToggleMs = nowMs;
@@ -1097,8 +1103,8 @@
                 if (willOpen) {
                     manualOpenStartedAtMs = nowMs;
                 } else {
-                    const durationSec = manualOpenStartedAtMs
-                        ? Math.max(1, Math.round((nowMs - manualOpenStartedAtMs) / 1000))
+                    const durationSec = prevStartMs
+                        ? Math.max(1, Math.round((nowMs - prevStartMs) / 1000))
                         : 0;
                     const estMl = Number((durationSec * DRIPPER_ML_PER_SEC).toFixed(1));
                     manualOpenStartedAtMs = null;
